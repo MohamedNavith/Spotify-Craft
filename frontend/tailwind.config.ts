@@ -24,7 +24,24 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Figtree', 'CircularSp', 'CircularStd', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: [
+          'var(--font-figtree)',
+          'SpotifyMixUI',
+          'CircularSp',
+          'CircularStd',
+          'Figtree',
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'sans-serif',
+        ],
+        title: [
+          'SpotifyMixUITitle',
+          'CircularSpTitle',
+          'var(--font-figtree)',
+          'CircularSp',
+          'sans-serif',
+        ],
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-in-out',

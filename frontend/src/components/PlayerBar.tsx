@@ -126,7 +126,71 @@ export default function PlayerBar() {
 
   return (
     <>
-      <footer className="h-24 bg-black border-t border-spotify-border px-4 grid grid-cols-12 items-center select-none z-40">
+      {/* Mobile Floating Mini Player (Spotify Mobile style) */}
+      {currentTrack && (
+        <div className="md:hidden fixed bottom-[58px] left-2 right-2 z-40 bg-spotify-elevated/95 backdrop-blur-md border border-white/10 rounded-lg p-2 flex items-center justify-between shadow-2xl safe-area-pb">
+          {/* Track thumbnail + info */}
+          <div
+            onClick={() => setIsLyricsOpen(true)}
+            className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded bg-spotify-card overflow-hidden shrink-0">
+              {currentTrack.artworkUrl ? (
+                <img
+                  src={currentTrack.artworkUrl}
+                  alt={currentTrack.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-spotify-subtext">W</div>
+              )}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-white text-xs font-bold truncate">
+                {currentTrack.title}
+              </span>
+              <span className="text-spotify-subtext text-[11px] truncate">
+                {currentTrack.artistName}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Actions (Like, Play/Pause) */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => toggleLike(currentTrack.id)}
+              className="p-1 text-spotify-subtext hover:text-white"
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  isLiked ? 'text-spotify-green fill-spotify-green' : 'text-spotify-subtext'
+                }`}
+              />
+            </button>
+            <button
+              onClick={() => togglePlay()}
+              className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-md active:scale-95"
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4 fill-black" />
+              ) : (
+                <Play className="w-4 h-4 fill-black ml-0.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Bottom Progress Line */}
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 overflow-hidden rounded-b-lg">
+            <div
+              className="h-full bg-spotify-green"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Persistent Spotify Playback Bar */}
+      <footer className="hidden md:grid h-24 bg-black border-t border-spotify-border px-4 grid-cols-12 items-center select-none z-40">
         {/* Left (Col 1-3): Currently Playing Track */}
         <div className="col-span-3 flex items-center gap-3 min-w-0">
           {currentTrack ? (

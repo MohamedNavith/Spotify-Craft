@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,6 +5,7 @@
 :root {
   --background: #121212;
   --foreground: #ffffff;
+  --font-spotify: var(--font-figtree), 'SpotifyMixUI', 'CircularSp', 'CircularStd', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 * {
@@ -16,11 +15,19 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-spotify);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
   overflow: hidden;
   user-select: none;
+}
+
+/* Spotify Header Typography */
+h1, h2, h3, h4 {
+  font-family: var(--font-spotify);
+  letter-spacing: -0.035em;
 }
 
 /* Authentic Spotify Sleek Scrollbars */

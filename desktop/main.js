@@ -9,9 +9,14 @@ function createWindow() {
     height: 850,
     minWidth: 960,
     minHeight: 640,
-    title: 'Wavelength',
+    title: 'Wavelength - Spotify Web Player',
     backgroundColor: '#121212',
-    titleBarStyle: 'default',
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#121212',
+      symbolColor: '#ffffff',
+      height: 36,
+    },
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -20,21 +25,32 @@ function createWindow() {
     },
   });
 
-  const appUrl = process.env.APP_URL || 'http://localhost:3000';
-  mainWindow.loadURL(appUrl);
+  const appUrl = process.env.APP_URL || 'http://localhost:3001';
+  const localOutHtml = path.join(__dirname, '..', 'frontend', 'out', 'index.html');
+  const fs = require('fs');
+
+  mainWindow.loadURL(appUrl).catch(() => {
+    if (fs.existsSync(localOutHtml)) {
+      mainWindow.loadFile(localOutHtml);
+    }
+  });
 
   // Global Media Key Shortcuts for Windows
-  globalShortcut.register('MediaPlayPause', () => {
-    mainWindow.webContents.send('media-control', 'play-pause');
-  });
+  try {
+    globalShortcut.register('MediaPlayPause', () => {
+      mainWindow.webContents.send('media-control', 'play-pause');
+    });
 
-  globalShortcut.register('MediaNextTrack', () => {
-    mainWindow.webContents.send('media-control', 'next');
-  });
+    globalShortcut.register('MediaNextTrack', () => {
+      mainWindow.webContents.send('media-control', 'next');
+    });
 
-  globalShortcut.register('MediaPreviousTrack', () => {
-    mainWindow.webContents.send('media-control', 'prev');
-  });
+    globalShortcut.register('MediaPreviousTrack', () => {
+      mainWindow.webContents.send('media-control', 'prev');
+    });
+  } catch (err) {
+    console.warn('Could not register Windows media shortcuts:', err);
+  }
 }
 
 app.whenReady().then(() => {

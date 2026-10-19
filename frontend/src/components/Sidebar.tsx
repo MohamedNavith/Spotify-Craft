@@ -20,7 +20,8 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 flex flex-col gap-2 p-2 select-none h-full text-spotify-subtext text-sm font-medium">
+    <>
+      <aside className="hidden md:flex w-64 flex-col gap-2 p-2 select-none h-full text-spotify-subtext text-sm font-medium shrink-0">
       {/* Top Nav Block */}
       <div className="bg-spotify-card rounded-lg p-4 flex flex-col gap-4">
         <Link href="/" className="flex items-center gap-2 text-white font-bold text-lg px-2 py-1">
@@ -178,5 +179,55 @@ export default function Sidebar() {
         </div>
       </div>
     </aside>
+
+    {/* Authentic Spotify Mobile Bottom Navigation Bar (Smartphones & Android APK) */}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black via-black/95 to-black/90 backdrop-blur-lg border-t border-spotify-border flex items-center justify-around py-2 px-3 text-spotify-subtext safe-area-pb">
+      <Link
+        href="/"
+        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+          pathname === '/' ? 'text-white font-bold' : 'hover:text-white'
+        }`}
+      >
+        <Home className="w-5 h-5" />
+        <span className="text-[10px] tracking-tight">Home</span>
+      </Link>
+      <Link
+        href="/search"
+        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+          pathname === '/search' ? 'text-white font-bold' : 'hover:text-white'
+        }`}
+      >
+        <Search className="w-5 h-5" />
+        <span className="text-[10px] tracking-tight">Search</span>
+      </Link>
+      <Link
+        href="/podcasts"
+        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+          pathname === '/podcasts' ? 'text-white font-bold' : 'hover:text-white'
+        }`}
+      >
+        <Radio className="w-5 h-5" />
+        <span className="text-[10px] tracking-tight">Podcasts</span>
+      </Link>
+      <Link
+        href="/jam"
+        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+          pathname === '/jam' ? 'text-white font-bold' : 'hover:text-white'
+        }`}
+      >
+        <Users className="w-5 h-5" />
+        <span className="text-[10px] tracking-tight">Jam</span>
+      </Link>
+      <Link
+        href="/wrapped"
+        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+          pathname === '/wrapped' ? 'text-white font-bold' : 'hover:text-white'
+        }`}
+      >
+        <Sparkles className="w-5 h-5 text-spotify-green" />
+        <span className="text-[10px] tracking-tight">Wrapped</span>
+      </Link>
+    </nav>
+  </>
   );
 }
