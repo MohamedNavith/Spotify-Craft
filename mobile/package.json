@@ -1,0 +1,16 @@
+{
+  "name": "wavelength-mobile",
+  "version": "1.0.0",
+  "description": "Wavelength Mobile App (Capacitor for Android APK)",
+  "private": true,
+  "scripts": {
+    "cap:sync": "cap sync",
+    "cap:android": "cap open android",
+    "build:apk": "cap build android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "wavelength-desktop",
+  "version": "1.0.0",
+  "description": "Wavelength Spotify-style Desktop Player for Windows",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1"
+  }
+}

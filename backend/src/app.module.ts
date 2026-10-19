@@ -1,0 +1,26 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
+import { DatabaseModule } from './database/database.module';
+import { LyricsModule } from './lyrics/lyrics.module';
+import { PlaylistsModule } from './playlists/playlists.module';
+import { ProvidersModule } from './providers/providers.module';
+import { UsersModule } from './users/users.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '../.env'],
+    }),
+    DatabaseModule,
+    UsersModule,
+    AuthModule,
+    ProvidersModule,
+    LyricsModule,
+    PlaylistsModule,
+  ],
+  controllers: [AppController],
+})
+export class AppModule {}

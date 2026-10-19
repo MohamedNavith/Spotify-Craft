@@ -1,0 +1,16 @@
+{
+  "name": "wavelength-monorepo",
+  "version": "1.0.0",
+  "description": "Wavelength Spotify-Grade Music Streaming Ecosystem",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm --prefix backend run start:dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "test:backend": "npm --prefix backend test",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "desktop": "npm --prefix desktop start",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down"
+  }
+}

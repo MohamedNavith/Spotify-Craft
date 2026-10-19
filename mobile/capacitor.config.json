@@ -1,0 +1,22 @@
+{
+  "appId": "fm.wavelength.app",
+  "appName": "Wavelength",
+  "webDir": "../frontend/out",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "http://10.0.2.2:3000",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#121212",
+      "showSpinner": false
+    }
+  }
+}

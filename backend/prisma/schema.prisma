@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ARTIST
+  ADMIN
+}
+
+enum StreamFormat {
+  MP3
+  AAC
+  HLS
+  DASH
+  EMBED
+}
+
+model User {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  passwordHash String
+  displayName  String
+  avatarUrl    String?
+  bio          String?
+  isPremium    Boolean            @default(false)
+  role         Role               @default(USER)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  refreshTokens    RefreshToken[]
+  playlists        Playlist[]
+  likes            Like[]
+  follows          Follow[]
+  listeningHistory ListeningHistory[]
+  uploadedTracks   Track[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family    String
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([family])
+  @@map("refresh_tokens")
+}
+
+model Track {
+  id              String       @id @default(uuid())
+  provider        String       // "jamendo", "audius", "archive", "spotify", "youtube", "upload"
+  providerTrackId String
+  isrc            String?
+  title           String
+  artistName      String
+  albumName       String?
+  duration        Int          // in seconds
+  audioUrl        String?
+  streamFormat    StreamFormat @default(MP3)
+  artworkUrl      String?
+  license         String?      // e.g. "CC BY-NC 4.0", "Public Domain", "Copyright"
+  audioQuality    String?      // "128kbps", "256kbps", "lossless"
+  explicit        Boolean      @default(false)
+  year            Int?
+  uploadedById    String?
+  uploadedBy      User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime     @default(now())
+
+  playlistItems    PlaylistItem[]
+  likes            Like[]
+  listeningHistory ListeningHistory[]
+
+  @@unique([provider, providerTrackId])
+  @@index([title])
+  @@index([artistName])
+  @@index([isrc])
+  @@map("tracks")
+}
+
+model Artist {
+  id               String   @id @default(uuid())
+  provider         String
+  providerArtistId String
+  name             String
+  imageUrl         String?
+  bio              String?
+  genres           String[] @default([])
+  monthlyListeners Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  follows Follow[]
+
+  @@unique([provider, providerArtistId])
+  @@index([name])
+  @@map("artists")
+}
+
+model Album {
+  id              String   @id @default(uuid())
+  provider        String
+  providerAlbumId String
+  title           String
+  artistName      String
+  coverUrl        String?
+  releaseDate     String?
+  totalTracks     Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@unique([provider, providerAlbumId])
+  @@index([title])
+  @@index([artistName])
+  @@map("albums")
+}
+
+model Playlist {
+  id              String         @id @default(uuid())
+  title           String
+  description     String?
+  coverUrl        String?
+  isPublic        Boolean        @default(true)
+  isCollaborative Boolean        @default(false)
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  items PlaylistItem[]
+
+  @@index([userId])
+  @@map("playlists")
+}
+
+model PlaylistItem {
+  id         String   @id @default(uuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  trackId    String
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  position   Int
+  addedAt    DateTime @default(now())
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId, position])
+  @@map("playlist_items")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, trackId])
+  @@index([userId])
+  @@map("likes")
+}
+
+model Follow {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artistId  String
+  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, artistId])
+  @@index([userId])
+  @@map("follows")
+}
+
+model ListeningHistory {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId            String
+  track              Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  playedAt           DateTime @default(now())
+  durationPlayedSec  Int      @default(0)
+  completed          Boolean  @default(false)
+
+  @@index([userId, playedAt])
+  @@map("listening_history")
+}
+
+model Podcast {
+  id          String           @id @default(uuid())
+  title       String
+  description String?
+  feedUrl     String           @unique
+  author      String?
+  coverUrl    String?
+  createdAt   DateTime         @default(now())
+
+  episodes PodcastEpisode[]
+
+  @@map("podcasts")
+}
+
+model PodcastEpisode {
+  id                String   @id @default(uuid())
+  podcastId         String
+  podcast           Podcast  @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  title             String
+  audioUrl          String
+  duration          Int
+  publishedAt       DateTime
+  resumePositionSec Int      @default(0)
+
+  @@index([podcastId])
+  @@map("podcast_episodes")
+}
