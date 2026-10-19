@@ -9,5 +9,15 @@
   },
   "devDependencies": {
     "electron": "^33.2.1"
+  },
+  "build": {
+    "appId": "fm.wavelength.desktop",
+    "productName": "Wavelength",
+    "win": {
+      "target": "portable"
+    },
+    "directories": {
+      "output": "dist"
+    }
   }
 }
