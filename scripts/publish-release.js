@@ -155,24 +155,17 @@ Production-grade Spotify-style music streaming ecosystem across **Web**, **Andro
     }
 
     console.log(`Uploading ${file.name} (${(fs.statSync(file.path).size / 1024 / 1024).toFixed(2)} MB)...`);
-    const fileBuffer = fs.readFileSync(file.path);
-    const uploadRes = await fetch(`${uploadBaseUrl}?name=${file.name}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': file.contentType,
-        'Content-Length': fileBuffer.length.toString(),
-        'User-Agent': 'Wavelength-Publisher',
-      },
-      body: fileBuffer,
-    });
-
-    const uploadData = await uploadRes.json();
-    if (uploadRes.ok) {
-      console.log(`✓ Uploaded ${file.name}: ${uploadData.browser_download_url}`);
-    } else {
-      console.error(`Failed to upload ${file.name}:`, uploadData);
+    const curlCmd = `curl.exe -s -S -X POST -H "Authorization: Bearer ${token}" -H "Accept: application/vnd.github+json" -H "Content-Type: ${file.contentType}" --data-binary "@${file.path.replace(/\\/g, '/')}" "${uploadBaseUrl}?name=${file.name}"`;
+    try {
+      const output = execSync(curlCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
+      const uploadData = JSON.parse(output);
+      if (uploadData.browser_download_url) {
+        console.log(`✓ Uploaded ${file.name}: ${uploadData.browser_download_url}`);
+      } else {
+        console.error(`Failed to upload ${file.name}:`, uploadData);
+      }
+    } catch (err) {
+      console.error(`Error uploading ${file.name}:`, err.message);
     }
   }
 
