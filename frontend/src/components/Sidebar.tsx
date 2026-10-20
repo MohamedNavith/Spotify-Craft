@@ -28,7 +28,7 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { setTrack, setIsSpotifyImportOpen } = usePlayerStore();
+  const { setTrack, setIsSpotifyImportOpen, setIsCreateSheetOpen } = usePlayerStore();
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
 
   useEffect(() => {
@@ -284,21 +284,21 @@ export default function Sidebar() {
 
         {/* Sidebar Footer: App Version & Check for Updates */}
         <div className="p-3 border-t border-spotify-border bg-black/20 flex items-center justify-between text-[11px] text-spotify-subtext">
-          <span className="font-mono">v1.2.0</span>
+          <span className="font-mono">v1.4.0</span>
           <button
             onClick={async () => {
               try {
                 const res = await fetch('https://api.github.com/repos/MohamedNavith/Spotify-Craft/releases/latest');
                 if (res.ok) {
                   const data = await res.json();
-                  if (data.tag_name && data.tag_name !== 'v1.2.0') {
+                  if (data.tag_name && data.tag_name !== 'v1.4.0') {
                     window.open(data.html_url, '_blank');
                   } else {
-                    alert('You are on the latest version of Wavelength (v1.2.0)!');
+                    alert('You are on the latest version of Wavelength (v1.4.0)!');
                   }
                 }
               } catch {
-                alert('You are on the latest version of Wavelength (v1.2.0)!');
+                alert('You are on the latest version of Wavelength (v1.4.0)!');
               }
             }}
             className="hover:text-spotify-green hover:underline font-semibold transition-colors"
@@ -309,12 +309,12 @@ export default function Sidebar() {
       </div>
     </aside>
 
-    {/* Authentic Spotify Mobile Bottom Navigation Bar (Smartphones & Android APK) */}
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black via-black/95 to-black/90 backdrop-blur-lg border-t border-spotify-border flex items-center justify-around py-2 px-3 text-spotify-subtext safe-area-pb">
+    {/* Authentic Spotify Mobile Bottom Navigation Bar (Matching Spotify.apk) */}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-t border-white/10 flex items-center justify-around py-1.5 px-3 text-spotify-subtext safe-area-pb">
       <Link
         href="/"
         className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-          pathname === '/' ? 'text-white font-bold' : 'hover:text-white'
+          pathname === '/' || pathname === '/Spotify-Craft/' ? 'text-white font-bold' : 'hover:text-white'
         }`}
       >
         <Home className="w-5 h-5" />
@@ -329,6 +329,15 @@ export default function Sidebar() {
         <Search className="w-5 h-5" />
         <span className="text-[10px] tracking-tight">Search</span>
       </Link>
+      <Link
+        href="/library"
+        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+          pathname === '/library' ? 'text-white font-bold' : 'hover:text-white'
+        }`}
+      >
+        <Library className="w-5 h-5" />
+        <span className="text-[10px] tracking-tight">Your Library</span>
+      </Link>
       <button
         onClick={() => setIsSpotifyImportOpen(true)}
         className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white text-spotify-green"
@@ -337,15 +346,12 @@ export default function Sidebar() {
         <span className="text-[10px] tracking-tight font-bold">Sync</span>
       </button>
       <button
-        onClick={async () => {
-          const offTracks = await getOfflineTracks();
-          if (offTracks.length > 0) setTrack(offTracks[0], offTracks);
-          else alert('No tracks saved offline yet. Click the download icon on any song!');
-        }}
+        onClick={() => setIsCreateSheetOpen(true)}
         className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white"
+        title="Create Playlist or Blend"
       >
-        <ArrowDownToLine className="w-5 h-5" />
-        <span className="text-[10px] tracking-tight">Offline</span>
+        <Plus className="w-6 h-6" />
+        <span className="text-[10px] tracking-tight">Create</span>
       </button>
     </nav>
     </>

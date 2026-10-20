@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { resolveVideoIdAsync } from '../lib/dynamicResolver';
 import { resolveFullAudioStream } from '../lib/fullAudioResolver';
+import { resolveVideoId } from '../lib/videoResolver';
 import { UnifiedPlayback, UnifiedTrack } from '../types';
 
 export type RepeatMode = 'off' | 'all' | 'one';
@@ -22,6 +24,11 @@ interface PlayerState {
   playbackMode: PlaybackMode;
   isNowPlayingVideoOpen: boolean;
   isSpotifyImportOpen: boolean;
+  isShareModalOpen: boolean;
+  shareTrack: UnifiedTrack | null;
+  isCreateSheetOpen: boolean;
+  isExpandedNowPlaying: boolean;
+  dynamicVideoId: string | null;
   likedTrackIds: Set<string>;
   downloadedTrackIds: Set<string>;
 
@@ -44,6 +51,11 @@ interface PlayerState {
   togglePlaybackMode: () => void;
   toggleNowPlayingVideo: () => void;
   setIsSpotifyImportOpen: (open: boolean) => void;
+  openShareModal: (track?: UnifiedTrack) => void;
+  closeShareModal: () => void;
+  setIsCreateSheetOpen: (open: boolean) => void;
+  setIsExpandedNowPlaying: (open: boolean) => void;
+  setDynamicVideoId: (id: string | null) => void;
   toggleLike: (trackId: string) => void;
   markTrackDownloaded: (id: string) => void;
   unmarkTrackDownloaded: (id: string) => void;
@@ -77,6 +89,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playbackMode: 'full', // Default to full version of song
   isNowPlayingVideoOpen: false,
   isSpotifyImportOpen: false,
+  isShareModalOpen: false,
+  shareTrack: null,
+  isCreateSheetOpen: false,
+  isExpandedNowPlaying: false,
+  dynamicVideoId: null,
   likedTrackIds: new Set<string>(),
   downloadedTrackIds: new Set<string>(),
 
@@ -92,6 +109,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       localStorage.setItem('wavelength_listening_history', JSON.stringify(updatedHist));
     } catch {}
 
+    // Check fast local resolver first
+    const instantVideoId = resolveVideoId(track.title, track.artistName);
+
     set({
       currentTrack: track,
       queue: newQueue,
@@ -100,7 +120,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       isPlaying: true,
       progress: 0,
       duration: track.duration || 180,
+      dynamicVideoId: instantVideoId,
     });
+
+    // Asynchronously resolve dynamic official video/audio if not instant
+    if (!instantVideoId) {
+      resolveVideoIdAsync(track.title, track.artistName).then((resolved) => {
+        if (resolved) {
+          const current = get().currentTrack;
+          if (current && current.id === track.id) {
+            set({ dynamicVideoId: resolved });
+          }
+        }
+      });
+    }
 
     // Auto-resolve 100% full version (3-5 mins) when in full playback mode
     if (get().playbackMode === 'full') {
@@ -122,6 +155,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       });
     }
   },
+
+  openShareModal: (track) => {
+    set({
+      isShareModalOpen: true,
+      shareTrack: track || get().currentTrack,
+    });
+  },
+
+  closeShareModal: () => set({ isShareModalOpen: false, shareTrack: null }),
+
+  setIsCreateSheetOpen: (open) => set({ isCreateSheetOpen: open }),
+
+  setIsExpandedNowPlaying: (open) => set({ isExpandedNowPlaying: open }),
+
+  setDynamicVideoId: (id) => set({ dynamicVideoId: id }),
 
   setPlayback: (playback) => set({ playback }),
 

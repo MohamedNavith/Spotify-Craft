@@ -164,7 +164,10 @@ export default function PlayerBar() {
   return (
     <>
       {/* Authentic Spotify Mobile Player (Mini Player + Expandable Bottom Sheet) */}
-      <SpotifyMobilePlayer onOpenLyrics={() => setIsLyricsOpen(true)} />
+      <SpotifyMobilePlayer
+        onOpenLyrics={() => setIsLyricsOpen(true)}
+        onOpenQueue={() => setIsQueueOpen(true)}
+      />
 
       {/* Main Persistent Desktop Player Bar */}
       <footer className="hidden md:grid grid-cols-12 items-center h-24 bg-spotify-base border-t border-spotify-border px-4 select-none z-30 shrink-0">

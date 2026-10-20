@@ -438,6 +438,196 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Featured Album: Aashiqui 2 (Matching User Reference Screenshot #4) */}
+        <section className="flex flex-col gap-4 mt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
+                Featured Album
+              </h2>
+              <p className="text-spotify-subtext text-xs">
+                Stream the complete master soundtrack
+              </p>
+            </div>
+            <Link
+              href="/album"
+              className="text-xs font-bold text-spotify-green hover:underline uppercase tracking-wider"
+            >
+              View Album →
+            </Link>
+          </div>
+
+          <Link
+            href="/album"
+            className="group bg-gradient-to-r from-[#0d3d34] via-[#112d27] to-[#121212] p-5 rounded-2xl border border-teal-500/30 flex items-center justify-between shadow-xl hover:border-teal-400 transition-all cursor-pointer"
+          >
+            <div className="flex items-center gap-5">
+              <div className="w-24 h-24 rounded-xl overflow-hidden shadow-2xl border border-white/20 shrink-0 group-hover:scale-105 transition-transform">
+                <img
+                  src="https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg"
+                  alt="Aashiqui 2"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-widest text-spotify-green">
+                  Master Studio Album
+                </span>
+                <h3 className="text-2xl font-black text-white tracking-tight mt-0.5">
+                  Aashiqui 2
+                </h3>
+                <p className="text-xs text-[#b3b3b3] mt-1">
+                  Mithoon • Ankit Tiwari • Jeet Gannguli • Arijit Singh
+                </p>
+                <span className="text-[11px] text-white/60 mt-1">
+                  9 Songs • Full Master Audio &amp; Synchronized Lyrics
+                </span>
+              </div>
+            </div>
+
+            <div className="w-12 h-12 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-xl group-hover:scale-110 active:scale-95 transition-all shrink-0">
+              <Play className="w-6 h-6 fill-black ml-0.5" />
+            </div>
+          </Link>
+        </section>
+
+        {/* Shelf: Popular Radio (Matching Screenshot #2) */}
+        <section className="flex flex-col gap-4 mt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
+                Popular radio
+              </h2>
+              <p className="text-spotify-subtext text-xs">
+                Stations based on your favorite artists
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-spotify-green uppercase tracking-wider bg-spotify-green/10 px-2.5 py-1 rounded-full">
+              Radio Mix
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Arijit Singh Radio */}
+            <div
+              onClick={async () => {
+                const tracks = await searchOfficialMusic('Arijit Singh Pritam Anirudh', 12);
+                if (tracks.length > 0) setTrack(tracks[0], tracks);
+              }}
+              className="bg-[#242424] hover:bg-[#2e2e2e] p-4 rounded-xl border border-white/5 cursor-pointer shadow-md group transition-all"
+            >
+              <div className="w-full h-36 rounded-lg bg-gradient-to-br from-amber-300 via-amber-200 to-amber-100 flex flex-col justify-between p-3 relative overflow-hidden shadow-inner mb-3">
+                <div className="flex items-center justify-between text-black">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3.5 h-3.5 rounded-full bg-black flex items-center justify-center text-[8px] text-white font-bold">W</div>
+                    <span className="text-[10px] font-black uppercase tracking-wider">RADIO</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-1.5 my-auto">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
+                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" alt="Arijit" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow z-10 scale-105">
+                    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500" alt="Pritam" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
+                    <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" alt="Anirudh" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+
+                <h4 className="text-lg font-black text-black tracking-tight leading-tight">
+                  Arijit Singh
+                </h4>
+              </div>
+
+              <span className="text-xs font-bold text-white block">Arijit Singh Radio</span>
+              <p className="text-[11px] text-[#b3b3b3] truncate mt-0.5">
+                With Pritam, Anirudh Ravichander, Atif Aslam...
+              </p>
+            </div>
+
+            {/* Sidhu Moose Wala Radio */}
+            <div
+              onClick={async () => {
+                const tracks = await searchOfficialMusic('Sidhu Moose Wala Karan Aujla AP Dhillon', 12);
+                if (tracks.length > 0) setTrack(tracks[0], tracks);
+              }}
+              className="bg-[#242424] hover:bg-[#2e2e2e] p-4 rounded-xl border border-white/5 cursor-pointer shadow-md group transition-all"
+            >
+              <div className="w-full h-36 rounded-lg bg-gradient-to-br from-indigo-300 via-indigo-200 to-indigo-100 flex flex-col justify-between p-3 relative overflow-hidden shadow-inner mb-3">
+                <div className="flex items-center justify-between text-black">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3.5 h-3.5 rounded-full bg-black flex items-center justify-center text-[8px] text-white font-bold">W</div>
+                    <span className="text-[10px] font-black uppercase tracking-wider">RADIO</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-1.5 my-auto">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
+                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500" alt="Punjabi" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow z-10 scale-105">
+                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500" alt="Sidhu" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
+                    <img src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500" alt="Karan" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+
+                <h4 className="text-lg font-black text-black tracking-tight leading-tight">
+                  Sidhu Moose Wala
+                </h4>
+              </div>
+
+              <span className="text-xs font-bold text-white block">Sidhu Moose Wala Radio</span>
+              <p className="text-[11px] text-[#b3b3b3] truncate mt-0.5">
+                With Karan Aujla, Shubh, Diljit Dosanjh...
+              </p>
+            </div>
+
+            {/* Diljit Dosanjh Radio */}
+            <div
+              onClick={async () => {
+                const tracks = await searchOfficialMusic('Diljit Dosanjh Hass Hass G.O.A.T', 12);
+                if (tracks.length > 0) setTrack(tracks[0], tracks);
+              }}
+              className="bg-[#242424] hover:bg-[#2e2e2e] p-4 rounded-xl border border-white/5 cursor-pointer shadow-md group transition-all"
+            >
+              <div className="w-full h-36 rounded-lg bg-gradient-to-br from-emerald-300 via-teal-200 to-emerald-100 flex flex-col justify-between p-3 relative overflow-hidden shadow-inner mb-3">
+                <div className="flex items-center justify-between text-black">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3.5 h-3.5 rounded-full bg-black flex items-center justify-center text-[8px] text-white font-bold">W</div>
+                    <span className="text-[10px] font-black uppercase tracking-wider">RADIO</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-1.5 my-auto">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
+                    <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500" alt="Diljit" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow z-10 scale-105">
+                    <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" alt="Badshah" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
+                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" alt="Yo Yo" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+
+                <h4 className="text-lg font-black text-black tracking-tight leading-tight">
+                  Diljit Dosanjh
+                </h4>
+              </div>
+
+              <span className="text-xs font-bold text-white block">Diljit Dosanjh Radio</span>
+              <p className="text-[11px] text-[#b3b3b3] truncate mt-0.5">
+                With Badshah, Yo Yo Honey Singh, Guru Randhawa...
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Shelf: Today's Top Hits */}
         <section className="flex flex-col gap-4 mt-4">
           <div className="flex items-center justify-between">

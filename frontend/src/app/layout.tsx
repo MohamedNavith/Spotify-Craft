@@ -2,7 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import { Figtree } from 'next/font/google';
 import AppUpdateChecker from '../components/AppUpdateChecker';
 import AudioEngine from '../components/AudioEngine';
+import BackButtonManager from '../components/BackButtonManager';
+import CreateSheetModal from '../components/CreateSheetModal';
+import DynamicIsland from '../components/DynamicIsland';
 import PlayerBar from '../components/PlayerBar';
+import ShareModal from '../components/ShareModal';
 import Sidebar from '../components/Sidebar';
 import './globals.css';
 
@@ -49,6 +53,18 @@ export default function RootLayout({
 
         {/* Bottom Persistent Spotify Playback Bar */}
         <PlayerBar />
+
+        {/* Floating Dynamic Island Media Controller (Mobile & Desktop) */}
+        <DynamicIsland />
+
+        {/* Global Social Share Modal (Snapchat, Instagram, WhatsApp) */}
+        <ShareModal />
+
+        {/* Create (+) Modal Sheet */}
+        <CreateSheetModal />
+
+        {/* Android Hardware/Software Exit & Back Button Handler */}
+        <BackButtonManager />
 
         {/* Audio Engine with Web Audio & Media Session API */}
         <AudioEngine />

@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { resolveVideoIdAsync } from '../lib/dynamicResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { usePlayerStore } from '../stores/usePlayerStore';
+
+// Ultra-light silent WAV audio carrier (1 sample) used to keep Android MediaSession active during full mode
+const SILENT_AUDIO_URI = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A/w==';
 
 export default function AudioEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -28,10 +32,29 @@ export default function AudioEngine() {
     playbackMode,
     isNowPlayingVideoOpen,
     toggleNowPlayingVideo,
+    dynamicVideoId,
+    setDynamicVideoId,
   } = usePlayerStore();
 
-  const videoId = currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null;
+  const videoId = dynamicVideoId || (currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null);
   const isYTMode = playbackMode === 'full' && !!videoId;
+
+  // Resolve dynamic video ID asynchronously if not already known
+  useEffect(() => {
+    if (!currentTrack) return;
+    if (videoId) return;
+
+    let active = true;
+    resolveVideoIdAsync(currentTrack.title, currentTrack.artistName).then((resolved) => {
+      if (active && resolved) {
+        setDynamicVideoId(resolved);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [currentTrack, videoId, setDynamicVideoId]);
 
   // Helper to send postMessage commands to YouTube IFrame
   const postYT = (func: string, args: any[] = []) => {
@@ -93,14 +116,23 @@ export default function AudioEngine() {
     }
 
     if (isYTMode) {
-      // In full mode with YouTube video, pause HTML5 audio so only full official YouTube audio plays
-      audio.pause();
+      // In full mode with YouTube video, use silent audio carrier to keep Android Lock Screen & MediaSession alive
+      if (audio.src !== SILENT_AUDIO_URI) {
+        audio.src = SILENT_AUDIO_URI;
+        audio.loop = true;
+        audio.volume = 0.001;
+      }
       if (isPlaying) {
+        audio.play().catch(() => {});
         postYT('playVideo');
+      } else {
+        audio.pause();
+        postYT('pauseVideo');
       }
     } else {
       // Fallback or preview mode: use HTML5 audio element
       postYT('pauseVideo');
+      audio.loop = false;
       if (currentTrack.streamUrl && audio.src !== currentTrack.streamUrl) {
         audio.src = currentTrack.streamUrl;
         audio.load();
@@ -124,7 +156,12 @@ export default function AudioEngine() {
 
     if (isPlaying) {
       if (isYTMode) {
-        audio?.pause();
+        if (audio && audio.src !== SILENT_AUDIO_URI) {
+          audio.src = SILENT_AUDIO_URI;
+          audio.loop = true;
+          audio.volume = 0.001;
+        }
+        audio?.play().catch(() => {});
         postYT('playVideo');
       } else if (audio) {
         audio.play().catch(() => {});

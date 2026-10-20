@@ -1,6 +1,8 @@
 const { app, BrowserWindow, globalShortcut } = require('electron');
 const path = require('path');
 
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 let mainWindow;
 
 function createWindow() {

@@ -83,7 +83,7 @@ export const CURATED_OFFICIAL_VIDEOS: Record<string, string> = {
   'hayyoda': 'Q7n_S2Mv8P8',
   'fear song': '0d-Lh0K3jB8',
   'zinda banda': 'BddgUkQn5rU',
-  'tum hi ho': 'IJq0yyWug1k',
+  'tum hi ho': 'Umqb9KENgmk',
   'apna bana le': 'ElZfdU54Cp8',
   'o maahi': '8sLS2knUa6Y' ,
   'satranga': 'HrnrqYxYrbk',
@@ -132,6 +132,32 @@ export const CURATED_OFFICIAL_VIDEOS: Record<string, string> = {
   'enna sona': '4w_d84hWj2k',
   'tere bina': 'mY_v5o4P-l4',
   'raanjhanaa': 'osT_iWj6e6k',
+
+  // Aashiqui 2 Complete Master Tracklist
+  'sunn raha hai': 'z3UHfi9vpbc',
+  'chahun main ya naa': 'VdyBtGaspss',
+  'milne hai mujhse aayi': 'GtPvCa3vvxA',
+  'hum mar jayenge': 'h5Y3Yj7E2E4',
+  'meri aashiqui': 'w_HaY7sDbgw',
+  'piya aaye na': 'Mmg_7lX4j6w',
+  'bhula dena': '8aG_eRjXjP8',
+  'aasan nahin yahan': 'z_8Z8-qQ238',
+
+  // South Indian & Tamil Classics (Ilaiyaraaja, Unnikrishnan, Kamal Haasan, S. Janaki)
+  'kanmani anbodu': 'aDk3lM1X9_0',
+  'ennavale adi ennavale': 'o6XkP93q3L8',
+  'roja janeman': '7f7DqL78b7g',
+  'thenpandi cheemayile': 'H-y8bNq2q8g',
+  'chinna chinna aasai': 'x0sE-KqYVb0',
+  'sandhana kaatre': 'm6p7pGvB_18',
+  'sundari kannal': 'uL9n0k8J8L8',
+  'kannazhaga': 'w7_Y_V-tL1s',
+  'why this kolaveri': 'YR12Z8f1Dh8',
+  'aarambam': 'M9rX8K9yP7w',
+  'vikram title track': 'j23_GZ7sKqw',
+  'pathala pathala': 'sL5c9Hj5N_0',
+  'porkanda singam': '8yL3V-e4r28',
+  'naan ready': 'SZzxRP-7Pcw',
 
   // Lo-Fi & Study
   'snowman': 'yXn14eGv-uY',
