@@ -61,7 +61,7 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
       const cleanArtist = cleanString(rawArtist);
 
       try {
-        // Strategy 1: Direct LRCLIB Search with title and artist
+        // Strategy 1: Search LRCLIB
         const searchRes = await fetch(
           `https://lrclib.net/api/search?q=${encodeURIComponent(
             `${cleanTitle} ${cleanArtist}`,
@@ -71,7 +71,6 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
         if (searchRes.ok) {
           const list = await searchRes.json();
           if (Array.isArray(list) && list.length > 0) {
-            // Find best match with synced lyrics
             const withSynced = list.find((item) => item.syncedLyrics);
             if (withSynced && withSynced.syncedLyrics) {
               const parsed = parseLRC(withSynced.syncedLyrics);
@@ -91,7 +90,7 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
           }
         }
 
-        // Strategy 2: Exact LRCLIB Get
+        // Strategy 2: Exact Get
         const exactRes = await fetch(
           `https://lrclib.net/api/get?track_name=${encodeURIComponent(
             cleanTitle,
@@ -117,11 +116,9 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
           }
         }
 
-        // If no lyrics found
         setLyrics([]);
         setPlainLyrics(null);
       } catch (err) {
-        console.warn('LRCLIB client-side fetch error:', err);
         setLyrics([]);
         setPlainLyrics(null);
       } finally {
@@ -132,7 +129,7 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
     loadLyrics();
   }, [isOpen, currentTrack]);
 
-  // Find active line index based on progress
+  // Find active line index based on current progress
   let activeIndex = -1;
   for (let i = 0; i < lyrics.length; i++) {
     if (progress >= lyrics[i].time) {
@@ -155,52 +152,64 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-b from-[#18342b]/95 via-spotify-base/98 to-black backdrop-blur-xl flex flex-col p-8 animate-fade-in select-none">
+    <div className="fixed inset-0 z-50 bg-gradient-to-b from-[#1c382b]/95 via-[#121212]/98 to-black backdrop-blur-2xl flex flex-col p-6 md:p-10 animate-fade-in select-none">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-6 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-spotify-green flex items-center justify-center text-black">
-            <Mic2 className="w-5 h-5 stroke-[2.5]" />
+      <div className="flex items-center justify-between pb-6 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-spotify-elevated shadow-lg shrink-0">
+            {currentTrack?.artworkUrl ? (
+              <img
+                src={currentTrack.artworkUrl}
+                alt={currentTrack.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center font-bold text-white">
+                <Mic2 className="w-5 h-5 text-spotify-green" />
+              </div>
+            )}
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-white leading-tight">
+          <div className="flex flex-col">
+            <h3 className="text-lg md:text-xl font-black text-white tracking-tight">
               {currentTrack?.title}
-            </h2>
-            <p className="text-xs text-spotify-subtext font-semibold">
-              {currentTrack?.artistName} • Synced Lyrics by LRCLIB
+            </h3>
+            <p className="text-xs md:text-sm text-spotify-subtext font-medium flex items-center gap-1.5">
+              <span>{currentTrack?.artistName}</span>
+              <span>•</span>
+              <span className="text-spotify-green font-semibold">Live Karaoke Lyrics</span>
             </p>
           </div>
         </div>
 
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Main Lyrics Display */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar py-12 flex flex-col items-center justify-start gap-8 max-w-3xl mx-auto w-full text-center">
+      {/* Main Authentic Spotify Lyrics Stream */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar py-16 px-4 md:px-12 flex flex-col items-start max-w-4xl mx-auto w-full space-y-6 md:space-y-8">
         {isLoading && (
-          <div className="text-spotify-subtext text-lg italic mt-20 animate-pulse">
-            Fetching time-synced lyrics...
+          <div className="text-spotify-subtext text-xl italic mt-20 animate-pulse">
+            Loading synchronized lyrics...
           </div>
         )}
 
         {!isLoading && lyrics.length === 0 && !plainLyrics && (
-          <div className="flex flex-col items-center justify-center mt-24 text-center">
-            <p className="text-2xl font-bold text-white/80">
-              Looks like we don't have the lyrics for this song yet.
+          <div className="flex flex-col items-start justify-center mt-24">
+            <p className="text-3xl font-black text-white/70">
+              Lyrics aren&apos;t available for this song yet.
             </p>
-            <p className="text-sm text-spotify-subtext mt-2">
-              Enjoy the music or try another track!
+            <p className="text-sm text-spotify-subtext mt-2 font-medium">
+              Enjoy the full official master audio!
             </p>
           </div>
         )}
 
         {!isLoading && plainLyrics && (
-          <div className="whitespace-pre-line text-lg md:text-xl text-white/80 leading-relaxed font-semibold">
+          <div className="whitespace-pre-line text-2xl md:text-4xl text-white/80 leading-relaxed font-black tracking-tight">
             {plainLyrics}
           </div>
         )}
@@ -213,10 +222,10 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
                 key={idx}
                 ref={isActive ? activeLineRef : null}
                 onClick={() => seek(line.time)}
-                className={`lyric-line cursor-pointer select-none transition-all duration-300 ${
+                className={`cursor-pointer select-none transition-all duration-300 font-black tracking-tight leading-snug md:leading-tight ${
                   isActive
-                    ? 'active text-2xl md:text-3xl font-extrabold text-white scale-105'
-                    : 'inactive text-lg md:text-xl text-white/40 hover:text-white/80 font-bold'
+                    ? 'text-white text-3xl md:text-5xl drop-shadow-[0_4px_24px_rgba(255,255,255,0.45)] transform scale-[1.02] origin-left'
+                    : 'text-white/30 hover:text-white/70 text-2xl md:text-4xl filter blur-[0.2px]'
                 }`}
               >
                 {line.text}

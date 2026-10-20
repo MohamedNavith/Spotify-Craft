@@ -2,6 +2,7 @@
 
 import {
   ArrowDownToLine,
+  Clock,
   Compass,
   Download,
   FolderPlus,
@@ -13,6 +14,7 @@ import {
   Plus,
   Radio,
   Search,
+  Settings,
   Sparkles,
   UploadCloud,
   Users,
@@ -115,6 +117,28 @@ export default function Sidebar() {
           >
             <Users className="w-6 h-6" />
             <span>Jam Session</span>
+          </Link>
+          <Link
+            href="/history"
+            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
+              pathname === '/history'
+                ? 'text-white bg-spotify-hover font-semibold'
+                : 'hover:text-white'
+            }`}
+          >
+            <Clock className="w-6 h-6" />
+            <span>Recently Played</span>
+          </Link>
+          <Link
+            href="/settings"
+            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
+              pathname === '/settings'
+                ? 'text-white bg-spotify-hover font-semibold'
+                : 'hover:text-white'
+            }`}
+          >
+            <Settings className="w-6 h-6" />
+            <span>Settings</span>
           </Link>
           <Link
             href="/upload"

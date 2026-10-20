@@ -17,40 +17,40 @@ The live application is hosted on GitHub Pages:
 
 ## 📥 Downloads & Releases
 
-Get the latest production builds from [GitHub Releases v1.2.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.2.0):
+Get the latest production builds from [GitHub Releases v1.3.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.3.0):
 
 | Target | File | Size | Description | Download Link |
 | :--- | :--- | :--- | :--- | :--- |
-| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.5 MB | Standalone Android APK with native audio, gesture player & offline cache | [⬇️ Download APK (v1.2.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.2.0/wavelength-mobile.apk) |
-| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Full Windows Installer with desktop shortcuts & media keys | [⬇️ Download EXE (v1.2.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.2.0/wavelength-desktop.exe) |
-| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~366 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.2.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.2.0/wavelength-windows-x64.zip) |
+| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.5 MB | Standalone Android APK with native lock screen & notification media controls | [⬇️ Download APK (v1.3.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.0/wavelength-mobile.apk) |
+| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys | [⬇️ Download EXE (v1.3.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.0/wavelength-desktop.exe) |
+| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~366 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.3.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.0/wavelength-windows-x64.zip) |
 | **Web Browser (PWA)** | Web Application | Cloud | Live everywhere without installation or localhost | [🌐 Launch Web Player](https://mohamednavith.github.io/Spotify-Craft/) |
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Features in v1.3.0
 
-- **Full-Length Audio Playback (Zero 30s Cutoffs)**:
-  - Automatically resolves 100% full-length master streams (3–5 minutes) in high-fidelity 320kbps MP3.
-  - Continuous timeline scrubbing, ±10s seeking, and volume synchronization.
-  - Time-synced LRCLIB karaoke lyrics match vocals line-by-line in real time from 0:00 to the end.
-- **Authentic Spotify Mobile APK Experience**:
-  - Floating mini player with real-time accent progress bar.
-  - Horizontal swipe left/right on mini player for next/previous track.
-  - Tap-to-expand full-screen Now Playing bottom sheet with large touch targets, scrubber, and lyrics pull-up card.
-  - Native haptic vibration feedback on touch.
-- **Spotify Playlist Library Persistence**:
-  - Direct **"Add to Your Library"** integration in the Spotify Import modal.
-  - Imported Spotify playlists are permanently saved to device storage and accessible anytime from the left sidebar and mobile library.
-- **In-App Update System**:
-  - Built-in automatic release checker alerts users when an update is available with 1-tap download for Android APK, Windows EXE, and instant Web PWA reload.
-- **In-App Offline Storage (IndexedDB)**:
-  - Download your favorite tracks directly into device storage with the one-click Download button.
-  - Access your downloaded catalog anytime under **"Downloaded Songs"** even when completely offline.
-- **Picture-in-Picture & Official Video Mode**:
-  - Watch the official music video with one click or shortcut `V` in a draggable floating window.
-- **10-Band Equalizer & Audio Presets**:
-  - Bass Boost, Acoustic, Electronic, Rock, Vocal, and Flat presets with real-time Web Audio API biquad filters.
+- **Android Lock Screen & Quick Settings Notification Controls**:
+  - Full Android system media tile with active playback state, title, artist, high-res artwork, previous/play/pause/next, and position scrubber.
+- **Full Song Playback by Default**:
+  - Every selected track automatically resolves the complete 3–5 minute full studio version; 30-second preview mode is strictly an optional manual toggle.
+- **Top Centric-Left Spotify Search Bar with Live Autocomplete**:
+  - Official Spotify Web layout with a search input positioned in the top navigation bar.
+  - 200ms debounced live dropdown displaying matching songs, artists, thumbnails, and 1-click play buttons.
+- **Authentic Spotify Lyrics Typography**:
+  - Left-aligned, heavy bold sans-serif styling matching the official Spotify client.
+  - Active line text shadow glow, soft inactive blur, and automatic smooth vertical scrolling.
+- **Fixed Official Video Mode**:
+  - Direct video ID resolver overcoming YouTube's deprecation of `listType=search`.
+  - Floating Picture-in-Picture window with full playback synchronization.
+- **Listening History & Recently Played**:
+  - Dedicated `/history` page and Home shelf tracking your listening journey with one-click "Play All".
+- **Settings & Favorite Artists System**:
+  - Dedicated `/settings` page allowing users to select favorite singers (Anirudh, A.R. Rahman, Arijit Singh, Taylor Swift, Billie Eilish, Bruno Mars, etc.).
+  - "Recommended Based on Your Favorites" dynamic shelf on Home.
+  - 320kbps high-fidelity streaming quality setting.
+- **Popular Artists Shelf**:
+  - Circular artist portraits with hover green play button matching the Spotify Web Home page.
 
 ---
 

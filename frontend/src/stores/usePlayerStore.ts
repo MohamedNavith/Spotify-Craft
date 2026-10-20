@@ -50,13 +50,23 @@ interface PlayerState {
   addToQueue: (track: UnifiedTrack) => void;
 }
 
+const getInitialHistory = (): UnifiedTrack[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('wavelength_listening_history');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentTrack: null,
   playback: null,
   isPlaying: false,
   queue: [],
   queueIndex: 0,
-  history: [],
+  history: getInitialHistory(),
   volume: 0.8,
   isMuted: false,
   progress: 0,
@@ -76,10 +86,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       queue && queue.length > 0 ? queue : state.queue.length > 0 ? state.queue : [track];
     const index = newQueue.findIndex((t) => t.id === track.id);
 
+    const currentHist = state.history || [];
+    const updatedHist = [track, ...currentHist.filter((t) => t.id !== track.id)].slice(0, 50);
+    try {
+      localStorage.setItem('wavelength_listening_history', JSON.stringify(updatedHist));
+    } catch {}
+
     set({
       currentTrack: track,
       queue: newQueue,
       queueIndex: index >= 0 ? index : 0,
+      history: updatedHist,
       isPlaying: true,
       progress: 0,
       duration: track.duration || 180,
