@@ -25,7 +25,7 @@ function createWindow() {
     },
   });
 
-  const appUrl = process.env.APP_URL || 'http://localhost:3001';
+  const appUrl = process.env.APP_URL || 'https://mohamednavith.github.io/Spotify-Craft/';
   const localOutHtml = path.join(__dirname, '..', 'frontend', 'out', 'index.html');
   const fs = require('fs');
 

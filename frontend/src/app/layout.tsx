@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: 'Wavelength - Web Player: Music for everyone',
   description: 'Production-quality Spotify-style music streaming platform powered by Next.js and open licensed music APIs.',
   manifest: '/manifest.json',
+  icons: {
+    icon: './icon.svg',
+    shortcut: './icon.svg',
+    apple: './icon.svg',
+  },
 };
 
 export const viewport: Viewport = {

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { UnifiedPlayback, UnifiedTrack } from '../types';
 
 export type RepeatMode = 'off' | 'all' | 'one';
+export type PlaybackMode = 'full' | 'preview';
 
 interface PlayerState {
   currentTrack: UnifiedTrack | null;
@@ -17,7 +18,11 @@ interface PlayerState {
   seekTarget: number | null;
   isShuffled: boolean;
   repeatMode: RepeatMode;
+  playbackMode: PlaybackMode;
+  isNowPlayingVideoOpen: boolean;
+  isSpotifyImportOpen: boolean;
   likedTrackIds: Set<string>;
+  downloadedTrackIds: Set<string>;
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -35,7 +40,12 @@ interface PlayerState {
   toggleMute: () => void;
   toggleShuffle: () => void;
   cycleRepeat: () => void;
+  togglePlaybackMode: () => void;
+  toggleNowPlayingVideo: () => void;
+  setIsSpotifyImportOpen: (open: boolean) => void;
   toggleLike: (trackId: string) => void;
+  markTrackDownloaded: (id: string) => void;
+  unmarkTrackDownloaded: (id: string) => void;
   addToQueue: (track: UnifiedTrack) => void;
 }
 
@@ -53,11 +63,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   seekTarget: null,
   isShuffled: false,
   repeatMode: 'off',
+  playbackMode: 'full', // Default to full version of song
+  isNowPlayingVideoOpen: false,
+  isSpotifyImportOpen: false,
   likedTrackIds: new Set<string>(),
+  downloadedTrackIds: new Set<string>(),
 
   setTrack: (track, queue) => {
     const state = get();
-    const newQueue = queue && queue.length > 0 ? queue : state.queue.length > 0 ? state.queue : [track];
+    const newQueue =
+      queue && queue.length > 0 ? queue : state.queue.length > 0 ? state.queue : [track];
     const index = newQueue.findIndex((t) => t.id === track.id);
 
     set({
@@ -66,7 +81,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       queueIndex: index >= 0 ? index : 0,
       isPlaying: true,
       progress: 0,
-      duration: track.duration || 0,
+      duration: track.duration || 180,
     });
   },
 
@@ -104,7 +119,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       currentTrack: nextTrack,
       queueIndex: nextIndex,
       progress: 0,
-      duration: nextTrack.duration || 0,
+      duration: nextTrack.duration || 180,
       isPlaying: true,
     });
   },
@@ -113,7 +128,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { queue, queueIndex, progress } = get();
     if (queue.length === 0) return;
 
-    // If more than 3 seconds in, restart track
     if (progress > 3) {
       set({ progress: 0 });
       return;
@@ -125,28 +139,31 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       currentTrack: prevTrack,
       queueIndex: prevIndex,
       progress: 0,
-      duration: prevTrack.duration || 0,
+      duration: prevTrack.duration || 180,
       isPlaying: true,
     });
   },
 
   seek: (seconds) => {
-    const target = Math.max(0, isNaN(seconds) ? 0 : seconds);
-    set({ seekTarget: target, progress: target });
+    const valid = Math.max(0, isNaN(seconds) ? 0 : seconds);
+    set({ seekTarget: valid, progress: valid });
   },
 
   clearSeek: () => set({ seekTarget: null }),
 
   fastForward: (seconds) => {
     const { progress, duration } = get();
-    const maxDur = duration > 0 ? duration : 3600;
-    const target = Math.max(0, Math.min(maxDur, progress + seconds));
-    set({ seekTarget: target, progress: target });
+    const newTarget = Math.max(0, Math.min(duration || 1000, progress + seconds));
+    set({ seekTarget: newTarget, progress: newTarget });
   },
 
-  setProgress: (seconds) => set({ progress: seconds }),
+  setProgress: (seconds) => set({ progress: isNaN(seconds) ? 0 : seconds }),
 
-  setDuration: (seconds) => set({ duration: seconds }),
+  setDuration: (seconds) => {
+    if (!isNaN(seconds) && seconds > 0) {
+      set({ duration: seconds });
+    }
+  },
 
   setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)), isMuted: false }),
 
@@ -157,9 +174,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   cycleRepeat: () =>
     set((state) => {
       const modes: RepeatMode[] = ['off', 'all', 'one'];
-      const nextIndex = (modes.indexOf(state.repeatMode) + 1) % modes.length;
-      return { repeatMode: modes[nextIndex] };
+      const currentIndex = modes.indexOf(state.repeatMode);
+      return { repeatMode: modes[(currentIndex + 1) % modes.length] };
     }),
+
+  togglePlaybackMode: () =>
+    set((state) => ({
+      playbackMode: state.playbackMode === 'full' ? 'preview' : 'full',
+    })),
+
+  toggleNowPlayingVideo: () =>
+    set((state) => ({
+      isNowPlayingVideoOpen: !state.isNowPlayingVideoOpen,
+    })),
+
+  setIsSpotifyImportOpen: (open) => set({ isSpotifyImportOpen: open }),
 
   toggleLike: (trackId) =>
     set((state) => {
@@ -170,6 +199,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         nextLiked.add(trackId);
       }
       return { likedTrackIds: nextLiked };
+    }),
+
+  markTrackDownloaded: (id) =>
+    set((state) => {
+      const nextDown = new Set(state.downloadedTrackIds);
+      nextDown.add(id);
+      return { downloadedTrackIds: nextDown };
+    }),
+
+  unmarkTrackDownloaded: (id) =>
+    set((state) => {
+      const nextDown = new Set(state.downloadedTrackIds);
+      nextDown.delete(id);
+      return { downloadedTrackIds: nextDown };
     }),
 
   addToQueue: (track) =>

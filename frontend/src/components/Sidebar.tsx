@@ -1,10 +1,14 @@
 'use client';
 
 import {
+  ArrowDownToLine,
   Compass,
+  Download,
+  FolderPlus,
   Heart,
   Home,
   Library,
+  ListPlus,
   Music,
   Plus,
   Radio,
@@ -15,9 +19,12 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getOfflineTracks } from '../lib/offlineStorage';
+import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { setTrack, setIsSpotifyImportOpen } = usePlayerStore();
 
   return (
     <>
@@ -54,6 +61,18 @@ export default function Sidebar() {
             <Search className="w-6 h-6" />
             <span>Search</span>
           </Link>
+          <button
+            onClick={() => setIsSpotifyImportOpen(true)}
+            className="flex items-center gap-4 px-3 py-2 rounded-md transition-colors hover:text-white text-spotify-green font-semibold text-left"
+          >
+            <Sparkles className="w-6 h-6 text-spotify-green" />
+            <span className="flex items-center gap-1.5">
+              <span>Sync Spotify</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-spotify-green text-black">
+                Pro
+              </span>
+            </span>
+          </button>
           <Link
             href="/wrapped"
             className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
@@ -62,13 +81,8 @@ export default function Sidebar() {
                 : 'hover:text-white'
             }`}
           >
-            <Sparkles className="w-6 h-6 text-spotify-green" />
-            <span className="flex items-center gap-1.5">
-              <span>Wrapped</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-spotify-green text-black">
-                New
-              </span>
-            </span>
+            <Compass className="w-6 h-6" />
+            <span>Wrapped</span>
           </Link>
           <Link
             href="/podcasts"
@@ -114,20 +128,12 @@ export default function Sidebar() {
             <span className="font-bold text-base">Your Library</span>
           </button>
           <button
-            title="Create playlist"
-            className="p-1 rounded-full hover:bg-spotify-hover text-spotify-subtext hover:text-white transition-colors"
+            onClick={() => setIsSpotifyImportOpen(true)}
+            title="Import or Sync Spotify Playlist"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black text-xs font-bold transition-all shadow-sm"
           >
-            <Plus className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Library Filter Pills */}
-        <div className="px-4 py-2 flex gap-2">
-          <button className="px-3 py-1 bg-spotify-elevated hover:bg-spotify-hover text-white text-xs font-semibold rounded-full transition-colors">
-            Playlists
-          </button>
-          <button className="px-3 py-1 bg-spotify-elevated hover:bg-spotify-hover text-white text-xs font-semibold rounded-full transition-colors">
-            Artists
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>Import</span>
           </button>
         </div>
 
@@ -135,7 +141,7 @@ export default function Sidebar() {
         <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-1 custom-scrollbar">
           {/* Liked Songs Entry */}
           <Link
-            href="/collection/tracks"
+            href="/search"
             className="flex items-center gap-3 p-2 rounded-md hover:bg-spotify-hover transition-colors group"
           >
             <div className="w-12 h-12 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
@@ -149,16 +155,39 @@ export default function Sidebar() {
             </div>
           </Link>
 
-          {/* Sample Spotify-style Playlists */}
+          {/* Offline Downloaded Songs */}
+          <div
+            onClick={async () => {
+              const offTracks = await getOfflineTracks();
+              if (offTracks.length > 0) {
+                setTrack(offTracks[0], offTracks);
+              } else {
+                alert('No tracks saved offline yet. Click the download icon on any track to save it to your device storage!');
+              }
+            }}
+            className="flex items-center gap-3 p-2 rounded-md hover:bg-spotify-hover transition-colors group cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white shrink-0 shadow-md">
+              <ArrowDownToLine className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-white font-medium truncate group-hover:text-spotify-green transition-colors">
+                Downloaded Songs
+              </span>
+              <span className="text-xs text-spotify-subtext">Offline Storage • In-App</span>
+            </div>
+          </div>
+
+          {/* Spotify Synced Presets */}
           {[
-            { title: 'Discover Weekly', author: 'Wavelength AI', coverBg: 'bg-emerald-900' },
-            { title: 'Daily Mix 1', author: 'Synthwave & Electronic', coverBg: 'bg-cyan-900' },
-            { title: 'Chill Waves & Lo-Fi', author: 'Curated by Jamendo', coverBg: 'bg-amber-900' },
-            { title: 'Ambient Focus & Study', author: 'Wavelength', coverBg: 'bg-violet-900' },
-            { title: 'Indie Discoveries', author: 'Wavelength Community', coverBg: 'bg-rose-900' },
+            { title: "Today's Top Hits", author: 'Spotify Curated', coverBg: 'bg-emerald-900' },
+            { title: 'Global Top 50', author: 'Daily Chart', coverBg: 'bg-cyan-900' },
+            { title: 'Hot Hits India', author: 'Bollywood & Desi', coverBg: 'bg-amber-900' },
+            { title: 'Chill Waves & Lo-Fi', author: 'Lofi Records', coverBg: 'bg-violet-900' },
           ].map((item, idx) => (
             <div
               key={idx}
+              onClick={() => setIsSpotifyImportOpen(true)}
               className="flex items-center gap-3 p-2 rounded-md hover:bg-spotify-hover transition-colors cursor-pointer group"
             >
               <div
@@ -200,34 +229,25 @@ export default function Sidebar() {
         <Search className="w-5 h-5" />
         <span className="text-[10px] tracking-tight">Search</span>
       </Link>
-      <Link
-        href="/podcasts"
-        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-          pathname === '/podcasts' ? 'text-white font-bold' : 'hover:text-white'
-        }`}
+      <button
+        onClick={() => setIsSpotifyImportOpen(true)}
+        className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white text-spotify-green"
       >
-        <Radio className="w-5 h-5" />
-        <span className="text-[10px] tracking-tight">Podcasts</span>
-      </Link>
-      <Link
-        href="/jam"
-        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-          pathname === '/jam' ? 'text-white font-bold' : 'hover:text-white'
-        }`}
+        <Sparkles className="w-5 h-5" />
+        <span className="text-[10px] tracking-tight font-bold">Sync</span>
+      </button>
+      <button
+        onClick={async () => {
+          const offTracks = await getOfflineTracks();
+          if (offTracks.length > 0) setTrack(offTracks[0], offTracks);
+          else alert('No tracks saved offline yet. Click the download icon on any song!');
+        }}
+        className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white"
       >
-        <Users className="w-5 h-5" />
-        <span className="text-[10px] tracking-tight">Jam</span>
-      </Link>
-      <Link
-        href="/wrapped"
-        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-          pathname === '/wrapped' ? 'text-white font-bold' : 'hover:text-white'
-        }`}
-      >
-        <Sparkles className="w-5 h-5 text-spotify-green" />
-        <span className="text-[10px] tracking-tight">Wrapped</span>
-      </Link>
+        <ArrowDownToLine className="w-5 h-5" />
+        <span className="text-[10px] tracking-tight">Offline</span>
+      </button>
     </nav>
-  </>
+    </>
   );
 }

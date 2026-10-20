@@ -1,6 +1,9 @@
 'use client';
 
 import {
+  ArrowDownToLine,
+  Check,
+  Download,
   Heart,
   Laptop2,
   ListMusic,
@@ -14,14 +17,18 @@ import {
   SkipBack,
   SkipForward,
   Sliders,
+  Sparkles,
+  Video,
   Volume2,
   VolumeX,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { saveTrackOffline } from '../lib/offlineStorage';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import EqualizerModal from './EqualizerModal';
 import LyricsModal from './LyricsModal';
 import QueueDrawer from './QueueDrawer';
+import SpotifyImportModal from './SpotifyImportModal';
 
 function formatTime(seconds: number): string {
   if (isNaN(seconds) || seconds <= 0) return '0:00';
@@ -41,6 +48,10 @@ export default function PlayerBar() {
     isShuffled,
     repeatMode,
     likedTrackIds,
+    downloadedTrackIds,
+    playbackMode,
+    isNowPlayingVideoOpen,
+    isSpotifyImportOpen,
     togglePlay,
     nextTrack,
     prevTrack,
@@ -51,11 +62,16 @@ export default function PlayerBar() {
     toggleShuffle,
     cycleRepeat,
     toggleLike,
+    markTrackDownloaded,
+    togglePlaybackMode,
+    toggleNowPlayingVideo,
+    setIsSpotifyImportOpen,
   } = usePlayerStore();
 
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isEqualizerOpen, setIsEqualizerOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -71,12 +87,18 @@ export default function PlayerBar() {
           togglePlay();
           break;
         case 'ArrowRight':
-          if (e.ctrlKey || e.metaKey) nextTrack();
-          else seek(Math.min(duration, progress + 5));
+          if (e.ctrlKey) {
+            nextTrack();
+          } else {
+            fastForward(10);
+          }
           break;
         case 'ArrowLeft':
-          if (e.ctrlKey || e.metaKey) prevTrack();
-          else seek(Math.max(0, progress - 5));
+          if (e.ctrlKey) {
+            prevTrack();
+          } else {
+            fastForward(-10);
+          }
           break;
         case 'ArrowUp':
           e.preventDefault();
@@ -101,6 +123,9 @@ export default function PlayerBar() {
         case 'KeyQ':
           setIsQueueOpen((prev) => !prev);
           break;
+        case 'KeyV':
+          toggleNowPlayingVideo();
+          break;
       }
     };
 
@@ -110,9 +135,7 @@ export default function PlayerBar() {
     togglePlay,
     nextTrack,
     prevTrack,
-    seek,
-    progress,
-    duration,
+    fastForward,
     volume,
     setVolume,
     toggleMute,
@@ -120,10 +143,22 @@ export default function PlayerBar() {
     cycleRepeat,
     currentTrack,
     toggleLike,
+    toggleNowPlayingVideo,
   ]);
 
   const isLiked = currentTrack ? likedTrackIds.has(currentTrack.id) : false;
+  const isDownloaded = currentTrack ? downloadedTrackIds.has(currentTrack.id) : false;
   const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
+
+  const handleDownload = async () => {
+    if (!currentTrack) return;
+    setIsDownloading(true);
+    const ok = await saveTrackOffline(currentTrack);
+    if (ok) {
+      markTrackDownloaded(currentTrack.id);
+    }
+    setIsDownloading(false);
+  };
 
   return (
     <>
@@ -156,21 +191,49 @@ export default function PlayerBar() {
             </div>
           </div>
 
-          {/* Quick Actions (Like, Play/Pause) */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Mini Player Transport */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Mode switch */}
+            <button
+              onClick={togglePlaybackMode}
+              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${
+                playbackMode === 'full'
+                  ? 'border-spotify-green text-spotify-green bg-spotify-green/10'
+                  : 'border-white/20 text-spotify-subtext'
+              }`}
+            >
+              {playbackMode === 'full' ? 'FULL' : '30s'}
+            </button>
+
+            {/* Offline save */}
+            <button
+              onClick={handleDownload}
+              className="p-1.5 text-spotify-subtext hover:text-white"
+              title="Download offline"
+            >
+              {isDownloaded ? (
+                <Check className="w-4 h-4 text-spotify-green" />
+              ) : (
+                <Download className={`w-4 h-4 ${isDownloading ? 'animate-bounce text-spotify-green' : ''}`} />
+              )}
+            </button>
+
+            {/* Like */}
             <button
               onClick={() => toggleLike(currentTrack.id)}
-              className="p-1 text-spotify-subtext hover:text-white"
+              className="p-1.5 text-spotify-subtext hover:text-white"
             >
               <Heart
-                className={`w-5 h-5 ${
-                  isLiked ? 'text-spotify-green fill-spotify-green' : 'text-spotify-subtext'
+                className={`w-4 h-4 ${
+                  isLiked ? 'text-spotify-green fill-spotify-green' : ''
                 }`}
               />
             </button>
+
+            {/* Play/Pause */}
             <button
-              onClick={() => togglePlay()}
-              className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-md active:scale-95"
+              onClick={togglePlay}
+              className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center ml-1"
             >
               {isPlaying ? (
                 <Pause className="w-4 h-4 fill-black" />
@@ -180,32 +243,31 @@ export default function PlayerBar() {
             </button>
           </div>
 
-          {/* Bottom Progress Line */}
-          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/10 overflow-hidden rounded-b-lg">
+          {/* Mini progress line along bottom edge */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10 rounded-b-lg overflow-hidden">
             <div
-              className="h-full bg-spotify-green"
+              className="h-full bg-spotify-green transition-all"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Desktop Persistent Spotify Playback Bar */}
-      <footer className="hidden md:grid h-24 bg-black border-t border-spotify-border px-4 grid-cols-12 items-center select-none z-40">
-        {/* Left (Col 1-3): Currently Playing Track */}
-        <div className="col-span-3 flex items-center gap-3 min-w-0">
+      {/* Main Persistent Desktop Player Bar */}
+      <footer className="hidden md:grid grid-cols-12 items-center h-24 bg-spotify-base border-t border-spotify-border px-4 select-none z-30 shrink-0">
+        {/* Left (Col 1-3): Current Track Info, Cover, Like & Download */}
+        <div className="col-span-3 flex items-center gap-3 min-w-0 pr-4">
           {currentTrack ? (
             <>
               <div
                 onClick={() => setIsLyricsOpen(true)}
-                className="w-14 h-14 rounded bg-spotify-elevated relative overflow-hidden shrink-0 shadow-md cursor-pointer group"
-                title="Open Now Playing & Lyrics"
+                className="w-14 h-14 rounded bg-spotify-card overflow-hidden shrink-0 shadow-md cursor-pointer group relative"
               >
                 {currentTrack.artworkUrl ? (
                   <img
                     src={currentTrack.artworkUrl}
                     alt={currentTrack.title}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-spotify-subtext font-bold text-xs">
@@ -223,19 +285,33 @@ export default function PlayerBar() {
                 </span>
               </div>
 
-              <button
-                onClick={() => toggleLike(currentTrack.id)}
-                className="ml-2 text-spotify-subtext hover:text-white transition-colors"
-                title={isLiked ? 'Remove from Liked Songs' : 'Save to Liked Songs (L)'}
-              >
-                <Heart
-                  className={`w-5 h-5 transition-transform active:scale-125 ${
-                    isLiked
-                      ? 'text-spotify-green fill-spotify-green'
-                      : 'text-spotify-subtext hover:text-white'
-                  }`}
-                />
-              </button>
+              <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                <button
+                  onClick={() => toggleLike(currentTrack.id)}
+                  className="text-spotify-subtext hover:text-white transition-colors"
+                  title={isLiked ? 'Remove from Liked Songs' : 'Save to Liked Songs (L)'}
+                >
+                  <Heart
+                    className={`w-4 h-4 transition-transform active:scale-125 ${
+                      isLiked
+                        ? 'text-spotify-green fill-spotify-green'
+                        : 'text-spotify-subtext hover:text-white'
+                    }`}
+                  />
+                </button>
+
+                <button
+                  onClick={handleDownload}
+                  className="text-spotify-subtext hover:text-white transition-colors p-1"
+                  title={isDownloaded ? 'Saved in App Storage (Offline)' : 'Download song for offline listening'}
+                >
+                  {isDownloaded ? (
+                    <Check className="w-4 h-4 text-spotify-green" />
+                  ) : (
+                    <Download className={`w-4 h-4 ${isDownloading ? 'animate-bounce text-spotify-green' : ''}`} />
+                  )}
+                </button>
+              </div>
             </>
           ) : (
             <div className="text-spotify-subtext text-xs italic">
@@ -244,10 +320,23 @@ export default function PlayerBar() {
           )}
         </div>
 
-        {/* Center (Col 4-9): Main Transport Controls & Progress Slider */}
+        {/* Center (Col 4-9): Transport Controls & Progress Slider */}
         <div className="col-span-6 flex flex-col items-center gap-1.5 max-w-2xl mx-auto w-full">
-          {/* Buttons Row */}
-          <div className="flex items-center gap-6">
+          {/* Controls Row */}
+          <div className="flex items-center gap-5">
+            {/* Mode Switch Badge */}
+            <button
+              onClick={() => togglePlaybackMode()}
+              className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border transition-all ${
+                playbackMode === 'full'
+                  ? 'border-spotify-green text-spotify-green bg-spotify-green/10 shadow-sm'
+                  : 'border-white/20 text-spotify-subtext hover:text-white'
+              }`}
+              title="Toggle Full Song Version (Official Audio) vs 30s Snippet"
+            >
+              {playbackMode === 'full' ? '● Full Song' : '30s Snippet'}
+            </button>
+
             {/* Shuffle */}
             <button
               onClick={() => toggleShuffle()}
@@ -348,7 +437,7 @@ export default function PlayerBar() {
               <input
                 type="range"
                 min={0}
-                max={duration > 0 ? duration : 100}
+                max={duration > 0 ? duration : 180}
                 step={0.1}
                 value={progress}
                 onInput={(e) => {
@@ -367,8 +456,19 @@ export default function PlayerBar() {
           </div>
         </div>
 
-        {/* Right (Col 10-12): Volume & Panels */}
+        {/* Right (Col 10-12): Video, Lyrics, Volume & Panels */}
         <div className="col-span-3 flex items-center justify-end gap-3 text-spotify-subtext">
+          {/* Official Video Screen Toggle */}
+          <button
+            onClick={() => toggleNowPlayingVideo()}
+            title={isNowPlayingVideoOpen ? 'Hide Video (V)' : 'Watch Official Music Video (V)'}
+            className={`p-1 transition-colors ${
+              isNowPlayingVideoOpen ? 'text-spotify-green' : 'hover:text-white'
+            }`}
+          >
+            <Video className="w-4 h-4" />
+          </button>
+
           {/* Lyrics Button */}
           <button
             onClick={() => setIsLyricsOpen((prev) => !prev)}
@@ -401,16 +501,16 @@ export default function PlayerBar() {
           </button>
 
           {/* Volume controls */}
-          <div className="flex items-center gap-2 group w-28">
+          <div className="flex items-center gap-2 group w-24">
             <button
               onClick={() => toggleMute()}
               className="hover:text-white transition-colors"
               title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-5 h-5 text-spotify-subtext" />
+                <VolumeX className="w-4 h-4 text-spotify-subtext" />
               ) : (
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className="w-4 h-4" />
               )}
             </button>
 
@@ -435,7 +535,7 @@ export default function PlayerBar() {
 
           <button
             onClick={() => setIsLyricsOpen(true)}
-            title="Fullscreen Now Playing"
+            title="Fullscreen Lyrics"
             className="hover:text-white transition-colors p-1"
           >
             <Maximize2 className="w-4 h-4" />
@@ -449,6 +549,10 @@ export default function PlayerBar() {
       <EqualizerModal
         isOpen={isEqualizerOpen}
         onClose={() => setIsEqualizerOpen(false)}
+      />
+      <SpotifyImportModal
+        isOpen={isSpotifyImportOpen}
+        onClose={() => setIsSpotifyImportOpen(false)}
       />
     </>
   );
