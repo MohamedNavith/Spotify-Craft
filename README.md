@@ -15,6 +15,39 @@ The live application is hosted on GitHub Pages:
 
 ---
 
+## 📥 Downloads & Releases
+
+Get the latest production builds from [GitHub Releases v1.1.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.1.0):
+
+| Target | File | Size | Description | Download Link |
+| :--- | :--- | :--- | :--- | :--- |
+| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.5 MB | Standalone Android APK with native audio and offline cache | [⬇️ Download APK](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.1.0/wavelength-mobile.apk) |
+| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Full Windows Installer with desktop shortcuts & media keys | [⬇️ Download EXE](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.1.0/wavelength-desktop.exe) |
+| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~219 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.1.0/wavelength-windows-x64.zip) |
+| **Web Browser (PWA)** | Web Application | Cloud | Live everywhere without installation or localhost | [🌐 Launch Web Player](https://mohamednavith.github.io/Spotify-Craft/) |
+
+---
+
+## 🌟 Key Features
+
+- **Full-Length Audio Playback (No 30s cutoffs)**:
+  - Seamlessly streams the full 3-5 minute official track via embedded full-playback engine with live scrubbing, ±10s seeking, and volume synchronization.
+  - Switch anytime between **"● Full Song"** and **"30s Snippet"** via the badge in the player bar.
+- **In-App Offline Storage (IndexedDB)**:
+  - Download your favorite tracks directly into device storage with the one-click Download button.
+  - Access your downloaded catalog anytime under **"Downloaded Songs"** even when completely offline.
+- **Spotify Playlist Sync & Import**:
+  - Paste any public Spotify playlist URL or choose from top global presets (*Today's Top Hits*, *Hot Hits India*, *Global Top 50*, *Mega Hit Mix*).
+  - Automatic song-matching streams your favorite Spotify tracks for free without requiring a paid subscription.
+- **Time-Synced Karaoke Lyrics**:
+  - Live synced LRC scrolling lyrics powered by LRCLIB with click-to-seek support.
+- **Picture-in-Picture & Official Video Mode**:
+  - Watch the official music video with one click or shortcut `V` in a draggable floating window.
+- **10-Band Equalizer & Audio Presets**:
+  - Bass Boost, Acoustic, Electronic, Rock, Vocal, and Flat presets with real-time Web Audio API biquad filters.
+
+---
+
 ## 📱 Multi-Platform Support
 
 | Platform | Technology | Target Output | Run Command |
@@ -172,3 +205,20 @@ Wavelength adheres strictly to official developer terms and copyright laws:
 | `S` | Toggle Shuffle |
 | `R` | Cycle Repeat (Off / All / One) |
 | `Q` | Open / Close Play Queue |
+| `V` | Toggle Official Video Mode |
+
+---
+
+## 🗺️ Future Implementation Roadmap
+
+1. **Spotify Web Playback SDK OAuth PKCE Connect**:
+   - Provide direct native Spotify account connection for Spotify Premium subscribers who wish to use Spotify's encrypted EME playback engine directly in addition to the open full-song engine.
+2. **Collaborative Jam Sessions via WebSockets**:
+   - Real-time shared listening rooms where friends can join a room, vote on upcoming tracks, and synchronize playback down to the millisecond.
+3. **Smart AI Recommendations Engine**:
+   - Item-item collaborative filtering paired with acoustic feature matching (danceability, tempo, acousticness) to generate dynamic personalized "Daily Mix" and "Discover Weekly" playlists.
+4. **Offline Mobile Background Audio (Foreground Service)**:
+   - Enhance Android Capacitor shell with Android foreground service notification controls for screen-locked playback of offline cached media.
+5. **Lossless FLAC Local HLS Ingestion**:
+   - Allow musicians and creators to drag-and-drop uncompressed audio with automated ffmpeg segmenting to 320kbps AAC and lossless Opus streams.
+
