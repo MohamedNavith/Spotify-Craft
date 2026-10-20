@@ -122,8 +122,23 @@ export default function AudioEngine() {
       onEnded={() => {
         nextTrack();
       }}
-      onError={(e) => {
-        console.warn('Audio playback error:', e);
+      onError={async (e) => {
+        console.warn('Audio playback error, attempting live stream refresh:', e);
+        if (currentTrack && currentTrack.provider === 'official') {
+          try {
+            const { searchOfficialMusic } = await import('../lib/officialMusic');
+            const fresh = await searchOfficialMusic(
+              `${currentTrack.title} ${currentTrack.artistName}`,
+              1,
+            );
+            if (fresh.length > 0 && fresh[0].streamUrl && audioRef.current) {
+              audioRef.current.src = fresh[0].streamUrl;
+              audioRef.current.play().catch(() => {});
+            }
+          } catch (refreshErr) {
+            console.error('Failed to refresh audio stream:', refreshErr);
+          }
+        }
       }}
     />
   );

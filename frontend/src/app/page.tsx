@@ -26,29 +26,27 @@ export default function HomePage() {
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
 
-    // Optionally expand fresh tracks from the live official catalog in the background
+    // Fetch fresh live tracks from the official studio master catalog
     async function loadFreshOfficial() {
       try {
-        const [freshPop, freshGlobal] = await Promise.allSettled([
-          searchOfficialMusic('top hits 2024', 8),
-          searchOfficialMusic('arijit singh hits', 8),
+        const [freshPop, freshBollywood, freshGlobal, freshLoFi] = await Promise.allSettled([
+          searchOfficialMusic('Taylor Swift Bruno Mars Billie Eilish Sabrina Carpenter', 12),
+          searchOfficialMusic('Arijit Singh Anirudh Ravichander Bad Newz', 12),
+          searchOfficialMusic('Kendrick Lamar Coldplay Harry Styles Dua Lipa', 12),
+          searchOfficialMusic('Lofi Study Beats Chillhop', 12),
         ]);
 
         if (freshPop.status === 'fulfilled' && freshPop.value.length > 0) {
-          // Merge unique tracks
-          setTopHits((prev) => {
-            const ids = new Set(prev.map((t) => t.id));
-            const added = freshPop.value.filter((t) => !ids.has(t.id));
-            return [...prev, ...added];
-          });
+          setTopHits(freshPop.value);
         }
-
+        if (freshBollywood.status === 'fulfilled' && freshBollywood.value.length > 0) {
+          setBollywood(freshBollywood.value);
+        }
         if (freshGlobal.status === 'fulfilled' && freshGlobal.value.length > 0) {
-          setBollywood((prev) => {
-            const ids = new Set(prev.map((t) => t.id));
-            const added = freshGlobal.value.filter((t) => !ids.has(t.id));
-            return [...prev, ...added];
-          });
+          setGlobal50(freshGlobal.value);
+        }
+        if (freshLoFi.status === 'fulfilled' && freshLoFi.value.length > 0) {
+          setChillLoFi(freshLoFi.value);
         }
       } catch (err) {
         // Fallback already pre-loaded via CURATED_OFFICIAL_HITS
