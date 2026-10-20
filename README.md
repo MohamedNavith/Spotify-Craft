@@ -17,30 +17,36 @@ The live application is hosted on GitHub Pages:
 
 ## 📥 Downloads & Releases
 
-Get the latest production builds from [GitHub Releases v1.1.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.1.0):
+Get the latest production builds from [GitHub Releases v1.2.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.2.0):
 
 | Target | File | Size | Description | Download Link |
 | :--- | :--- | :--- | :--- | :--- |
-| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.5 MB | Standalone Android APK with native audio and offline cache | [⬇️ Download APK](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.1.0/wavelength-mobile.apk) |
-| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Full Windows Installer with desktop shortcuts & media keys | [⬇️ Download EXE](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.1.0/wavelength-desktop.exe) |
-| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~219 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.1.0/wavelength-windows-x64.zip) |
+| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.5 MB | Standalone Android APK with native audio, gesture player & offline cache | [⬇️ Download APK (v1.2.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.2.0/wavelength-mobile.apk) |
+| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Full Windows Installer with desktop shortcuts & media keys | [⬇️ Download EXE (v1.2.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.2.0/wavelength-desktop.exe) |
+| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~366 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.2.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.2.0/wavelength-windows-x64.zip) |
 | **Web Browser (PWA)** | Web Application | Cloud | Live everywhere without installation or localhost | [🌐 Launch Web Player](https://mohamednavith.github.io/Spotify-Craft/) |
 
 ---
 
 ## 🌟 Key Features
 
-- **Full-Length Audio Playback (No 30s cutoffs)**:
-  - Seamlessly streams the full 3-5 minute official track via embedded full-playback engine with live scrubbing, ±10s seeking, and volume synchronization.
-  - Switch anytime between **"● Full Song"** and **"30s Snippet"** via the badge in the player bar.
+- **Full-Length Audio Playback (Zero 30s Cutoffs)**:
+  - Automatically resolves 100% full-length master streams (3–5 minutes) in high-fidelity 320kbps MP3.
+  - Continuous timeline scrubbing, ±10s seeking, and volume synchronization.
+  - Time-synced LRCLIB karaoke lyrics match vocals line-by-line in real time from 0:00 to the end.
+- **Authentic Spotify Mobile APK Experience**:
+  - Floating mini player with real-time accent progress bar.
+  - Horizontal swipe left/right on mini player for next/previous track.
+  - Tap-to-expand full-screen Now Playing bottom sheet with large touch targets, scrubber, and lyrics pull-up card.
+  - Native haptic vibration feedback on touch.
+- **Spotify Playlist Library Persistence**:
+  - Direct **"Add to Your Library"** integration in the Spotify Import modal.
+  - Imported Spotify playlists are permanently saved to device storage and accessible anytime from the left sidebar and mobile library.
+- **In-App Update System**:
+  - Built-in automatic release checker alerts users when an update is available with 1-tap download for Android APK, Windows EXE, and instant Web PWA reload.
 - **In-App Offline Storage (IndexedDB)**:
   - Download your favorite tracks directly into device storage with the one-click Download button.
   - Access your downloaded catalog anytime under **"Downloaded Songs"** even when completely offline.
-- **Spotify Playlist Sync & Import**:
-  - Paste any public Spotify playlist URL or choose from top global presets (*Today's Top Hits*, *Hot Hits India*, *Global Top 50*, *Mega Hit Mix*).
-  - Automatic song-matching streams your favorite Spotify tracks for free without requiring a paid subscription.
-- **Time-Synced Karaoke Lyrics**:
-  - Live synced LRC scrolling lyrics powered by LRCLIB with click-to-seek support.
 - **Picture-in-Picture & Official Video Mode**:
   - Watch the official music video with one click or shortcut `V` in a draggable floating window.
 - **10-Band Equalizer & Audio Presets**:
