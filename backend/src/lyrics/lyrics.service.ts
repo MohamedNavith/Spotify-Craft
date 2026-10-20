@@ -52,7 +52,32 @@ export class LyricsService {
         parsedLines,
       };
     } catch (err: any) {
-      this.logger.debug(`LRCLIB lookup failed: ${err.message}`);
+      this.logger.debug(`LRCLIB get lookup failed, trying search fallback: ${err.message}`);
+      try {
+        const searchRes = await axios.get('https://lrclib.net/api/search', {
+          params: { q: `${trackName} ${artistName}`.trim() },
+          timeout: 6000,
+          headers: {
+            'User-Agent': 'Wavelength-Music/1.0 (https://github.com/MohamedNavith/Spotify-Craft)',
+          },
+        });
+        const list = searchRes.data;
+        if (Array.isArray(list) && list.length > 0) {
+          const best = list.find((item: any) => item.syncedLyrics) || list[0];
+          const parsedLines = best.syncedLyrics ? this.parseLrc(best.syncedLyrics) : [];
+          return {
+            trackName: best.trackName || trackName,
+            artistName: best.artistName || artistName,
+            instrumental: Boolean(best.instrumental),
+            plainLyrics: best.plainLyrics || null,
+            syncedLyrics: best.syncedLyrics || null,
+            parsedLines,
+          };
+        }
+      } catch (searchErr: any) {
+        this.logger.debug(`LRCLIB search fallback failed: ${searchErr.message}`);
+      }
+
       return {
         trackName,
         artistName,

@@ -45,6 +45,7 @@ export default function PlayerBar() {
     nextTrack,
     prevTrack,
     seek,
+    fastForward,
     setVolume,
     toggleMute,
     toggleShuffle,
@@ -261,6 +262,15 @@ export default function PlayerBar() {
               )}
             </button>
 
+            {/* Skip Back 10s */}
+            <button
+              onClick={() => fastForward(-10)}
+              className="text-spotify-subtext hover:text-white transition-colors p-1 text-xs font-bold"
+              title="Rewind 10s (Left Arrow)"
+            >
+              -10s
+            </button>
+
             {/* Previous */}
             <button
               onClick={() => prevTrack()}
@@ -291,6 +301,15 @@ export default function PlayerBar() {
               title="Next (Ctrl+Right)"
             >
               <SkipForward className="w-5 h-5 fill-current" />
+            </button>
+
+            {/* Skip Forward 10s */}
+            <button
+              onClick={() => fastForward(10)}
+              className="text-spotify-subtext hover:text-white transition-colors p-1 text-xs font-bold"
+              title="Forward 10s (Right Arrow)"
+            >
+              +10s
             </button>
 
             {/* Repeat */}
@@ -329,10 +348,17 @@ export default function PlayerBar() {
               <input
                 type="range"
                 min={0}
-                max={duration || 100}
-                step={0.5}
+                max={duration > 0 ? duration : 100}
+                step={0.1}
                 value={progress}
-                onChange={(e) => seek(parseFloat(e.target.value))}
+                onInput={(e) => {
+                  const val = parseFloat((e.target as HTMLInputElement).value);
+                  seek(val);
+                }}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  seek(val);
+                }}
                 className="absolute inset-0 w-full opacity-0 cursor-pointer"
               />
             </div>

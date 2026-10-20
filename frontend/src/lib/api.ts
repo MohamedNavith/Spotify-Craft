@@ -6,23 +6,49 @@ import {
   UnifiedTrack,
   UserProfile,
 } from '../types';
+import { CURATED_OFFICIAL_HITS, searchOfficialMusic } from './officialMusic';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
 export async function searchTracks(
   query: string,
   limit = 20,
 ): Promise<UnifiedSearchResult> {
+  // Strategy 1: Try official client-side catalog first for real composer/artist songs
   try {
-    const res = await fetch(
-      `${API_BASE}/api/search?q=${encodeURIComponent(query)}&limit=${limit}`,
-    );
-    if (!res.ok) throw new Error('Search failed');
-    return await res.json();
-  } catch {
-    // Graceful fallback directly to Jamendo client-side if backend is offline during early frontend test
-    return searchJamendoDirect(query, limit);
+    const officialTracks = await searchOfficialMusic(query, limit);
+    if (officialTracks && officialTracks.length > 0) {
+      return {
+        provider: 'official',
+        tracks: officialTracks,
+        albums: [],
+        artists: [],
+        totalResults: officialTracks.length,
+      };
+    }
+  } catch (err) {
+    console.warn('Client-side official search error:', err);
   }
+
+  // Strategy 2: If a custom backend is configured, attempt backend search
+  if (API_BASE) {
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.tracks && data.tracks.length > 0) {
+          return data;
+        }
+      }
+    } catch {
+      // Backend offline, fallback to Jamendo
+    }
+  }
+
+  // Strategy 3: Jamendo fallback
+  return searchJamendoDirect(query, limit);
 }
 
 export async function getTrack(id: string): Promise<UnifiedTrack> {
@@ -53,10 +79,13 @@ export async function getAlbum(id: string): Promise<UnifiedAlbum> {
 
 export async function fetchTrendingTracks(): Promise<UnifiedTrack[]> {
   try {
-    const searchRes = await searchTracks('popular', 20);
+    if (CURATED_OFFICIAL_HITS.todayTopHits.length > 0) {
+      return CURATED_OFFICIAL_HITS.todayTopHits;
+    }
+    const searchRes = await searchTracks('top hits', 20);
     return searchRes.tracks;
   } catch {
-    return [];
+    return CURATED_OFFICIAL_HITS.todayTopHits;
   }
 }
 

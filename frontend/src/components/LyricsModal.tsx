@@ -14,6 +14,35 @@ interface LyricsModalProps {
   onClose: () => void;
 }
 
+function cleanString(str: string): string {
+  return str
+    .replace(/\(.*?\)/g, '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/feat\..*/i, '')
+    .replace(/ft\..*/i, '')
+    .replace(/official.*/i, '')
+    .trim();
+}
+
+function parseLRC(lrcText: string): LyricLine[] {
+  const lines: LyricLine[] = [];
+  const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
+  for (const raw of lrcText.split('\n')) {
+    const match = raw.match(regex);
+    if (match) {
+      const mins = parseInt(match[1], 10);
+      const secs = parseInt(match[2], 10);
+      const ms = parseInt(match[3].padEnd(3, '0').slice(0, 3), 10);
+      const time = mins * 60 + secs + ms / 1000;
+      const text = match[4].trim();
+      if (text) {
+        lines.push({ time, text });
+      }
+    }
+  }
+  return lines.sort((a, b) => a.time - b.time);
+}
+
 export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
   const { currentTrack, progress, seek } = usePlayerStore();
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
@@ -26,27 +55,75 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
 
     async function loadLyrics() {
       setIsLoading(true);
+      const rawTitle = currentTrack?.title || '';
+      const rawArtist = currentTrack?.artistName || '';
+      const cleanTitle = cleanString(rawTitle);
+      const cleanArtist = cleanString(rawArtist);
+
       try {
-        const res = await fetch(
-          `http://localhost:4000/api/lyrics?track=${encodeURIComponent(
-            currentTrack?.title || '',
-          )}&artist=${encodeURIComponent(
-            currentTrack?.artistName || '',
-          )}&duration=${currentTrack?.duration || 0}`,
+        // Strategy 1: Direct LRCLIB Search with title and artist
+        const searchRes = await fetch(
+          `https://lrclib.net/api/search?q=${encodeURIComponent(
+            `${cleanTitle} ${cleanArtist}`,
+          )}`,
         );
-        const data = await res.json();
-        if (data.parsedLines && data.parsedLines.length > 0) {
-          setLyrics(data.parsedLines);
-          setPlainLyrics(null);
-        } else if (data.plainLyrics) {
-          setPlainLyrics(data.plainLyrics);
-          setLyrics([]);
-        } else {
-          setLyrics([]);
-          setPlainLyrics(null);
+
+        if (searchRes.ok) {
+          const list = await searchRes.json();
+          if (Array.isArray(list) && list.length > 0) {
+            // Find best match with synced lyrics
+            const withSynced = list.find((item) => item.syncedLyrics);
+            if (withSynced && withSynced.syncedLyrics) {
+              const parsed = parseLRC(withSynced.syncedLyrics);
+              if (parsed.length > 0) {
+                setLyrics(parsed);
+                setPlainLyrics(null);
+                setIsLoading(false);
+                return;
+              }
+            }
+            if (list[0].plainLyrics) {
+              setPlainLyrics(list[0].plainLyrics);
+              setLyrics([]);
+              setIsLoading(false);
+              return;
+            }
+          }
         }
+
+        // Strategy 2: Exact LRCLIB Get
+        const exactRes = await fetch(
+          `https://lrclib.net/api/get?track_name=${encodeURIComponent(
+            cleanTitle,
+          )}&artist_name=${encodeURIComponent(cleanArtist)}`,
+        );
+
+        if (exactRes.ok) {
+          const item = await exactRes.json();
+          if (item.syncedLyrics) {
+            const parsed = parseLRC(item.syncedLyrics);
+            if (parsed.length > 0) {
+              setLyrics(parsed);
+              setPlainLyrics(null);
+              setIsLoading(false);
+              return;
+            }
+          }
+          if (item.plainLyrics) {
+            setPlainLyrics(item.plainLyrics);
+            setLyrics([]);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // If no lyrics found
+        setLyrics([]);
+        setPlainLyrics(null);
       } catch (err) {
-        console.warn('Failed to load lyrics:', err);
+        console.warn('LRCLIB client-side fetch error:', err);
+        setLyrics([]);
+        setPlainLyrics(null);
       } finally {
         setIsLoading(false);
       }

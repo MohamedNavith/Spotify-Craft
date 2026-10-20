@@ -1,21 +1,21 @@
 'use client';
 
-import { Heart, Music, Play, Radio, Sparkles } from 'lucide-react';
+import { Flame, Heart, Headphones, Music2, Radio, Sparkles, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import TopBar from '../components/TopBar';
 import TrackCard from '../components/TrackCard';
 import VisualBackground from '../components/VisualBackground';
-import { fetchTrendingTracks, searchTracks } from '../lib/api';
+import { CURATED_OFFICIAL_HITS, searchOfficialMusic } from '../lib/officialMusic';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { UnifiedTrack } from '../types';
 
 export default function HomePage() {
   const [greeting, setGreeting] = useState('Good evening');
   const [activeCategory, setActiveCategory] = useState<'all' | 'music' | 'podcasts'>('all');
-  const [trendingTracks, setTrendingTracks] = useState<UnifiedTrack[]>([]);
-  const [chillTracks, setChillTracks] = useState<UnifiedTrack[]>([]);
-  const [electronicTracks, setElectronicTracks] = useState<UnifiedTrack[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [topHits, setTopHits] = useState<UnifiedTrack[]>(CURATED_OFFICIAL_HITS.todayTopHits);
+  const [bollywood, setBollywood] = useState<UnifiedTrack[]>(CURATED_OFFICIAL_HITS.bollywoodHits);
+  const [global50, setGlobal50] = useState<UnifiedTrack[]>(CURATED_OFFICIAL_HITS.global50);
+  const [chillLoFi, setChillLoFi] = useState<UnifiedTrack[]>(CURATED_OFFICIAL_HITS.chillLoFi);
 
   const { setTrack } = usePlayerStore();
 
@@ -26,37 +26,85 @@ export default function HomePage() {
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
 
-    // Fetch initial tracks from API
-    async function loadFeed() {
-      setIsLoading(true);
+    // Optionally expand fresh tracks from the live official catalog in the background
+    async function loadFreshOfficial() {
       try {
-        const [trending, chillRes, elecRes] = await Promise.allSettled([
-          fetchTrendingTracks(),
-          searchTracks('chill ambient', 10),
-          searchTracks('electronic dance', 10),
+        const [freshPop, freshGlobal] = await Promise.allSettled([
+          searchOfficialMusic('top hits 2024', 8),
+          searchOfficialMusic('arijit singh hits', 8),
         ]);
 
-        if (trending.status === 'fulfilled' && trending.value.length > 0) {
-          setTrendingTracks(trending.value);
+        if (freshPop.status === 'fulfilled' && freshPop.value.length > 0) {
+          // Merge unique tracks
+          setTopHits((prev) => {
+            const ids = new Set(prev.map((t) => t.id));
+            const added = freshPop.value.filter((t) => !ids.has(t.id));
+            return [...prev, ...added];
+          });
         }
-        if (chillRes.status === 'fulfilled' && chillRes.value.tracks.length > 0) {
-          setChillTracks(chillRes.value.tracks);
-        }
-        if (elecRes.status === 'fulfilled' && elecRes.value.tracks.length > 0) {
-          setElectronicTracks(elecRes.value.tracks);
+
+        if (freshGlobal.status === 'fulfilled' && freshGlobal.value.length > 0) {
+          setBollywood((prev) => {
+            const ids = new Set(prev.map((t) => t.id));
+            const added = freshGlobal.value.filter((t) => !ids.has(t.id));
+            return [...prev, ...added];
+          });
         }
       } catch (err) {
-        console.error('Failed to load feed:', err);
-      } finally {
-        setIsLoading(false);
+        // Fallback already pre-loaded via CURATED_OFFICIAL_HITS
       }
     }
 
-    loadFeed();
+    loadFreshOfficial();
   }, []);
 
+  const quickTiles = [
+    {
+      title: "Today's Top Hits",
+      gradient: 'from-emerald-700 to-green-600',
+      icon: <Flame className="w-6 h-6 text-white" />,
+      tracks: topHits,
+      startTrack: topHits[0],
+    },
+    {
+      title: 'Bollywood & Indian Hits',
+      gradient: 'from-amber-600 to-rose-600',
+      icon: <Sparkles className="w-6 h-6 text-white" />,
+      tracks: bollywood,
+      startTrack: bollywood[0],
+    },
+    {
+      title: 'Global Top 50',
+      gradient: 'from-indigo-700 to-purple-600',
+      icon: <Radio className="w-6 h-6 text-white" />,
+      tracks: global50,
+      startTrack: global50[0],
+    },
+    {
+      title: 'Chill Lo-Fi Study',
+      gradient: 'from-teal-800 to-cyan-700',
+      icon: <Headphones className="w-6 h-6 text-white" />,
+      tracks: chillLoFi,
+      startTrack: chillLoFi[0],
+    },
+    {
+      title: 'Liked Songs',
+      gradient: 'from-purple-800 to-indigo-900',
+      icon: <Heart className="w-6 h-6 fill-white text-white" />,
+      tracks: topHits,
+      startTrack: topHits[1] || topHits[0],
+    },
+    {
+      title: 'Rock & Pop Legends',
+      gradient: 'from-rose-800 to-pink-700',
+      icon: <Music2 className="w-6 h-6 text-white" />,
+      tracks: global50,
+      startTrack: global50[2] || global50[0],
+    },
+  ];
+
   return (
-    <div className="flex flex-col min-h-full pb-12 relative overflow-hidden">
+    <div className="flex flex-col min-h-full pb-16 relative overflow-hidden">
       <VisualBackground />
       <TopBar />
 
@@ -85,62 +133,31 @@ export default function HomePage() {
 
         {/* Spotify 6-Item Quick Play Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[
-            {
-              title: 'Liked Songs',
-              gradient: 'from-indigo-700 to-purple-600',
-              icon: <Heart className="w-6 h-6 fill-white text-white" />,
-            },
-            {
-              title: 'Daily Mix 1 (Electronic)',
-              gradient: 'from-teal-800 to-emerald-700',
-              icon: <Sparkles className="w-6 h-6 text-white" />,
-            },
-            {
-              title: 'Top Open Wave Hits',
-              gradient: 'from-amber-700 to-orange-600',
-              icon: <Radio className="w-6 h-6 text-white" />,
-            },
-            {
-              title: 'Deep Ambient Focus',
-              gradient: 'from-blue-900 to-indigo-800',
-              icon: <Music className="w-6 h-6 text-white" />,
-            },
-            {
-              title: 'Chillout Lounge',
-              gradient: 'from-rose-900 to-pink-700',
-              icon: <Music className="w-6 h-6 text-white" />,
-            },
-            {
-              title: 'Synthesizer Dreams',
-              gradient: 'from-purple-900 to-violet-700',
-              icon: <Radio className="w-6 h-6 text-white" />,
-            },
-          ].map((item, idx) => (
+          {quickTiles.map((tile, idx) => (
             <div
               key={idx}
               onClick={() => {
-                if (trendingTracks.length > 0) {
-                  setTrack(trendingTracks[idx % trendingTracks.length], trendingTracks);
+                if (tile.startTrack) {
+                  setTrack(tile.startTrack, tile.tracks);
                 }
               }}
               className="group bg-white/5 hover:bg-white/10 rounded overflow-hidden flex items-center justify-between transition-colors cursor-pointer shadow-sm relative pr-4"
             >
               <div className="flex items-center gap-4 min-w-0">
                 <div
-                  className={`w-16 h-16 bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 shadow-md`}
+                  className={`w-16 h-16 bg-gradient-to-br ${tile.gradient} flex items-center justify-center shrink-0 shadow-md`}
                 >
-                  {item.icon}
+                  {tile.icon}
                 </div>
                 <span className="font-bold text-sm text-white truncate">
-                  {item.title}
+                  {tile.title}
                 </span>
               </div>
 
               {/* Floating green play button on hover */}
               <button
-                className="w-10 h-10 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-105 active:scale-95"
-                title="Play"
+                className="w-10 h-10 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-105 active:scale-95 shrink-0"
+                title={`Play ${tile.title}`}
               >
                 <Play className="w-5 h-5 fill-black ml-0.5" />
               </button>
@@ -148,71 +165,94 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Shelf: Featured & Trending on Jamendo */}
+        {/* Shelf: Today's Top Hits */}
         <section className="flex flex-col gap-4 mt-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
-                Trending on Jamendo
+                Today&apos;s Top Hits
               </h2>
               <p className="text-spotify-subtext text-xs">
-                Popular legally licensed tracks with full playback streams
+                Official Studio Masters &middot; Chart-topping songs by Bruno Mars, Billie Eilish, Sabrina Carpenter &amp; more
               </p>
             </div>
-            <button className="text-spotify-subtext hover:text-white text-xs font-bold uppercase tracking-wider">
-              Show all
-            </button>
+            <span className="text-xs font-semibold text-spotify-green uppercase tracking-wider bg-spotify-green/10 px-2.5 py-1 rounded-full">
+              Official Master
+            </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {trendingTracks.slice(0, 6).map((track) => (
-              <TrackCard key={track.id} track={track} queue={trendingTracks} />
+            {topHits.slice(0, 6).map((track) => (
+              <TrackCard key={track.id} track={track} queue={topHits} />
             ))}
           </div>
         </section>
 
-        {/* Shelf: Chill & Ambient Waves */}
+        {/* Shelf: Bollywood & Indian Chartbusters */}
         <section className="flex flex-col gap-4 mt-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
-                Chill & Ambient
+                Bollywood &amp; Indian Chartbusters
               </h2>
               <p className="text-spotify-subtext text-xs">
-                Relaxing soundscapes and meditative tones
+                Arijit Singh, Anirudh Ravichander, Karan Aujla, Sachin-Jigar
               </p>
             </div>
-            <button className="text-spotify-subtext hover:text-white text-xs font-bold uppercase tracking-wider">
-              Show all
-            </button>
+            <span className="text-xs font-semibold text-spotify-green uppercase tracking-wider bg-spotify-green/10 px-2.5 py-1 rounded-full">
+              Studio Audio
+            </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {chillTracks.slice(0, 6).map((track) => (
-              <TrackCard key={track.id} track={track} queue={chillTracks} />
+            {bollywood.slice(0, 6).map((track) => (
+              <TrackCard key={track.id} track={track} queue={bollywood} />
             ))}
           </div>
         </section>
 
-        {/* Shelf: Electronic Energy */}
+        {/* Shelf: Global Top 50 */}
         <section className="flex flex-col gap-4 mt-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
-                Electronic Energy
+                Global Top 50
               </h2>
               <p className="text-spotify-subtext text-xs">
-                Dance, electro, and synthwave productions
+                The most played official tracks around the world right now
               </p>
             </div>
-            <button className="text-spotify-subtext hover:text-white text-xs font-bold uppercase tracking-wider">
-              Show all
-            </button>
+            <span className="text-xs font-semibold text-spotify-green uppercase tracking-wider bg-spotify-green/10 px-2.5 py-1 rounded-full">
+              Lossless AAC
+            </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {electronicTracks.slice(0, 6).map((track) => (
-              <TrackCard key={track.id} track={track} queue={electronicTracks} />
+            {global50.slice(0, 6).map((track) => (
+              <TrackCard key={track.id} track={track} queue={global50} />
+            ))}
+          </div>
+        </section>
+
+        {/* Shelf: Chill & Lo-Fi Beats */}
+        <section className="flex flex-col gap-4 mt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
+                Chill &amp; Lo-Fi Study Beats
+              </h2>
+              <p className="text-spotify-subtext text-xs">
+                Lofi Records official master study &amp; focus sessions
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-spotify-green uppercase tracking-wider bg-spotify-green/10 px-2.5 py-1 rounded-full">
+              Focus
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {chillLoFi.slice(0, 6).map((track) => (
+              <TrackCard key={track.id} track={track} queue={chillLoFi} />
             ))}
           </div>
         </section>

@@ -1,4 +1,5 @@
 export type ProviderName =
+  | 'official'
   | 'jamendo'
   | 'audius'
   | 'archive'

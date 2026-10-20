@@ -14,6 +14,7 @@ interface PlayerState {
   isMuted: boolean;
   progress: number;
   duration: number;
+  seekTarget: number | null;
   isShuffled: boolean;
   repeatMode: RepeatMode;
   likedTrackIds: Set<string>;
@@ -26,6 +27,8 @@ interface PlayerState {
   nextTrack: () => void;
   prevTrack: () => void;
   seek: (seconds: number) => void;
+  clearSeek: () => void;
+  fastForward: (seconds: number) => void;
   setProgress: (seconds: number) => void;
   setDuration: (seconds: number) => void;
   setVolume: (volume: number) => void;
@@ -47,6 +50,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isMuted: false,
   progress: 0,
   duration: 0,
+  seekTarget: null,
   isShuffled: false,
   repeatMode: 'off',
   likedTrackIds: new Set<string>(),
@@ -126,7 +130,19 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     });
   },
 
-  seek: (seconds) => set({ progress: seconds }),
+  seek: (seconds) => {
+    const target = Math.max(0, isNaN(seconds) ? 0 : seconds);
+    set({ seekTarget: target, progress: target });
+  },
+
+  clearSeek: () => set({ seekTarget: null }),
+
+  fastForward: (seconds) => {
+    const { progress, duration } = get();
+    const maxDur = duration > 0 ? duration : 3600;
+    const target = Math.max(0, Math.min(maxDur, progress + seconds));
+    set({ seekTarget: target, progress: target });
+  },
 
   setProgress: (seconds) => set({ progress: seconds }),
 

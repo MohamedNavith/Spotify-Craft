@@ -12,12 +12,25 @@ export default function AudioEngine() {
     volume,
     isMuted,
     progress,
+    seekTarget,
+    clearSeek,
+    seek,
+    fastForward,
     setProgress,
     setDuration,
     nextTrack,
     prevTrack,
     togglePlay,
   } = usePlayerStore();
+
+  // Sync seeking directly into HTMLAudioElement
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (seekTarget !== null && audio && isFinite(seekTarget)) {
+      audio.currentTime = seekTarget;
+      clearSeek();
+    }
+  }, [seekTarget, clearSeek]);
 
   // Initialize Audio Source
   useEffect(() => {
@@ -81,12 +94,17 @@ export default function AudioEngine() {
     navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
     navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
     navigator.mediaSession.setActionHandler('seekto', (details) => {
-      if (details.seekTime && audioRef.current) {
-        audioRef.current.currentTime = details.seekTime;
-        setProgress(details.seekTime);
+      if (typeof details.seekTime === 'number') {
+        seek(details.seekTime);
       }
     });
-  }, [currentTrack, togglePlay, nextTrack, prevTrack, setProgress]);
+    navigator.mediaSession.setActionHandler('seekforward', (details) => {
+      fastForward(details.seekOffset || 10);
+    });
+    navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+      fastForward(-(details.seekOffset || 10));
+    });
+  }, [currentTrack, togglePlay, nextTrack, prevTrack, seek, fastForward]);
 
   return (
     <audio
