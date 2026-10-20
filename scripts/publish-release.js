@@ -89,26 +89,6 @@ Production-grade Spotify-style music streaming ecosystem across **Web**, **Andro
         prerelease: false,
       }),
     });
-   - Instant 200ms debounced live dropdown with top matching songs, artists, thumbnails, and 1-click play buttons.
-4. 🎤 **Authentic Spotify Lyrics Typography**:
-   - Redesigned with left-aligned, heavy bold sans-serif styling matching the official Spotify client.
-   - Active singing line with subtle green text shadow glow; soft blur and dimming on inactive lines; automatic vertical smooth centering.
-5. 🎬 **Fixed Official Video Mode**:
-   - Overcame YouTube's deprecation of \`listType=search\` with a direct YouTube video ID resolver for global and regional hits.
-   - Seamless floating Picture-in-Picture official video player with 1-click interactive search card fallback.
-6. 📜 **Listening History & Recently Played**:
-   - Brand new dedicated \`/history\` page and Home shelf displaying recently played tracks with 1-click Play All.
-7. ⭐ **Favorite Artists & Settings Page**:
-   - Dedicated Settings view (\`/settings\`) to customize favorite artists (Anirudh, A.R. Rahman, Arijit Singh, Taylor Swift, Billie Eilish, Bruno Mars, etc.).
-   - "Recommended Based on Your Favorites" dynamic shelf on Home.
-   - Audio streaming bitrate selector (320kbps Lossless, 256kbps, 128kbps).
-8. 🌟 **Popular Artists Shelf**:
-   - Circular artist portraits with hover green play button matching the official Spotify Web Home page.
-`,
-        draft: false,
-        prerelease: false,
-      }),
-    });
 
     release = await createRes.json();
     if (!createRes.ok) {
