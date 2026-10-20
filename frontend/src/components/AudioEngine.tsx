@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function AudioEngine() {
@@ -12,7 +12,6 @@ export default function AudioEngine() {
     isPlaying,
     volume,
     isMuted,
-    progress,
     seekTarget,
     clearSeek,
     seek,
@@ -22,12 +21,12 @@ export default function AudioEngine() {
     nextTrack,
     prevTrack,
     togglePlay,
-    playbackMode,
+    repeatMode,
     isNowPlayingVideoOpen,
     toggleNowPlayingVideo,
   } = usePlayerStore();
 
-  // Helper to send postMessage commands to YouTube IFrame
+  // Helper to send postMessage commands to YouTube IFrame if active
   const postYT = (func: string, args: any[] = []) => {
     try {
       if (ytIframeRef.current?.contentWindow) {
@@ -36,112 +35,96 @@ export default function AudioEngine() {
           '*',
         );
       }
-    } catch (e) {}
+    } catch {}
   };
 
-  // Sync Seeking (YouTube full stream or HTML5 audio)
+  // 1. Audio Source Loading: Load streamUrl whenever currentTrack changes
   useEffect(() => {
-    if (seekTarget === null || !isFinite(seekTarget)) return;
-
-    if (playbackMode === 'full') {
-      postYT('seekTo', [seekTarget, true]);
-      clearSeek();
-    } else {
-      const audio = audioRef.current;
-      if (audio) {
-        audio.currentTime = seekTarget;
-        clearSeek();
-      }
-    }
-  }, [seekTarget, clearSeek, playbackMode]);
-
-  // Sync Play / Pause
-  useEffect(() => {
-    if (playbackMode === 'full') {
-      postYT(isPlaying ? 'playVideo' : 'pauseVideo');
-      if (audioRef.current) audioRef.current.pause();
-    } else {
-      const audio = audioRef.current;
-      if (!audio || !currentTrack) return;
-      if (isPlaying) {
-        audio.play().catch(() => {});
-      } else {
-        audio.pause();
-      }
-      postYT('pauseVideo');
-    }
-  }, [isPlaying, playbackMode, currentTrack]);
-
-  // Sync Volume
-  useEffect(() => {
-    const vol = isMuted ? 0 : volume;
-    if (playbackMode === 'full') {
-      postYT('setVolume', [Math.round(vol * 100)]);
-      if (isMuted) postYT('mute');
-      else postYT('unMute');
-    } else {
-      if (audioRef.current) audioRef.current.volume = vol;
-    }
-  }, [volume, isMuted, playbackMode]);
-
-  // HTML5 Audio Source loader for Preview Mode or Offline Blobs
-  useEffect(() => {
-    if (playbackMode !== 'preview') {
-      if (audioRef.current) audioRef.current.pause();
-      return;
-    }
-
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (currentTrack?.streamUrl) {
-      if (audio.src !== currentTrack.streamUrl) {
-        audio.src = currentTrack.streamUrl;
-        audio.load();
+    if (!currentTrack || !currentTrack.streamUrl) {
+      audio.pause();
+      audio.removeAttribute('src');
+      return;
+    }
+
+    if (audio.src !== currentTrack.streamUrl) {
+      audio.src = currentTrack.streamUrl;
+      audio.load();
+      if (currentTrack.duration) {
+        setDuration(currentTrack.duration);
       }
-      if (isPlaying) {
-        audio.play().catch(() => {});
+    }
+
+    if (isPlaying) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          // Autoplay policy prevented playback until user interaction
+          console.warn('Autoplay waiting for user gesture:', err.message);
+        });
       }
+    }
+  }, [currentTrack, setDuration]);
+
+  // 2. Play / Pause Synchronization
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentTrack) return;
+
+    if (isPlaying) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {});
+      }
+      postYT('playVideo');
     } else {
       audio.pause();
+      postYT('pauseVideo');
     }
-  }, [currentTrack, playbackMode, isPlaying]);
+  }, [isPlaying, currentTrack]);
 
-  // Listen to YouTube postMessage events (time update, duration, song ended)
+  // 3. Seeking Synchronization (Instant scrubbing response)
   useEffect(() => {
-    const handleMessage = (e: MessageEvent) => {
-      try {
-        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (!data) return;
+    if (seekTarget === null || !isFinite(seekTarget)) return;
 
-        // infoDelivery event contains currentTime and duration
-        if (data.event === 'infoDelivery' && data.info) {
-          if (typeof data.info.currentTime === 'number') {
-            setProgress(data.info.currentTime);
-          }
-          if (typeof data.info.duration === 'number' && data.info.duration > 0) {
-            setDuration(data.info.duration);
-          }
-          if (data.info.playerState === 0) {
-            // 0 = ENDED -> Advance to next track in queue!
-            nextTrack();
-          }
-        }
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = seekTarget;
+      setProgress(seekTarget);
+    }
+    postYT('seekTo', [seekTarget, true]);
+    clearSeek();
+  }, [seekTarget, clearSeek, setProgress]);
 
-        // initialDelivery on player start
-        if (data.event === 'initialDelivery' && data.info) {
-          if (typeof data.info.duration === 'number' && data.info.duration > 0) {
-            setDuration(data.info.duration);
-          }
-        }
-      } catch (err) {}
-    };
+  // 4. Volume & Mute Synchronization
+  useEffect(() => {
+    const audio = audioRef.current;
+    const vol = isMuted ? 0 : volume;
+    if (audio) {
+      audio.volume = Math.max(0, Math.min(1, vol));
+    }
+    postYT('setVolume', [Math.round(vol * 100)]);
+    if (isMuted) postYT('mute');
+    else postYT('unMute');
+  }, [volume, isMuted]);
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [setProgress, setDuration, nextTrack]);
+  // 5. High-Precision Playback Timer (Updates progress every 150ms for smooth UI)
+  useEffect(() => {
+    if (!isPlaying) return;
 
-  // Media Session API (Spotify lock screen & notification controls)
+    const interval = setInterval(() => {
+      const audio = audioRef.current;
+      if (audio && !audio.paused && isFinite(audio.currentTime)) {
+        setProgress(audio.currentTime);
+      }
+    }, 150);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, setProgress]);
+
+  // 6. Media Session API (Lock screen, dynamic notifications, Bluetooth metadata)
   useEffect(() => {
     if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
     if (!currentTrack) return;
@@ -149,7 +132,7 @@ export default function AudioEngine() {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.title,
       artist: currentTrack.artistName,
-      album: currentTrack.albumName || 'Wavelength',
+      album: currentTrack.albumName || 'Wavelength Master',
       artwork: currentTrack.artworkUrl
         ? [
             { src: currentTrack.artworkUrl, sizes: '96x96', type: 'image/jpeg' },
@@ -177,32 +160,47 @@ export default function AudioEngine() {
   }, [currentTrack, togglePlay, nextTrack, prevTrack, seek, fastForward]);
 
   const ytQuery = currentTrack
-    ? encodeURIComponent(`${currentTrack.title} ${currentTrack.artistName} official audio`)
+    ? encodeURIComponent(`${currentTrack.title} ${currentTrack.artistName} official video`)
     : '';
 
   return (
     <>
-      {/* HTML5 Audio Tag for AAC Previews and Downloaded Offline Blobs */}
+      {/* Primary HTML5 Audio Engine */}
       <audio
         ref={audioRef}
+        preload="auto"
         onTimeUpdate={() => {
-          if (playbackMode === 'preview' && audioRef.current) {
+          if (audioRef.current && isFinite(audioRef.current.currentTime)) {
             setProgress(audioRef.current.currentTime);
           }
         }}
         onLoadedMetadata={() => {
-          if (playbackMode === 'preview' && audioRef.current) {
-            setDuration(audioRef.current.duration);
+          if (audioRef.current) {
+            const d = audioRef.current.duration;
+            if (isFinite(d) && d > 0) {
+              setDuration(d);
+            }
+          }
+        }}
+        onDurationChange={() => {
+          if (audioRef.current) {
+            const d = audioRef.current.duration;
+            if (isFinite(d) && d > 0) {
+              setDuration(d);
+            }
           }
         }}
         onEnded={() => {
-          if (playbackMode === 'preview') {
+          if (repeatMode === 'one' && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(() => {});
+          } else {
             nextTrack();
           }
         }}
         onError={async (e) => {
-          console.warn('Audio preview error, self-healing:', e);
-          if (playbackMode === 'preview' && currentTrack && currentTrack.provider === 'official') {
+          console.warn('Audio stream error, attempting self-healing:', e);
+          if (currentTrack && currentTrack.provider === 'official') {
             try {
               const { searchOfficialMusic } = await import('../lib/officialMusic');
               const fresh = await searchOfficialMusic(
@@ -218,43 +216,24 @@ export default function AudioEngine() {
         }}
       />
 
-      {/* Official YouTube Full Song Audio/Video Player */}
-      {currentTrack && (
-        <div
-          className={`fixed z-30 transition-all duration-300 rounded-lg overflow-hidden shadow-2xl border border-spotify-border bg-black ${
-            isNowPlayingVideoOpen
-              ? 'bottom-24 right-6 w-96 aspect-video opacity-100 pointer-events-auto'
-              : 'w-1 h-1 opacity-0 pointer-events-none -bottom-96 -right-96'
-          }`}
-        >
-          {/* Header if video view is expanded */}
-          {isNowPlayingVideoOpen && (
-            <div className="absolute top-2 right-2 z-10">
-              <button
-                onClick={toggleNowPlayingVideo}
-                className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs"
-                title="Minimize Video"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
+      {/* Official YouTube Music Video / Full Song Mode (Picture-in-Picture) */}
+      {currentTrack && isNowPlayingVideoOpen && (
+        <div className="fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4">
+          <div className="absolute top-2 right-2 z-10">
+            <button
+              onClick={toggleNowPlayingVideo}
+              className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
+              title="Close Video"
+            >
+              ✕
+            </button>
+          </div>
           <iframe
             ref={ytIframeRef}
-            key={currentTrack.id}
-            src={`https://www.youtube-nocookie.com/embed?listType=search&list=${ytQuery}&enablejsapi=1&autoplay=1&playsinline=1`}
+            src={`https://www.youtube-nocookie.com/embed?listType=search&list=${ytQuery}&autoplay=1`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             className="w-full h-full"
-            title="Wavelength Full Song Stream"
-            onLoad={() => {
-              // Handshake with YouTube iframe to activate full-length playback and state messages
-              setTimeout(() => {
-                postYT('listening');
-                postYT('setVolume', [Math.round((isMuted ? 0 : volume) * 100)]);
-                if (isPlaying) postYT('playVideo');
-              }, 600);
-            }}
+            title="Official Music Video"
           />
         </div>
       )}

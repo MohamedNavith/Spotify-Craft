@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { resolveFullAudioStream } from '../lib/fullAudioResolver';
 import { UnifiedPlayback, UnifiedTrack } from '../types';
 
 export type RepeatMode = 'off' | 'all' | 'one';
@@ -83,6 +84,26 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       progress: 0,
       duration: track.duration || 180,
     });
+
+    // Auto-resolve 100% full version (3-5 mins) when in full playback mode
+    if (get().playbackMode === 'full') {
+      resolveFullAudioStream(track.title, track.artistName).then((full) => {
+        if (full) {
+          const current = get().currentTrack;
+          if (current && current.id === track.id) {
+            set({
+              currentTrack: {
+                ...current,
+                streamUrl: full.streamUrl,
+                duration: full.duration,
+                audioQuality: '320kbps (Full Master Audio)',
+              },
+              duration: full.duration,
+            });
+          }
+        }
+      });
+    }
   },
 
   setPlayback: (playback) => set({ playback }),
@@ -122,6 +143,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       duration: nextTrack.duration || 180,
       isPlaying: true,
     });
+
+    if (get().playbackMode === 'full') {
+      resolveFullAudioStream(nextTrack.title, nextTrack.artistName).then((full) => {
+        if (full) {
+          const current = get().currentTrack;
+          if (current && current.id === nextTrack.id) {
+            set({
+              currentTrack: {
+                ...current,
+                streamUrl: full.streamUrl,
+                duration: full.duration,
+                audioQuality: '320kbps (Full Master Audio)',
+              },
+              duration: full.duration,
+            });
+          }
+        }
+      });
+    }
   },
 
   prevTrack: () => {
@@ -142,6 +182,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       duration: prevTrack.duration || 180,
       isPlaying: true,
     });
+
+    if (get().playbackMode === 'full') {
+      resolveFullAudioStream(prevTrack.title, prevTrack.artistName).then((full) => {
+        if (full) {
+          const current = get().currentTrack;
+          if (current && current.id === prevTrack.id) {
+            set({
+              currentTrack: {
+                ...current,
+                streamUrl: full.streamUrl,
+                duration: full.duration,
+                audioQuality: '320kbps (Full Master Audio)',
+              },
+              duration: full.duration,
+            });
+          }
+        }
+      });
+    }
   },
 
   seek: (seconds) => {
@@ -178,10 +237,26 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       return { repeatMode: modes[(currentIndex + 1) % modes.length] };
     }),
 
-  togglePlaybackMode: () =>
-    set((state) => ({
-      playbackMode: state.playbackMode === 'full' ? 'preview' : 'full',
-    })),
+  togglePlaybackMode: () => {
+    const nextMode = get().playbackMode === 'full' ? 'preview' : 'full';
+    set({ playbackMode: nextMode });
+    const current = get().currentTrack;
+    if (nextMode === 'full' && current) {
+      resolveFullAudioStream(current.title, current.artistName).then((full) => {
+        if (full) {
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: full.streamUrl,
+              duration: full.duration,
+              audioQuality: '320kbps (Full Master Audio)',
+            },
+            duration: full.duration,
+          });
+        }
+      });
+    }
+  },
 
   toggleNowPlayingVideo: () =>
     set((state) => ({

@@ -19,12 +19,22 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { getOfflineTracks } from '../lib/offlineStorage';
+import { deleteUserPlaylist, getUserPlaylists, UserPlaylist } from '../lib/userPlaylists';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { setTrack, setIsSpotifyImportOpen } = usePlayerStore();
+  const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
+
+  useEffect(() => {
+    setUserPlaylists(getUserPlaylists());
+    const handleUpdate = () => setUserPlaylists(getUserPlaylists());
+    window.addEventListener('wavelength_playlists_updated', handleUpdate);
+    return () => window.removeEventListener('wavelength_playlists_updated', handleUpdate);
+  }, []);
 
   return (
     <>
@@ -178,6 +188,47 @@ export default function Sidebar() {
             </div>
           </div>
 
+          {/* User Imported / Synced Spotify Playlists */}
+          {userPlaylists.map((playlist) => (
+            <div
+              key={playlist.id}
+              onClick={() => {
+                if (playlist.tracks.length > 0) {
+                  setTrack(playlist.tracks[0], playlist.tracks);
+                }
+              }}
+              className="flex items-center justify-between p-2 rounded-md hover:bg-spotify-hover transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-12 h-12 rounded bg-gradient-to-br from-spotify-green to-emerald-950 overflow-hidden flex items-center justify-center text-black shrink-0 font-bold shadow">
+                  {playlist.coverArt ? (
+                    <img src={playlist.coverArt} alt={playlist.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <Music className="w-6 h-6 stroke-[2.5]" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white font-medium truncate group-hover:text-spotify-green transition-colors">
+                    {playlist.title}
+                  </span>
+                  <span className="text-xs text-spotify-subtext truncate">
+                    Playlist • {playlist.tracks.length} songs
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteUserPlaylist(playlist.id);
+                }}
+                className="opacity-0 group-hover:opacity-100 p-1 hover:text-white text-spotify-subtext transition-opacity text-xs"
+                title="Remove from Library"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+
           {/* Spotify Synced Presets */}
           {[
             { title: "Today's Top Hits", author: 'Spotify Curated', coverBg: 'bg-emerald-900' },
@@ -205,6 +256,31 @@ export default function Sidebar() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Sidebar Footer: App Version & Check for Updates */}
+        <div className="p-3 border-t border-spotify-border bg-black/20 flex items-center justify-between text-[11px] text-spotify-subtext">
+          <span className="font-mono">v1.2.0</span>
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch('https://api.github.com/repos/MohamedNavith/Spotify-Craft/releases/latest');
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.tag_name && data.tag_name !== 'v1.2.0') {
+                    window.open(data.html_url, '_blank');
+                  } else {
+                    alert('You are on the latest version of Wavelength (v1.2.0)!');
+                  }
+                }
+              } catch {
+                alert('You are on the latest version of Wavelength (v1.2.0)!');
+              }
+            }}
+            className="hover:text-spotify-green hover:underline font-semibold transition-colors"
+          >
+            Check for Updates
+          </button>
         </div>
       </div>
     </aside>

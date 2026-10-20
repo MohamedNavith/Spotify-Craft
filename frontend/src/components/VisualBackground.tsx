@@ -8,7 +8,7 @@ export type VisualMode = 'none' | 'canvas' | 'ambient' | 'youtube';
 
 export default function VisualBackground() {
   const { currentTrack, isPlaying } = usePlayerStore();
-  const [mode, setMode] = useState<VisualMode>('canvas');
+  const [mode, setMode] = useState<VisualMode>('none');
   const [dataSaver, setDataSaver] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 

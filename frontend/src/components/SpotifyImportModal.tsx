@@ -3,6 +3,7 @@
 import { Check, Download, Music, Plus, Sparkles, Upload, X } from 'lucide-react';
 import { useState } from 'react';
 import { importSpotifyPlaylist, parseUploadedSpotifyList } from '../lib/spotifySync';
+import { addSpotifyPlaylistToLibrary } from '../lib/userPlaylists';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { UnifiedTrack } from '../types';
 
@@ -25,6 +26,8 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
   const [playlistTitle, setPlaylistTitle] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
 
+  const [isSaved, setIsSaved] = useState(false);
+
   const { setTrack, addToQueue } = usePlayerStore();
 
   if (!isOpen) return null;
@@ -34,6 +37,7 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
     if (!toImport) return;
 
     setIsLoading(true);
+    setIsSaved(false);
     setStatusMessage('Syncing with Spotify metadata...');
 
     try {
@@ -53,6 +57,7 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
     if (!file) return;
 
     setIsLoading(true);
+    setIsSaved(false);
     setStatusMessage(`Reading ${file.name}...`);
 
     try {
@@ -70,8 +75,17 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
 
   const handlePlayAll = () => {
     if (importedTracks.length > 0) {
+      addSpotifyPlaylistToLibrary(playlistTitle, importedTracks);
       setTrack(importedTracks[0], importedTracks);
       onClose();
+    }
+  };
+
+  const handleSaveToLibrary = () => {
+    if (importedTracks.length > 0) {
+      addSpotifyPlaylistToLibrary(playlistTitle, importedTracks);
+      setIsSaved(true);
+      setStatusMessage(`Successfully saved "${playlistTitle}" to Your Library!`);
     }
   };
 
@@ -174,16 +188,29 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
           {/* Imported Tracks Preview */}
           {importedTracks.length > 0 && (
             <div className="flex flex-col gap-3 mt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-white">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-sm font-bold text-white truncate max-w-[200px]">
                   {playlistTitle} ({importedTracks.length} songs)
                 </span>
-                <button
-                  onClick={handlePlayAll}
-                  className="px-4 py-1.5 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black font-bold text-xs shadow-md transition-all hover:scale-105"
-                >
-                  Play All Now
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveToLibrary}
+                    className="px-3.5 py-1.5 rounded-full border border-white/20 hover:border-spotify-green hover:text-spotify-green text-white font-bold text-xs shadow transition-all flex items-center gap-1.5"
+                  >
+                    {isSaved ? (
+                      <Check className="w-3.5 h-3.5 text-spotify-green" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isSaved ? 'In Library' : 'Add to Library'}</span>
+                  </button>
+                  <button
+                    onClick={handlePlayAll}
+                    className="px-4 py-1.5 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold text-xs shadow-md transition-all hover:scale-105"
+                  >
+                    Play All Now
+                  </button>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1 max-h-48 overflow-y-auto custom-scrollbar bg-black/30 rounded-lg p-2 border border-white/5">

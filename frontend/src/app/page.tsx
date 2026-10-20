@@ -1,11 +1,11 @@
 'use client';
 
-import { Flame, Heart, Headphones, Music2, Radio, Sparkles, Play } from 'lucide-react';
+import { Flame, Heart, Headphones, Music2, Radio, Sparkles, Play, Disc3 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import TopBar from '../components/TopBar';
 import TrackCard from '../components/TrackCard';
-import VisualBackground from '../components/VisualBackground';
 import { CURATED_OFFICIAL_HITS, searchOfficialMusic } from '../lib/officialMusic';
+import { generateDailyMixes } from '../lib/recommendations';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { UnifiedTrack } from '../types';
 
@@ -103,7 +103,6 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-full pb-16 relative overflow-hidden">
-      <VisualBackground />
       <TopBar />
 
       <div className="px-6 flex flex-col gap-6">
@@ -162,6 +161,74 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+
+        {/* Shelf: Made For You (AI Daily Mixes) */}
+        <section className="flex flex-col gap-4 mt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white hover:underline cursor-pointer">
+                Made For You
+              </h2>
+              <p className="text-spotify-subtext text-xs">
+                Your personalized mixes based on listening affinity &amp; acoustic moods
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-spotify-green uppercase tracking-wider bg-spotify-green/10 px-2.5 py-1 rounded-full">
+              Personalized
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {generateDailyMixes().map((mix) => (
+              <div
+                key={mix.id}
+                onClick={() => {
+                  if (mix.tracks.length > 0) {
+                    setTrack(mix.tracks[0], mix.tracks);
+                  }
+                }}
+                className="p-4 rounded-xl bg-spotify-card hover:bg-spotify-hover transition-all duration-300 flex flex-col gap-3 group cursor-pointer shadow-lg relative border border-white/5"
+              >
+                {/* Mix Cover Artwork with Gradient & Spotify badge */}
+                <div
+                  className={`aspect-square w-full rounded-lg bg-gradient-to-br ${mix.gradient} p-4 flex flex-col justify-between shadow-md relative overflow-hidden`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white/80">
+                      Wavelength
+                    </span>
+                    <Disc3 className="w-5 h-5 text-white/60 animate-spin" style={{ animationDuration: '8s' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-white leading-tight">
+                      {mix.title}
+                    </h3>
+                  </div>
+
+                  {/* Play Button on hover */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (mix.tracks.length > 0) setTrack(mix.tracks[0], mix.tracks);
+                    }}
+                    className="absolute bottom-3 right-3 w-12 h-12 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-105 active:scale-95"
+                  >
+                    <Play className="w-6 h-6 fill-black ml-0.5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-bold text-white truncate">
+                    {mix.title}
+                  </span>
+                  <p className="text-xs text-spotify-subtext line-clamp-2 mt-0.5 leading-snug">
+                    {mix.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Shelf: Today's Top Hits */}
         <section className="flex flex-col gap-4 mt-4">

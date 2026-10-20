@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Figtree } from 'next/font/google';
+import AppUpdateChecker from '../components/AppUpdateChecker';
 import AudioEngine from '../components/AudioEngine';
 import PlayerBar from '../components/PlayerBar';
 import Sidebar from '../components/Sidebar';
@@ -51,6 +52,9 @@ export default function RootLayout({
 
         {/* Audio Engine with Web Audio & Media Session API */}
         <AudioEngine />
+
+        {/* Global In-App Version Checker & Update Prompt */}
+        <AppUpdateChecker />
       </body>
     </html>
   );

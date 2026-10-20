@@ -29,6 +29,7 @@ import EqualizerModal from './EqualizerModal';
 import LyricsModal from './LyricsModal';
 import QueueDrawer from './QueueDrawer';
 import SpotifyImportModal from './SpotifyImportModal';
+import SpotifyMobilePlayer from './SpotifyMobilePlayer';
 
 function formatTime(seconds: number): string {
   if (isNaN(seconds) || seconds <= 0) return '0:00';
@@ -162,96 +163,8 @@ export default function PlayerBar() {
 
   return (
     <>
-      {/* Mobile Floating Mini Player (Spotify Mobile style) */}
-      {currentTrack && (
-        <div className="md:hidden fixed bottom-[58px] left-2 right-2 z-40 bg-spotify-elevated/95 backdrop-blur-md border border-white/10 rounded-lg p-2 flex items-center justify-between shadow-2xl safe-area-pb">
-          {/* Track thumbnail + info */}
-          <div
-            onClick={() => setIsLyricsOpen(true)}
-            className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
-          >
-            <div className="w-10 h-10 rounded bg-spotify-card overflow-hidden shrink-0">
-              {currentTrack.artworkUrl ? (
-                <img
-                  src={currentTrack.artworkUrl}
-                  alt={currentTrack.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-spotify-subtext">W</div>
-              )}
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-white text-xs font-bold truncate">
-                {currentTrack.title}
-              </span>
-              <span className="text-spotify-subtext text-[11px] truncate">
-                {currentTrack.artistName}
-              </span>
-            </div>
-          </div>
-
-          {/* Mini Player Transport */}
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Mode switch */}
-            <button
-              onClick={togglePlaybackMode}
-              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${
-                playbackMode === 'full'
-                  ? 'border-spotify-green text-spotify-green bg-spotify-green/10'
-                  : 'border-white/20 text-spotify-subtext'
-              }`}
-            >
-              {playbackMode === 'full' ? 'FULL' : '30s'}
-            </button>
-
-            {/* Offline save */}
-            <button
-              onClick={handleDownload}
-              className="p-1.5 text-spotify-subtext hover:text-white"
-              title="Download offline"
-            >
-              {isDownloaded ? (
-                <Check className="w-4 h-4 text-spotify-green" />
-              ) : (
-                <Download className={`w-4 h-4 ${isDownloading ? 'animate-bounce text-spotify-green' : ''}`} />
-              )}
-            </button>
-
-            {/* Like */}
-            <button
-              onClick={() => toggleLike(currentTrack.id)}
-              className="p-1.5 text-spotify-subtext hover:text-white"
-            >
-              <Heart
-                className={`w-4 h-4 ${
-                  isLiked ? 'text-spotify-green fill-spotify-green' : ''
-                }`}
-              />
-            </button>
-
-            {/* Play/Pause */}
-            <button
-              onClick={togglePlay}
-              className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center ml-1"
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4 fill-black" />
-              ) : (
-                <Play className="w-4 h-4 fill-black ml-0.5" />
-              )}
-            </button>
-          </div>
-
-          {/* Mini progress line along bottom edge */}
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10 rounded-b-lg overflow-hidden">
-            <div
-              className="h-full bg-spotify-green transition-all"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Authentic Spotify Mobile Player (Mini Player + Expandable Bottom Sheet) */}
+      <SpotifyMobilePlayer onOpenLyrics={() => setIsLyricsOpen(true)} />
 
       {/* Main Persistent Desktop Player Bar */}
       <footer className="hidden md:grid grid-cols-12 items-center h-24 bg-spotify-base border-t border-spotify-border px-4 select-none z-30 shrink-0">
