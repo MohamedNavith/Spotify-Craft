@@ -11,15 +11,58 @@ const MEMORY_CACHE = new Map<string, string>();
 const INVIDIOUS_INSTANCES = [
   'https://invidious.f5.si',
   'https://inv.nadeko.net',
-  'https://yt.chocolatemoo53.com',
   'https://invidious.nerdvpn.de',
-  'https://yt.artemislena.eu',
+  'https://yt.chocolatemoo53.com',
+  'https://invidious.jing.rocks',
+  'https://iv.melmac.space',
 ];
 
 const PIPED_INSTANCES = [
-  'https://pipedapi.kavin.rocks',
   'https://api.piped.private.coffee',
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi.leptons.xyz',
 ];
+
+function isCleanOfficialCandidate(item: any, origTitle: string): boolean {
+  if (!item) return false;
+  const title = (item.title || '').toLowerCase();
+
+  const badKeywords = [
+    'cover', 'reaction', 'reverb', 'slowed', 'sped up',
+    'mashup', 'tiktok', 'status', 'shorts', '1 hour', 'loop',
+    '8d', 'bass boosted', 'teaser', 'trailer', 'karaoke', 'clean edit'
+  ];
+
+  const allowRemix = origTitle.toLowerCase().includes('remix');
+  if (!allowRemix && title.includes('remix')) return false;
+
+  for (const bad of badKeywords) {
+    if (title.includes(bad)) return false;
+  }
+
+  if (typeof item.lengthSeconds === 'number' && item.lengthSeconds < 50) {
+    return false;
+  }
+
+  return true;
+}
+
+function scoreCandidate(item: any, expectedArtist: string): number {
+  let score = 0;
+  const title = (item.title || '').toLowerCase();
+  const author = (item.author || item.uploaderName || '').toLowerCase();
+  const normArtist = expectedArtist.toLowerCase();
+
+  if (author.endsWith('- topic') || author.includes('topic')) score += 100;
+  if (normArtist && author.includes(normArtist)) score += 80;
+  if (author.includes('vevo')) score += 60;
+  if (['t-series', 'sony', 'zee', 'yrf', 'saregama', 'tips', 'warner', 'universal'].some((l) => author.includes(l))) {
+    score += 70;
+  }
+  if (title.includes('official audio') || title.includes('official video')) score += 30;
+
+  return score;
+}
 
 export async function resolveVideoIdAsync(
   title: string,
@@ -72,10 +115,12 @@ export async function resolveVideoIdAsync(
       if (res.ok) {
         const items = await res.json();
         if (Array.isArray(items) && items.length > 0) {
-          // Find first item with videoId
-          const match = items.find((it: any) => it && it.videoId && it.type === 'video');
-          if (match && match.videoId) {
-            const vId = match.videoId;
+          // Filter out covers/reactions and pick the best official release
+          const candidates = items.filter((it: any) => it && it.videoId && isCleanOfficialCandidate(it, title));
+          if (candidates.length > 0) {
+            candidates.sort((a: any, b: any) => scoreCandidate(b, artist) - scoreCandidate(a, artist));
+            const best = candidates[0];
+            const vId = best.videoId;
             MEMORY_CACHE.set(query, vId);
             if (typeof window !== 'undefined') {
               try {
@@ -107,7 +152,10 @@ export async function resolveVideoIdAsync(
         const data = await res.json();
         const items = data.items || [];
         if (Array.isArray(items) && items.length > 0) {
-          const match = items[0];
+          const cleanItems = items.filter((it: any) => isCleanOfficialCandidate(it, title));
+          const list = cleanItems.length > 0 ? cleanItems : items;
+          list.sort((a: any, b: any) => scoreCandidate(b, artist) - scoreCandidate(a, artist));
+          const match = list[0];
           if (match && match.url) {
             // url: "/watch?v=Umqb9KENgmk"
             const vMatch = match.url.match(/v=([a-zA-Z0-9_-]{11})/);

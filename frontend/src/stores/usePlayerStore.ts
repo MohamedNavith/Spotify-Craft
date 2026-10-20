@@ -31,6 +31,9 @@ interface PlayerState {
   dynamicVideoId: string | null;
   likedTrackIds: Set<string>;
   downloadedTrackIds: Set<string>;
+  isSleepTimerModalOpen: boolean;
+  sleepTimerMinutes: number | null; // e.g. 5, 10, 15, 30, 45, 60, or -1 for end of track
+  sleepTimerEndTime: number | null; // epoch timestamp ms when timer expires
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -60,6 +63,9 @@ interface PlayerState {
   markTrackDownloaded: (id: string) => void;
   unmarkTrackDownloaded: (id: string) => void;
   addToQueue: (track: UnifiedTrack) => void;
+  openSleepTimerModal: () => void;
+  closeSleepTimerModal: () => void;
+  setSleepTimer: (minutes: number | null) => void;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -96,6 +102,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   dynamicVideoId: null,
   likedTrackIds: new Set<string>(),
   downloadedTrackIds: new Set<string>(),
+  isSleepTimerModalOpen: false,
+  sleepTimerMinutes: null,
+  sleepTimerEndTime: null,
 
   setTrack: (track, queue) => {
     const state = get();
@@ -359,4 +368,19 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     set((state) => ({
       queue: [...state.queue, track],
     })),
+
+  openSleepTimerModal: () => set({ isSleepTimerModalOpen: true }),
+  closeSleepTimerModal: () => set({ isSleepTimerModalOpen: false }),
+
+  setSleepTimer: (minutes) => {
+    if (minutes === null) {
+      set({ sleepTimerMinutes: null, sleepTimerEndTime: null });
+    } else if (minutes === -1) {
+      // End of current track
+      set({ sleepTimerMinutes: -1, sleepTimerEndTime: null });
+    } else {
+      const endTime = Date.now() + minutes * 60 * 1000;
+      set({ sleepTimerMinutes: minutes, sleepTimerEndTime: endTime });
+    }
+  },
 }));

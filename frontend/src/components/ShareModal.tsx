@@ -1,21 +1,64 @@
 'use client';
 
-import { Check, Copy, MessageCircle, Share2, Sparkles, X } from 'lucide-react';
+import { Check, Copy, Download, Image as ImageIcon, MessageCircle, Share2, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
-const COLOR_THEMES = [
-  { id: 'slate', name: 'Slate Night', gradient: 'from-[#2a323d] via-[#12161a] to-black', dot: 'bg-[#2a323d]' },
-  { id: 'emerald', name: 'Emerald Forest', gradient: 'from-[#064e3b] via-[#022c22] to-black', dot: 'bg-[#064e3b]' },
-  { id: 'teal', name: 'Ocean Teal', gradient: 'from-[#134e4a] via-[#042f2e] to-black', dot: 'bg-[#134e4a]' },
-  { id: 'purple', name: 'Purple Velvet', gradient: 'from-[#4c1d95] via-[#2e1065] to-black', dot: 'bg-[#4c1d95]' },
+interface ColorTheme {
+  id: string;
+  name: string;
+  gradient: string;
+  dot: string;
+  canvasTop: string;
+  canvasMid: string;
+  canvasBottom: string;
+}
+
+const COLOR_THEMES: ColorTheme[] = [
+  {
+    id: 'slate',
+    name: 'Slate Night',
+    gradient: 'from-[#2a323d] via-[#12161a] to-black',
+    dot: 'bg-[#2a323d]',
+    canvasTop: '#2a323d',
+    canvasMid: '#12161a',
+    canvasBottom: '#050709',
+  },
+  {
+    id: 'emerald',
+    name: 'Emerald Forest',
+    gradient: 'from-[#064e3b] via-[#022c22] to-black',
+    dot: 'bg-[#064e3b]',
+    canvasTop: '#064e3b',
+    canvasMid: '#022c22',
+    canvasBottom: '#01130e',
+  },
+  {
+    id: 'teal',
+    name: 'Ocean Teal',
+    gradient: 'from-[#134e4a] via-[#042f2e] to-black',
+    dot: 'bg-[#134e4a]',
+    canvasTop: '#134e4a',
+    canvasMid: '#042f2e',
+    canvasBottom: '#011717',
+  },
+  {
+    id: 'purple',
+    name: 'Purple Velvet',
+    gradient: 'from-[#4c1d95] via-[#2e1065] to-black',
+    dot: 'bg-[#4c1d95]',
+    canvasTop: '#4c1d95',
+    canvasMid: '#2e1065',
+    canvasBottom: '#100524',
+  },
 ];
 
 export default function ShareModal() {
   const { isShareModalOpen, closeShareModal, shareTrack, currentTrack } = usePlayerStore();
   const [mode, setMode] = useState<'song' | 'lyrics'>('song');
-  const [selectedTheme, setSelectedTheme] = useState(COLOR_THEMES[0]);
+  const [selectedTheme, setSelectedTheme] = useState<ColorTheme>(COLOR_THEMES[0]);
   const [copied, setCopied] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   if (!isShareModalOpen) return null;
 
@@ -28,6 +71,155 @@ export default function ShareModal() {
 
   const shareText = `Listening to "${track.title}" by ${track.artistName} on Wavelength! 🎧 Listen now: ${songUrl}`;
 
+  // Helper to generate the Spotify-Style 9:16 Photo Card
+  const generatePhotoBlob = async (): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1920;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(null);
+
+        // 1. Background Gradient
+        const grad = ctx.createLinearGradient(0, 0, 0, 1920);
+        grad.addColorStop(0, selectedTheme.canvasTop);
+        grad.addColorStop(0.55, selectedTheme.canvasMid);
+        grad.addColorStop(1, selectedTheme.canvasBottom);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1080, 1920);
+
+        // 2. Header Branding
+        ctx.fillStyle = '#1db954';
+        ctx.beginPath();
+        ctx.arc(100, 150, 30, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('W', 100, 152);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('WAVELENGTH', 150, 150);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText('SPOTIFY CRAFT', 980, 150);
+
+        // Function to finish drawing rest of the card after image handling
+        const finishCard = (hasImage = false, imgElement?: HTMLImageElement) => {
+          const cardX = 140;
+          const cardY = 320;
+          const cardW = 800;
+          const cardH = 800;
+
+          // Draw Artwork or Fallback Card
+          if (hasImage && imgElement) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 40;
+            ctx.shadowOffsetY = 20;
+
+            // Clip to rounded rect
+            const r = 36;
+            ctx.beginPath();
+            ctx.moveTo(cardX + r, cardY);
+            ctx.lineTo(cardX + cardW - r, cardY);
+            ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + r);
+            ctx.lineTo(cardX + cardW, cardY + cardH - r);
+            ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - r, cardY + cardH);
+            ctx.lineTo(cardX + r, cardY + cardH);
+            ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - r);
+            ctx.lineTo(cardX, cardY + r);
+            ctx.quadraticCurveTo(cardX, cardY, cardX + r, cardY);
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.drawImage(imgElement, cardX, cardY, cardW, cardH);
+            ctx.restore();
+          } else {
+            // Elegant Fallback Box
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillRect(cardX, cardY, cardW, cardH);
+            ctx.fillStyle = '#1db954';
+            ctx.font = 'bold 96px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('W', 540, 720);
+          }
+
+          // Track Title
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 56px sans-serif';
+          ctx.textAlign = 'left';
+          const displayTitle = track.title.length > 24 ? track.title.slice(0, 24) + '...' : track.title;
+          ctx.fillText(displayTitle, 140, 1220);
+
+          // Artist Name
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.font = '40px sans-serif';
+          const displayArtist = track.artistName.length > 30 ? track.artistName.slice(0, 30) + '...' : track.artistName;
+          ctx.fillText(displayArtist, 140, 1290);
+
+          // Spotify-Style Sound Wave Barcode
+          const waveY = 1420;
+          const waveHeightPattern = [30, 55, 80, 45, 90, 120, 60, 40, 110, 85, 45, 95, 125, 70, 35, 100, 75, 40, 60, 30];
+          ctx.fillStyle = '#1db954';
+          ctx.beginPath();
+          ctx.arc(170, waveY, 32, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          waveHeightPattern.forEach((h, i) => {
+            const bx = 230 + i * 36;
+            const by = waveY - h / 2;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, 14, h, 7);
+            ctx.fill();
+          });
+
+          // Bottom Deep Link Badge
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+          ctx.beginPath();
+          ctx.roundRect(140, 1600, 800, 110, 55);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.fillStyle = '#1db954';
+          ctx.font = 'bold 30px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('▶ Tap to listen on Wavelength', 540, 1665);
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.font = '22px monospace';
+          ctx.fillText('mohamednavith.github.io/Spotify-Craft', 540, 1770);
+
+          canvas.toBlob((blob) => resolve(blob), 'image/png');
+        };
+
+        // Try loading retina artwork
+        if (track.artworkUrl) {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => finishCard(true, img);
+          img.onerror = () => finishCard(false);
+          img.src = track.artworkUrl;
+        } else {
+          finishCard(false);
+        }
+      } catch {
+        resolve(null);
+      }
+    });
+  };
+
   const handleCopyLink = async () => {
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -38,35 +230,68 @@ export default function ShareModal() {
     } catch {}
   };
 
+  // Primary Photo Sharing Handler (Snapchat, Instagram, Social Media)
+  const handleSharePhoto = async () => {
+    setIsGenerating(true);
+    try {
+      const blob = await generatePhotoBlob();
+      if (!blob) throw new Error('Canvas generation failed');
+
+      const fileName = `${track.title.replace(/[^a-zA-Z0-9]/g, '_')}_Wavelength.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `${track.title} - Wavelength`,
+          text: `Listening to "${track.title}" by ${track.artistName} on Wavelength! 🎧 ${songUrl}`,
+        });
+      } else {
+        // Fallback: download the photo card directly and copy deep link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        await handleCopyLink();
+        alert('Photo card saved to your device! Deep link copied to clipboard.');
+      }
+    } catch {
+      await handleCopyLink();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadPhoto = async () => {
+    setIsGenerating(true);
+    try {
+      const blob = await generatePhotoBlob();
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${track.title.replace(/[^a-zA-Z0-9]/g, '_')}_Wavelength.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleWhatsAppShare = () => {
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
     window.open(url, '_blank');
   };
 
-  const handleSnapchatShare = () => {
-    // Official Snapchat Creative Kit share web intent
-    const snapUrl = `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(songUrl)}`;
-    if (navigator.share) {
-      navigator.share({
-        title: track.title,
-        text: shareText,
-        url: songUrl,
-      }).catch(() => window.open(snapUrl, '_blank'));
-    } else {
-      window.open(snapUrl, '_blank');
-    }
+  const handleSnapchatShare = async () => {
+    // Generate photo card and trigger native sharing sheet with Snapchat priority
+    await handleSharePhoto();
   };
 
-  const handleInstagramStories = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: track.title,
-        text: shareText,
-        url: songUrl,
-      }).catch(() => handleCopyLink());
-    } else {
-      handleCopyLink();
-    }
+  const handleInstagramStories = async () => {
+    await handleSharePhoto();
   };
 
   return (
@@ -77,7 +302,7 @@ export default function ShareModal() {
 
         {/* Modal Header */}
         <div className="w-full flex items-center justify-between mb-4">
-          <span className="text-sm font-bold text-white">Share this song</span>
+          <span className="text-sm font-bold text-white">Share photo card</span>
           <button
             onClick={closeShareModal}
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
@@ -86,9 +311,11 @@ export default function ShareModal() {
           </button>
         </div>
 
-        {/* Shareable Card Preview (Spotify Style) */}
+        {/* Shareable Photo Card Preview (Interactive) */}
         <div
-          className={`w-[260px] aspect-[9/14] rounded-2xl p-4 flex flex-col justify-between shadow-2xl transition-all duration-300 bg-gradient-to-b ${selectedTheme.gradient} border border-white/10 relative overflow-hidden`}
+          onClick={handleSharePhoto}
+          title="Tap to share or download photo card"
+          className={`w-[260px] aspect-[9/14] rounded-2xl p-4 flex flex-col justify-between shadow-2xl transition-all duration-300 bg-gradient-to-b ${selectedTheme.gradient} border border-white/10 relative overflow-hidden cursor-pointer group hover:scale-[1.02] active:scale-95`}
         >
           {/* Card Top Branding */}
           <div className="flex items-center justify-between text-white/60">
@@ -122,8 +349,8 @@ export default function ShareModal() {
             </div>
           )}
 
-          {/* Card Bottom Details */}
-          <div className="bg-black/30 p-2.5 rounded-xl border border-white/5 backdrop-blur-sm flex items-center justify-between">
+          {/* Card Bottom Details & Sound Wave Indicator */}
+          <div className="bg-black/40 p-2.5 rounded-xl border border-white/5 backdrop-blur-sm flex items-center justify-between">
             <div className="flex flex-col min-w-0 pr-2">
               <span className="text-xs font-bold text-white truncate">{track.title}</span>
               <span className="text-[10px] text-[#b3b3b3] truncate">{track.artistName}</span>
@@ -136,8 +363,29 @@ export default function ShareModal() {
           </div>
         </div>
 
+        {/* Primary Action Button: Share / Download Card Photo */}
+        <div className="w-full flex items-center gap-3 my-4">
+          <button
+            onClick={handleSharePhoto}
+            disabled={isGenerating}
+            className="flex-1 py-3 px-4 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <ImageIcon className="w-4 h-4" />
+            <span>{isGenerating ? 'Generating Photo Card...' : 'Share Photo Card'}</span>
+          </button>
+
+          <button
+            onClick={handleDownloadPhoto}
+            disabled={isGenerating}
+            title="Download Card to Gallery"
+            className="p-3 rounded-full bg-[#282828] hover:bg-[#333] text-white active:scale-90 transition-transform shadow-md"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+        </div>
+
         {/* Mode Toggle: Song | Lyrics */}
-        <div className="flex bg-[#282828] p-1 rounded-full my-4 border border-white/5">
+        <div className="flex bg-[#282828] p-1 rounded-full mb-3 border border-white/5">
           <button
             onClick={() => setMode('song')}
             className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
@@ -157,7 +405,7 @@ export default function ShareModal() {
         </div>
 
         {/* Color Palette Selector Dots */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           {COLOR_THEMES.map((theme) => (
             <button
               key={theme.id}
@@ -171,7 +419,7 @@ export default function ShareModal() {
         </div>
 
         {/* Social Sharing Actions Row */}
-        <div className="w-full grid grid-cols-4 gap-3 pt-4 border-t border-white/10">
+        <div className="w-full grid grid-cols-4 gap-3 pt-3 border-t border-white/10">
           {/* Copy Link */}
           <button
             onClick={handleCopyLink}

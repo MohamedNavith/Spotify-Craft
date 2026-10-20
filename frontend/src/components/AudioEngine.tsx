@@ -34,6 +34,10 @@ export default function AudioEngine() {
     toggleNowPlayingVideo,
     dynamicVideoId,
     setDynamicVideoId,
+    sleepTimerMinutes,
+    sleepTimerEndTime,
+    setSleepTimer,
+    setIsPlaying,
   } = usePlayerStore();
 
   const videoId = dynamicVideoId || (currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null);
@@ -56,6 +60,45 @@ export default function AudioEngine() {
     };
   }, [currentTrack, videoId, setDynamicVideoId]);
 
+  // Universal Track Finished Handler (Handles Sleep Timer & Auto-Next)
+  const handleTrackEnded = () => {
+    if (sleepTimerMinutes === -1) {
+      // Sleep timer was configured for "End of this track"
+      setIsPlaying(false);
+      setSleepTimer(null);
+      if (audioRef.current) audioRef.current.pause();
+      postYT('pauseVideo');
+      return;
+    }
+
+    if (repeatMode === 'one') {
+      if (isYTMode) {
+        postYT('seekTo', [0, true]);
+        postYT('playVideo');
+      } else if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+      }
+      setProgress(0);
+    } else {
+      nextTrack();
+    }
+  };
+
+  // Sleep Timer Countdown Listener
+  useEffect(() => {
+    if (!sleepTimerEndTime) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= sleepTimerEndTime) {
+        setIsPlaying(false);
+        setSleepTimer(null);
+        if (audioRef.current) audioRef.current.pause();
+        postYT('pauseVideo');
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sleepTimerEndTime, setIsPlaying, setSleepTimer]);
+
   // Helper to send postMessage commands to YouTube IFrame
   const postYT = (func: string, args: any[] = []) => {
     try {
@@ -68,23 +111,35 @@ export default function AudioEngine() {
     } catch {}
   };
 
-  // Listen for YouTube IFrame Player API postMessage events (Ended, Time update)
+  // Listen for YouTube IFrame Player API postMessage events (Ended, Time update, Ad silencing)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (typeof event.data !== 'string') return;
       try {
         const data = JSON.parse(event.data);
-        if (data.event === 'onStateChange') {
-          // YT.PlayerState.ENDED = 0
-          if (data.info === 0) {
-            if (repeatMode === 'one') {
-              postYT('seekTo', [0, true]);
-              postYT('playVideo');
-            } else {
-              nextTrack();
+
+        // Dynamic Ad Silencer & Auto-Skipper
+        if (data.event === 'infoDelivery' && data.info) {
+          const isAd = Boolean(
+            data.info.adVideoId ||
+            data.info.isAd ||
+            (data.info.videoData && data.info.videoData.isAd)
+          );
+
+          if (isAd) {
+            // Mute ad and fast-forward past commercial slot
+            postYT('mute');
+            postYT('setPlaybackRate', [16]);
+            if (data.info.duration && data.info.duration > 0) {
+              postYT('seekTo', [data.info.duration, true]);
             }
+            return;
+          } else {
+            // Restore regular playback audio rate
+            if (!isMuted) postYT('unMute');
+            postYT('setPlaybackRate', [1]);
           }
-        } else if (data.event === 'infoDelivery' && data.info) {
+
           if (typeof data.info.currentTime === 'number' && isFinite(data.info.currentTime)) {
             setProgress(data.info.currentTime);
           }
@@ -92,12 +147,19 @@ export default function AudioEngine() {
             setDuration(data.info.duration);
           }
         }
+
+        if (data.event === 'onStateChange') {
+          // YT.PlayerState.ENDED = 0
+          if (data.info === 0) {
+            handleTrackEnded();
+          }
+        }
       } catch {}
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [repeatMode, nextTrack, setProgress, setDuration]);
+  }, [repeatMode, nextTrack, setProgress, setDuration, isMuted, sleepTimerMinutes]);
 
   // 1. Audio Source Loading: Synchronize streamUrl or YouTube embed
   useEffect(() => {
@@ -208,7 +270,11 @@ export default function AudioEngine() {
         // Poll YouTube currentTime
         postYT('getCurrentTime');
         const next = progress + 0.2;
-        setProgress(duration > 0 ? Math.min(next, duration) : next);
+        if (duration > 5 && next >= duration) {
+          handleTrackEnded();
+        } else {
+          setProgress(duration > 0 ? Math.min(next, duration) : next);
+        }
       } else {
         const audio = audioRef.current;
         if (audio && !audio.paused && isFinite(audio.currentTime)) {
@@ -218,7 +284,7 @@ export default function AudioEngine() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [isPlaying, isYTMode, progress, duration, setProgress]);
+  }, [isPlaying, isYTMode, progress, duration, setProgress, repeatMode, nextTrack, sleepTimerMinutes]);
 
   // 6. Media Session API (Lock screen, dynamic notifications, Bluetooth metadata)
   useEffect(() => {
@@ -307,12 +373,7 @@ export default function AudioEngine() {
         }}
         onEnded={() => {
           if (!isYTMode) {
-            if (repeatMode === 'one' && audioRef.current) {
-              audioRef.current.currentTime = 0;
-              audioRef.current.play().catch(() => {});
-            } else {
-              nextTrack();
-            }
+            handleTrackEnded();
           }
         }}
         onError={async (e) => {
@@ -339,7 +400,7 @@ export default function AudioEngine() {
           className={
             isNowPlayingVideoOpen
               ? 'fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col'
-              : 'fixed -bottom-96 -right-96 w-[1px] h-[1px] opacity-0 pointer-events-none'
+              : 'fixed bottom-1 right-1 w-2 h-2 opacity-[0.02] pointer-events-none z-0 overflow-hidden'
           }
         >
           {isNowPlayingVideoOpen && (
@@ -365,7 +426,7 @@ export default function AudioEngine() {
 
           <iframe
             ref={ytIframeRef}
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1`}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&iv_load_policy=3&modestbranding=1`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             className="w-full h-full"
             title="Official Master Audio / Video"

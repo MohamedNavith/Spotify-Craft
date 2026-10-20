@@ -54,6 +54,8 @@ export default function SpotifyMobilePlayer({
     isNowPlayingVideoOpen,
     toggleNowPlayingVideo,
     openShareModal,
+    openSleepTimerModal,
+    sleepTimerMinutes,
     isExpandedNowPlaying,
     setIsExpandedNowPlaying,
     queue,
@@ -423,12 +425,18 @@ export default function SpotifyMobilePlayer({
 
               <button
                 onClick={() => {
-                  alert('Sleep timer set for 30 minutes.');
+                  openSleepTimerModal();
                   triggerHaptic(10);
                 }}
-                className="p-2 text-[#b3b3b3] hover:text-white transition-transform active:scale-75"
+                className={`p-2 transition-transform active:scale-75 relative ${
+                  sleepTimerMinutes !== null ? 'text-spotify-green' : 'text-[#b3b3b3] hover:text-white'
+                }`}
+                title={sleepTimerMinutes !== null ? 'Sleep Timer Active' : 'Sleep Timer'}
               >
                 <Timer className="w-5 h-5" />
+                {sleepTimerMinutes !== null && (
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-spotify-green animate-pulse" />
+                )}
               </button>
             </div>
 

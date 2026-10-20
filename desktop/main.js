@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut } = require('electron');
+const { app, BrowserWindow, globalShortcut, session } = require('electron');
 const path = require('path');
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -56,6 +56,27 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Ad-Free Media Engine: Intercept and drop all video advertising network requests
+  if (session && session.defaultSession) {
+    session.defaultSession.webRequest.onBeforeRequest(
+      {
+        urls: [
+          '*://*.doubleclick.net/*',
+          '*://*.googleads.g.doubleclick.net/*',
+          '*://pagead2.googlesyndication.com/*',
+          '*://*.youtube.com/pagead/*',
+          '*://*.youtube.com/api/stats/ads*',
+          '*://adservice.google.com/*',
+          '*://*.googlesyndication.com/*',
+          '*://*.pubads.g.doubleclick.net/*',
+        ],
+      },
+      (details, callback) => {
+        callback({ cancel: true });
+      }
+    );
+  }
+
   createWindow();
 
   app.on('activate', () => {

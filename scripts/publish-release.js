@@ -25,7 +25,7 @@ async function main() {
 
   const owner = 'MohamedNavith';
   const repo = 'Spotify-Craft';
-  const tag = 'v1.4.0';
+  const tag = 'v1.5.0';
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
   const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
@@ -52,8 +52,8 @@ async function main() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'Wavelength v1.4.0 - Dynamic Island, Full Spotify APK UI & Universal Full Songs',
-        body: `## 🎧 Wavelength v1.4.0 (Spotify-Craft)
+        name: 'Wavelength v1.5.0 - Ad-Free Master Engine, Auto-Next, Sleep Timer & Photo Card Sharing',
+        body: `## 🎧 Wavelength v1.5.0 (Spotify-Craft)
 
 Production-grade Spotify-style music streaming ecosystem across **Web**, **Android Mobile (APK)**, and **Windows PC Desktop (.exe)**.
 
@@ -62,30 +62,31 @@ Production-grade Spotify-style music streaming ecosystem across **Web**, **Andro
 ### 📦 Downloads & Platforms
 | Platform | Asset | Description |
 | :--- | :--- | :--- |
-| 📱 **Android** | [\`wavelength-mobile.apk\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) | Direct APK install with native audio playback permissions, gesture controls & lock screen controls |
-| 💻 **Windows PC** | [\`wavelength-windows-x64.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-windows-x64.zip) | Portable desktop player with Windows global media key shortcuts |
+| 📱 **Android** | [\`wavelength-mobile.apk\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) | Direct APK install with native audio playback permissions, gesture controls, lock screen controls & Ad-Free Media Engine |
+| 💻 **Windows PC** | [\`wavelength-windows-x64.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-windows-x64.zip) | Portable desktop player with Windows global media key shortcuts & Ad-Free network filtering |
 | 💻 **Windows PC Executable** | [\`wavelength-desktop.exe\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-desktop.exe) | Standalone Windows application binary |
 | 🌐 **Live Web App** | [https://mohamednavith.github.io/Spotify-Craft/](https://mohamednavith.github.io/Spotify-Craft/) | Hosted remotely on GitHub Pages (always online) |
 
 ---
 
-### ✨ What's New in v1.4.0 (Spotify APK Parity Release)
-1. 🎵 **Universal Full Song Playback (100% of Catalog)**:
-   - Dynamic real-time resolver automatically queries verified master releases for any song (Bollywood, Tamil, English, Punjabi, etc.).
-   - Guaranteed full-length streaming (0:00 to 4:21+ mins) with zero 30s cutoffs.
-2. 👆 **Horizontal Swipe Gesture to Switch Songs**:
-   - Push right-to-left to slide to the next track with smooth realtime card translation.
-   - Push left-to-right to return to the previous track.
-3. 🏝️ **Dynamic Island Floating Media Controller**:
-   - Floating top widget with live audio visualizer, timeline scrubber, media buttons, and bottom row of 4 upcoming song tiles.
-4. 👻 **Snapchat, Instagram Stories & Social Share Modal**:
-   - Spotify-style shareable card with customizable gradient color palette, Song / Lyrics quote toggle, and 1-tap Snapchat & WhatsApp sharing.
-5. 💿 **Full Album Detail UI (Featuring Aashiqui 2)**:
-   - Dedicated album view with artwork cover, release date, action row (+, download, share, shuffle, play), and full tracklist.
-6. 📚 **Your Library & Create (+) Sheet Modal**:
-   - Exact Spotify APK layout with circular artist portraits (Ilaiyaraaja, Unnikrishnan, P. Susheela, S. Janaki, Kamal Haasan, Arijit Singh), Recents sorting, and Playlist / Blend creation sheet.
-7. 🔙 **Android Hardware/Software Back Button Support**:
-   - Tapping the Android exit button closes open sheets and player overlays or returns to Home instead of abruptly quitting the app.
+### ✨ What's New in v1.5.0 (Ad-Free & Music Quality Parity Release)
+1. 🚫 **Ad-Free Media Engine Across All Platforms**:
+   - Zero YouTube video commercial ads!
+   - Built-in Android WebView request interceptor in \`MainActivity.java\` blocks advertising networks before they download.
+   - Electron Desktop network filter in \`desktop/main.js\` eliminates commercial ad traffic.
+   - Dynamic real-time ad silencer and fast-forward skipper in web playback engine.
+2. ⏭️ **Guaranteed Auto-Next Track Playback**:
+   - Continuous uninterrupted playback: when a track reaches its conclusion, it smoothly transitions to the next queued song automatically.
+3. 🎯 **Strict Studio Composer Resolver (Zero Mismatches)**:
+   - Eliminated substring collision bug where short words matched unrelated songs. Strict word-boundary matching guarantees the exact original studio track by the composer.
+4. 🌙 **Interactive Sleep Timer**:
+   - Real interactive modal sheet with options: 5m, 10m, 15m, 30m, 45m, 1 hour, and "End of this track".
+   - Live countdown display with automatic pause when the timer expires.
+5. 🏝️ **Translucent Dynamic Island**:
+   - Sleek semi-transparent glass pill (\`bg-black/40 backdrop-blur-2xl\`) that stays subtle and unobtrusive, popping up into the full interactive player only when tapped. Active on both phone and website!
+6. 📸 **Spotify-Style Visual Photo Card Sharing**:
+   - Generates high-resolution 9:16 story cards with album artwork, title, composer, sound wave barcode, and deep link for Snapchat, Instagram Stories, and WhatsApp.
+   - Includes direct "Save Photo to Gallery" download button.
 `,
         draft: false,
         prerelease: false,

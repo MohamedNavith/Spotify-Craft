@@ -52,18 +52,19 @@ export default function DynamicIsland() {
 
   return (
     <div className="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 select-none transition-all duration-300">
-      {/* 1. Collapsed Pill */}
+      {/* 1. Translucent Collapsed Dynamic Island Pill */}
       {!isExpanded ? (
         <div
           onClick={() => setIsExpanded(true)}
-          className="h-10 px-3 bg-[#064e3b]/90 hover:bg-[#064e3b] backdrop-blur-xl border border-emerald-500/30 rounded-full flex items-center gap-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.6)] cursor-pointer group active:scale-95 transition-all"
+          className="h-9 px-3 bg-black/40 hover:bg-black/70 backdrop-blur-2xl border border-white/10 hover:border-white/25 rounded-full flex items-center gap-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.6)] cursor-pointer group active:scale-95 transition-all"
+          title="Tap to expand Dynamic Island"
         >
           {/* Mini Album Cover */}
-          <div className="w-6 h-6 rounded-full overflow-hidden bg-black shrink-0 border border-white/20">
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-black shrink-0 border border-white/20 shadow-sm">
             {currentTrack.artworkUrl ? (
               <img src={currentTrack.artworkUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-spotify-green text-black font-black text-[9px]">W</div>
+              <div className="w-full h-full flex items-center justify-center bg-spotify-green text-black font-black text-[8px]">W</div>
             )}
           </div>
 
@@ -75,7 +76,7 @@ export default function DynamicIsland() {
           </div>
 
           {/* Track Title */}
-          <span className="text-xs font-bold text-white max-w-[140px] truncate">
+          <span className="text-xs font-semibold text-white/90 group-hover:text-white max-w-[130px] md:max-w-[180px] truncate">
             {currentTrack.title}
           </span>
 
@@ -85,20 +86,20 @@ export default function DynamicIsland() {
               e.stopPropagation();
               togglePlay();
             }}
-            className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center shrink-0 shadow active:scale-90 transition-transform"
+            className="w-5 h-5 rounded-full bg-white text-black flex items-center justify-center shrink-0 shadow active:scale-90 transition-transform"
           >
-            {isPlaying ? <Pause className="w-3 h-3 fill-black" /> : <Play className="w-3 h-3 fill-black ml-0.5" />}
+            {isPlaying ? <Pause className="w-2.5 h-2.5 fill-black" /> : <Play className="w-2.5 h-2.5 fill-black ml-0.5" />}
           </button>
 
-          <ChevronDown className="w-3.5 h-3.5 text-emerald-200/60 group-hover:text-white" />
+          <ChevronDown className="w-3.5 h-3.5 text-white/50 group-hover:text-white transition-colors" />
         </div>
       ) : (
-        /* 2. Expanded Dynamic Island Card (Matching Screenshot #4) */
-        <div className="w-[94vw] max-w-[390px] bg-gradient-to-b from-[#064e3b] via-[#042f2e] to-[#022c22] border border-emerald-500/40 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200">
-          {/* Top Row: Cover, Info, Spotify Icon */}
+        /* 2. Expanded Dynamic Island Floating Card */
+        <div className="w-[92vw] max-w-[380px] bg-black/85 border border-white/15 rounded-3xl p-4 shadow-[0_25px_60px_rgba(0,0,0,0.95)] backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 text-white">
+          {/* Top Row: Cover, Info, Wavelength Badge, Collapse */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-black shrink-0 border border-white/20 shadow-md">
+              <div className="w-12 h-12 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 shadow-lg">
                 {currentTrack.artworkUrl ? (
                   <img src={currentTrack.artworkUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
                 ) : (
@@ -107,21 +108,19 @@ export default function DynamicIsland() {
               </div>
 
               <div className="flex flex-col min-w-0 pr-2">
-                <span className="text-sm font-black text-white truncate">{currentTrack.title}</span>
-                <span className="text-xs text-emerald-200/80 truncate">{currentTrack.artistName}</span>
+                <span className="text-sm font-bold text-white truncate">{currentTrack.title}</span>
+                <span className="text-xs text-white/60 truncate">{currentTrack.artistName}</span>
               </div>
             </div>
 
             {/* Collapse & Watermark */}
             <div className="flex items-center gap-2 shrink-0">
-              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.308c-.215.352-.676.463-1.028.247-2.82-1.722-6.37-2.112-10.55-1.157-.402.092-.803-.158-.895-.56-.092-.403.158-.804.56-.896 4.58-1.045 8.508-.601 11.666 1.337.352.216.463.677.247 1.029zm1.47-3.267c-.27.44-.848.58-1.288.31-3.228-1.984-8.148-2.557-11.966-1.398-.498.151-1.027-.134-1.178-.632-.152-.498.134-1.028.632-1.179 4.37-1.326 9.8-1.09 13.49 1.61.44.27.58.849.31 1.289zm.126-3.41c-3.87-2.298-10.25-2.51-13.93-1.393-.593.18-1.222-.162-1.402-.756-.18-.593.162-1.222.756-1.402 4.238-1.287 11.286-1.036 15.753 1.616.534.316.71 1.007.394 1.54-.316.533-1.007.71-1.54.394l-.031.001z"/>
-                </svg>
+              <div className="w-5 h-5 rounded-full bg-spotify-green flex items-center justify-center">
+                <span className="text-[10px] font-black text-black">W</span>
               </div>
               <button
                 onClick={() => setIsExpanded(false)}
-                className="p-1 text-emerald-200/60 hover:text-white"
+                className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
               >
                 <ChevronUp className="w-4 h-4" />
               </button>
@@ -144,7 +143,7 @@ export default function DynamicIsland() {
                 className="absolute inset-0 w-full opacity-0 cursor-pointer"
               />
             </div>
-            <div className="flex items-center justify-between text-[10px] text-emerald-200/80 font-mono">
+            <div className="flex items-center justify-between text-[10px] text-white/60 font-mono">
               <span>{formatTime(progress)}</span>
               <span>{formatTime(duration)}</span>
             </div>

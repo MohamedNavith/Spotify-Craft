@@ -17,18 +17,33 @@ The live application is hosted on GitHub Pages:
 
 ## 📥 Downloads & Releases
 
-Get the latest production builds from [GitHub Releases v1.4.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.4.0):
+Get the latest production builds from [GitHub Releases v1.5.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.5.0):
 
 | Target | File | Size | Description | Download Link |
 | :--- | :--- | :--- | :--- | :--- |
-| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.3 MB | Standalone Android APK with gesture swipe, Dynamic Island & lock screen controls | [⬇️ Download APK (v1.4.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.4.0/wavelength-mobile.apk) |
-| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys | [⬇️ Download EXE (v1.4.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.4.0/wavelength-desktop.exe) |
-| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~350 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.4.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.4.0/wavelength-windows-x64.zip) |
+| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.3 MB | Standalone Android APK with gesture swipe, Dynamic Island, lock screen controls & Ad-Free Media Engine | [⬇️ Download APK (v1.5.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.0/wavelength-mobile.apk) |
+| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys & Ad-Free network filtering | [⬇️ Download EXE (v1.5.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.0/wavelength-desktop.exe) |
+| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~350 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.5.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.0/wavelength-windows-x64.zip) |
 | **Web Browser (PWA)** | Web Application | Cloud | Live everywhere without installation or localhost | [🌐 Launch Web Player](https://mohamednavith.github.io/Spotify-Craft/) |
 
 ---
 
-## 🌟 Key Features in v1.4.0 (Spotify APK Parity)
+## 🌟 Key Features in v1.5.0 (Ad-Free Master Engine & Music Quality Release)
+
+- **🚫 Ad-Free Master Streaming Across All Platforms**:
+  - Eliminated commercial YouTube video ads across Android WebView, Desktop Electron, and Web.
+  - Custom `BridgeWebViewClient` interceptor in Android `MainActivity.java` and Electron network filters drop ad payloads at the network level.
+  - Active real-time ad silencer and fast-forward skipper in web playback engine.
+- **⏭️ Seamless Auto-Next Track Transition**:
+  - Continuous uninterrupted listening: tracks automatically advance to the next song in the queue as soon as they end.
+- **🎯 Strict Studio Composer Matching (Zero Mismatch)**:
+  - Eliminated substring matching collisions; strict word-boundary token matching guarantees the exact official release by the composer.
+- **🌙 Interactive Sleep Timer**:
+  - Real interactive modal sheet with options: 5m, 10m, 15m, 30m, 45m, 1 hour, and "End of this track" with live countdown display.
+- **🏝️ Translucent Dynamic Island**:
+  - Sleek, semi-transparent glass pill (`bg-black/40 backdrop-blur-2xl`) that stays subtle and unobtrusive, popping up into the interactive player only when tapped.
+- **📸 Spotify-Style Visual Photo Card Sharing**:
+  - Generates 9:16 high-resolution story photo cards with album artwork, title, composer, sound wave barcode, and deep link for Snapchat, Instagram Stories, and WhatsApp. Includes direct "Save Photo to Gallery" download button.
 
 - **Universal Full-Length Master Playback (Zero 30s Cutoffs)**:
   - Dynamic real-time official resolver guarantees full-length (3–5 minute) master streaming for 100% of tracks (Bollywood, Tamil, English, Punjabi, etc.).

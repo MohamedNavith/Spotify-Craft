@@ -8,6 +8,7 @@ import DynamicIsland from '../components/DynamicIsland';
 import PlayerBar from '../components/PlayerBar';
 import ShareModal from '../components/ShareModal';
 import Sidebar from '../components/Sidebar';
+import SleepTimerModal from '../components/SleepTimerModal';
 import './globals.css';
 
 const figtree = Figtree({
@@ -59,6 +60,9 @@ export default function RootLayout({
 
         {/* Global Social Share Modal (Snapchat, Instagram, WhatsApp) */}
         <ShareModal />
+
+        {/* Sleep Timer Modal */}
+        <SleepTimerModal />
 
         {/* Create (+) Modal Sheet */}
         <CreateSheetModal />

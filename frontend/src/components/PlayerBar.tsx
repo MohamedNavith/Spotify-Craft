@@ -9,6 +9,7 @@ import {
   ListMusic,
   Maximize2,
   Mic2,
+  Moon,
   Pause,
   Play,
   Repeat,
@@ -53,6 +54,8 @@ export default function PlayerBar() {
     playbackMode,
     isNowPlayingVideoOpen,
     isSpotifyImportOpen,
+    openSleepTimerModal,
+    sleepTimerMinutes,
     togglePlay,
     nextTrack,
     prevTrack,
@@ -414,6 +417,20 @@ export default function PlayerBar() {
             className="hover:text-white transition-colors p-1"
           >
             <Sliders className="w-4 h-4" />
+          </button>
+
+          {/* Sleep Timer */}
+          <button
+            onClick={() => openSleepTimerModal()}
+            title={sleepTimerMinutes !== null ? 'Sleep Timer Active' : 'Sleep Timer'}
+            className={`p-1 transition-colors relative ${
+              sleepTimerMinutes !== null ? 'text-spotify-green' : 'hover:text-white'
+            }`}
+          >
+            <Moon className="w-4 h-4" />
+            {sleepTimerMinutes !== null && (
+              <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-spotify-green animate-pulse" />
+            )}
           </button>
 
           {/* Volume controls */}

@@ -164,28 +164,45 @@ export const CURATED_OFFICIAL_VIDEOS: Record<string, string> = {
   'controlla': '34z9j_5kP-0',
 };
 
+function escapeReg(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function resolveVideoId(title: string, artist: string): string | null {
+  if (!title) return null;
+
+  // 1. Check title for embedded 11-char YouTube ID like [ic8j13piAhQ]
+  const match = title.match(/\[([a-zA-Z0-9_-]{11})\]/);
+  if (match) return match[1];
+
   const normTitle = title.toLowerCase().replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim();
   const normArtist = (artist || '').toLowerCase().trim();
 
-  // 1. Direct curated key match
+  // 2. Direct exact match in curated dictionary
+  if (CURATED_OFFICIAL_VIDEOS[normTitle]) {
+    return CURATED_OFFICIAL_VIDEOS[normTitle];
+  }
+
+  // 3. Exact match with combined title + artist
+  const combined = `${normTitle} ${normArtist}`.trim();
+  if (CURATED_OFFICIAL_VIDEOS[combined]) {
+    return CURATED_OFFICIAL_VIDEOS[combined];
+  }
+
+  // 4. Strict whole-phrase boundary matching (Avoid accidental substring collisions like "as" matching "taste")
   for (const [key, id] of Object.entries(CURATED_OFFICIAL_VIDEOS)) {
-    if (normTitle.includes(key) || key.includes(normTitle)) {
+    // Single short words must match exactly to prevent false positives
+    if (key.length <= 4) {
+      if (normTitle === key) return id;
+      continue;
+    }
+
+    // Multi-word or longer titles: match as a complete phrase with word boundaries
+    const phrasePattern = new RegExp(`(?:^|\\s|[\\W_])${escapeReg(key)}(?:$|\\s|[\\W_])`, 'i');
+    if (phrasePattern.test(normTitle)) {
       return id;
     }
   }
-
-  // 2. Check title + artist combined
-  const combined = `${normTitle} ${normArtist}`;
-  for (const [key, id] of Object.entries(CURATED_OFFICIAL_VIDEOS)) {
-    if (combined.includes(key)) {
-      return id;
-    }
-  }
-
-  // 3. Check title for embedded 11-char YouTube ID like [ic8j13piAhQ]
-  const match = title.match(/\[([a-zA-Z0-9_-]{11})\]/);
-  if (match) return match[1];
 
   return null;
 }

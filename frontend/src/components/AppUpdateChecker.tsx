@@ -3,7 +3,7 @@
 import { ArrowDownToLine, Check, Download, RefreshCw, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export const CURRENT_APP_VERSION = 'v1.4.0';
+export const CURRENT_APP_VERSION = 'v1.5.0';
 
 interface ReleaseAsset {
   name: string;
