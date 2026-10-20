@@ -1,8 +1,10 @@
 /**
  * Full-Length Audio Resolver
- * Seamlessly resolves full-length 3-5 minute 320kbps MP3 audio streams for official hits
- * so users hear the 100% full version with matching synchronized lyrics.
+ * Seamlessly resolves full-length 3-5 minute 320kbps MP3/AAC audio streams
+ * for official hits via direct CDN streams with 100% ZERO ADS.
  */
+
+import { resolveMasterAudioStream } from './masterAudioResolver';
 
 export interface FullAudioResult {
   streamUrl: string;
@@ -23,7 +25,24 @@ export async function resolveFullAudioStream(
     return fullAudioCache.get(cacheKey)!;
   }
 
-  // Clean title from extras like (feat. X) or (Official Video)
+  // 1. Primary: Direct 320kbps Master Studio Stream (100% Ad-Free from high-speed CDN)
+  try {
+    const master = await resolveMasterAudioStream(title, artist);
+    if (master && master.streamUrl) {
+      const result: FullAudioResult = {
+        streamUrl: master.streamUrl,
+        duration: master.duration,
+        title,
+        artist,
+      };
+      fullAudioCache.set(cacheKey, result);
+      return result;
+    }
+  } catch (err) {
+    console.warn('Master audio resolver error:', err);
+  }
+
+  // 2. Secondary fallback: Audius open streaming API
   const cleanTitle = title
     .replace(/\(.*?\)/g, '')
     .replace(/\[.*?\]/g, '')
@@ -40,26 +59,23 @@ export async function resolveFullAudioStream(
       { headers: { Accept: 'application/json' } },
     );
 
-    if (!res.ok) return null;
-    const data = await res.json();
-    const tracks = data?.data || [];
+    if (res.ok) {
+      const data = await res.json();
+      const tracks = data?.data || [];
+      const match = tracks.find((t: any) => typeof t.duration === 'number' && t.duration > 60);
 
-    // Find the best match with full duration (> 60 seconds)
-    const match = tracks.find((t: any) => typeof t.duration === 'number' && t.duration > 60);
-
-    if (match) {
-      const result: FullAudioResult = {
-        streamUrl: `https://api.audius.co/v1/tracks/${match.id}/stream?app_name=Wavelength`,
-        duration: match.duration,
-        title: match.title,
-        artist: match.user?.name || artist,
-      };
-      fullAudioCache.set(cacheKey, result);
-      return result;
+      if (match) {
+        const result: FullAudioResult = {
+          streamUrl: `https://api.audius.co/v1/tracks/${match.id}/stream?app_name=Wavelength`,
+          duration: match.duration,
+          title: match.title,
+          artist: match.user?.name || artist,
+        };
+        fullAudioCache.set(cacheKey, result);
+        return result;
+      }
     }
-  } catch (err) {
-    console.warn('Full audio resolver network error:', err);
-  }
+  } catch {}
 
   return null;
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
 import { resolveFullAudioStream } from '../lib/fullAudioResolver';
+import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { UnifiedPlayback, UnifiedTrack } from '../types';
 
@@ -144,25 +145,41 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       });
     }
 
-    // Auto-resolve 100% full version (3-5 mins) when in full playback mode
-    if (get().playbackMode === 'full') {
-      resolveFullAudioStream(track.title, track.artistName).then((full) => {
-        if (full) {
-          const current = get().currentTrack;
-          if (current && current.id === track.id) {
-            set({
-              currentTrack: {
-                ...current,
-                streamUrl: full.streamUrl,
-                duration: full.duration,
-                audioQuality: '320kbps (Full Master Audio)',
-              },
-              duration: full.duration,
-            });
-          }
+    // Auto-resolve 100% full master ad-free version (3-5 mins) via direct 320kbps CDN stream
+    resolveMasterAudioStream(track.title, track.artistName).then((master) => {
+      if (master && master.streamUrl) {
+        const current = get().currentTrack;
+        if (current && current.id === track.id) {
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: master.streamUrl,
+              duration: master.duration,
+              audioQuality: '320kbps (Master Studio Lossless)',
+            },
+            duration: master.duration,
+          });
         }
-      });
-    }
+      } else {
+        // Fallback to fullAudioStream
+        resolveFullAudioStream(track.title, track.artistName).then((full) => {
+          if (full) {
+            const current = get().currentTrack;
+            if (current && current.id === track.id) {
+              set({
+                currentTrack: {
+                  ...current,
+                  streamUrl: full.streamUrl,
+                  duration: full.duration,
+                  audioQuality: '320kbps (Full Master Audio)',
+                },
+                duration: full.duration,
+              });
+            }
+          }
+        });
+      }
+    });
   },
 
   openShareModal: (track) => {

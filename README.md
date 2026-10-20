@@ -17,23 +17,26 @@ The live application is hosted on GitHub Pages:
 
 ## 📥 Downloads & Releases
 
-Get the latest production builds from [GitHub Releases v1.5.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.5.0):
+Get the latest production builds from [GitHub Releases v1.5.1](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.5.1):
 
 | Target | File | Size | Description | Download Link |
 | :--- | :--- | :--- | :--- | :--- |
-| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.3 MB | Standalone Android APK with gesture swipe, Dynamic Island, lock screen controls & Ad-Free Media Engine | [⬇️ Download APK (v1.5.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.0/wavelength-mobile.apk) |
-| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys & Ad-Free network filtering | [⬇️ Download EXE (v1.5.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.0/wavelength-desktop.exe) |
-| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~350 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.5.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.0/wavelength-windows-x64.zip) |
+| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.4 MB | Standalone Android APK with gesture swipe, Dynamic Island, lock screen controls & 100% Ad-Free 320kbps Master Studio Engine | [⬇️ Download APK (v1.5.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-mobile.apk) |
+| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys & Ad-Free network filtering | [⬇️ Download EXE (v1.5.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-desktop.exe) |
+| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~350 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.5.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-windows-x64.zip) |
 | **Web Browser (PWA)** | Web Application | Cloud | Live everywhere without installation or localhost | [🌐 Launch Web Player](https://mohamednavith.github.io/Spotify-Craft/) |
 
 ---
 
-## 🌟 Key Features in v1.5.0 (Ad-Free Master Engine & Music Quality Release)
+## 🌟 Key Features in v1.5.1 (100% Ad-Free Master Studio Audio Engine)
 
-- **🚫 Ad-Free Master Streaming Across All Platforms**:
-  - Eliminated commercial YouTube video ads across Android WebView, Desktop Electron, and Web.
-  - Custom `BridgeWebViewClient` interceptor in Android `MainActivity.java` and Electron network filters drop ad payloads at the network level.
-  - Active real-time ad silencer and fast-forward skipper in web playback engine.
+- **🚫 Permanently Eliminated Commercial Video Ads**:
+  - Replaced background YouTube audio playback with direct 320kbps master studio audio CDN streams (`https://aac.saavncdn.com/..._320.mp4`).
+  - Zero YouTube pre-roll ads, zero audio watermarks, zero commercial interruptions.
+  - YouTube video iframe is strictly mounted ONLY when the user explicitly taps "Watch Video".
+- **🎵 Full Master Studio 320kbps Lossless Audio Quality**:
+  - Original studio audio tracks by the true composer and artist.
+  - Native byte-range seeking for instantaneous scrubbing with zero lag.
 - **⏭️ Seamless Auto-Next Track Transition**:
   - Continuous uninterrupted listening: tracks automatically advance to the next song in the queue as soon as they end.
 - **🎯 Strict Studio Composer Matching (Zero Mismatch)**:

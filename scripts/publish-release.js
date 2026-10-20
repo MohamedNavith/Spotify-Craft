@@ -25,7 +25,7 @@ async function main() {
 
   const owner = 'MohamedNavith';
   const repo = 'Spotify-Craft';
-  const tag = 'v1.5.0';
+  const tag = 'v1.5.1';
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
   const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
@@ -52,8 +52,8 @@ async function main() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'Wavelength v1.5.0 - Ad-Free Master Engine, Auto-Next, Sleep Timer & Photo Card Sharing',
-        body: `## 🎧 Wavelength v1.5.0 (Spotify-Craft)
+        name: 'Wavelength v1.5.1 - 100% Ad-Free 320kbps Master Studio Audio Engine & Complete Ecosystem',
+        body: `## 🎧 Wavelength v1.5.1 (Spotify-Craft)
 
 Production-grade Spotify-style music streaming ecosystem across **Web**, **Android Mobile (APK)**, and **Windows PC Desktop (.exe)**.
 
@@ -62,31 +62,29 @@ Production-grade Spotify-style music streaming ecosystem across **Web**, **Andro
 ### 📦 Downloads & Platforms
 | Platform | Asset | Description |
 | :--- | :--- | :--- |
-| 📱 **Android** | [\`wavelength-mobile.apk\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) | Direct APK install with native audio playback permissions, gesture controls, lock screen controls & Ad-Free Media Engine |
+| 📱 **Android** | [\`wavelength-mobile.apk\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) | Direct APK install with native audio playback permissions, gesture controls, lock screen controls & 100% Ad-Free 320kbps Master Engine |
 | 💻 **Windows PC** | [\`wavelength-windows-x64.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-windows-x64.zip) | Portable desktop player with Windows global media key shortcuts & Ad-Free network filtering |
 | 💻 **Windows PC Executable** | [\`wavelength-desktop.exe\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-desktop.exe) | Standalone Windows application binary |
 | 🌐 **Live Web App** | [https://mohamednavith.github.io/Spotify-Craft/](https://mohamednavith.github.io/Spotify-Craft/) | Hosted remotely on GitHub Pages (always online) |
 
 ---
 
-### ✨ What's New in v1.5.0 (Ad-Free & Music Quality Parity Release)
-1. 🚫 **Ad-Free Media Engine Across All Platforms**:
-   - Zero YouTube video commercial ads!
-   - Built-in Android WebView request interceptor in \`MainActivity.java\` blocks advertising networks before they download.
-   - Electron Desktop network filter in \`desktop/main.js\` eliminates commercial ad traffic.
-   - Dynamic real-time ad silencer and fast-forward skipper in web playback engine.
-2. ⏭️ **Guaranteed Auto-Next Track Playback**:
-   - Continuous uninterrupted playback: when a track reaches its conclusion, it smoothly transitions to the next queued song automatically.
-3. 🎯 **Strict Studio Composer Resolver (Zero Mismatches)**:
-   - Eliminated substring collision bug where short words matched unrelated songs. Strict word-boundary matching guarantees the exact original studio track by the composer.
+### ✨ What's New in v1.5.1 (Zero-Ad Master Audio Parity Release)
+1. 🚫 **Permanently Eliminated Commercial Video Ads**:
+   - Replaced hidden background YouTube player with direct 320kbps master studio audio CDN stream (\`https://aac.saavncdn.com/..._320.mp4\`).
+   - Zero YouTube pre-roll ads, zero audio watermarks, zero commercial interruptions.
+   - YouTube video iframe is strictly mounted ONLY when the user explicitly taps "Watch Video".
+2. 🎵 **Full Master Studio 320kbps Lossless Audio Quality**:
+   - Original audio tracks by the true composer and artist.
+   - Native byte-range seeking for instantaneous scrubbing with zero lag.
+3. ⏭️ **Guaranteed Auto-Next Track Playback**:
+   - Seamless transition to the next queued track when the current song completes.
 4. 🌙 **Interactive Sleep Timer**:
-   - Real interactive modal sheet with options: 5m, 10m, 15m, 30m, 45m, 1 hour, and "End of this track".
-   - Live countdown display with automatic pause when the timer expires.
+   - Flexible timer presets (5m, 10m, 15m, 30m, 45m, 1h, End of track) with automatic fade and pause.
 5. 🏝️ **Translucent Dynamic Island**:
-   - Sleek semi-transparent glass pill (\`bg-black/40 backdrop-blur-2xl\`) that stays subtle and unobtrusive, popping up into the full interactive player only when tapped. Active on both phone and website!
+   - Non-intrusive translucent glass pill that expands smoothly into full player controls upon touch.
 6. 📸 **Spotify-Style Visual Photo Card Sharing**:
-   - Generates high-resolution 9:16 story cards with album artwork, title, composer, sound wave barcode, and deep link for Snapchat, Instagram Stories, and WhatsApp.
-   - Includes direct "Save Photo to Gallery" download button.
+   - Generates high-res 9:16 story cards with album cover, wave barcode, and deep link for Snapchat, Instagram, and WhatsApp.
 `,
         draft: false,
         prerelease: false,
