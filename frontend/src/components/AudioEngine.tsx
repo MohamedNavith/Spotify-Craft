@@ -25,11 +25,15 @@ export default function AudioEngine() {
     prevTrack,
     togglePlay,
     repeatMode,
+    playbackMode,
     isNowPlayingVideoOpen,
     toggleNowPlayingVideo,
   } = usePlayerStore();
 
-  // Helper to send postMessage commands to YouTube IFrame if active
+  const videoId = currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null;
+  const isYTMode = playbackMode === 'full' && !!videoId;
+
+  // Helper to send postMessage commands to YouTube IFrame
   const postYT = (func: string, args: any[] = []) => {
     try {
       if (ytIframeRef.current?.contentWindow) {
@@ -41,65 +45,110 @@ export default function AudioEngine() {
     } catch {}
   };
 
-  // 1. Audio Source Loading: Load streamUrl whenever currentTrack changes
+  // Listen for YouTube IFrame Player API postMessage events (Ended, Time update)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (typeof event.data !== 'string') return;
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === 'onStateChange') {
+          // YT.PlayerState.ENDED = 0
+          if (data.info === 0) {
+            if (repeatMode === 'one') {
+              postYT('seekTo', [0, true]);
+              postYT('playVideo');
+            } else {
+              nextTrack();
+            }
+          }
+        } else if (data.event === 'infoDelivery' && data.info) {
+          if (typeof data.info.currentTime === 'number' && isFinite(data.info.currentTime)) {
+            setProgress(data.info.currentTime);
+          }
+          if (typeof data.info.duration === 'number' && isFinite(data.info.duration) && data.info.duration > 0) {
+            setDuration(data.info.duration);
+          }
+        }
+      } catch {}
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [repeatMode, nextTrack, setProgress, setDuration]);
+
+  // 1. Audio Source Loading: Synchronize streamUrl or YouTube embed
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (!currentTrack || !currentTrack.streamUrl) {
+    if (!currentTrack) {
       audio.pause();
       audio.removeAttribute('src');
+      postYT('pauseVideo');
       return;
     }
 
-    if (audio.src !== currentTrack.streamUrl) {
-      audio.src = currentTrack.streamUrl;
-      audio.load();
-      if (currentTrack.duration) {
-        setDuration(currentTrack.duration);
-      }
+    if (currentTrack.duration) {
+      setDuration(currentTrack.duration);
     }
 
-    if (isPlaying) {
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          // Autoplay policy prevented playback until user interaction
-          console.warn('Autoplay waiting for user gesture:', err.message);
-        });
+    if (isYTMode) {
+      // In full mode with YouTube video, pause HTML5 audio so only full official YouTube audio plays
+      audio.pause();
+      if (isPlaying) {
+        postYT('playVideo');
+      }
+    } else {
+      // Fallback or preview mode: use HTML5 audio element
+      postYT('pauseVideo');
+      if (currentTrack.streamUrl && audio.src !== currentTrack.streamUrl) {
+        audio.src = currentTrack.streamUrl;
+        audio.load();
+      }
+
+      if (isPlaying) {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn('Autoplay waiting for user gesture:', err.message);
+          });
+        }
       }
     }
-  }, [currentTrack, setDuration]);
+  }, [currentTrack, isYTMode, isPlaying, setDuration]);
 
   // 2. Play / Pause Synchronization
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !currentTrack) return;
+    if (!currentTrack) return;
 
     if (isPlaying) {
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {});
+      if (isYTMode) {
+        audio?.pause();
+        postYT('playVideo');
+      } else if (audio) {
+        audio.play().catch(() => {});
       }
-      postYT('playVideo');
     } else {
-      audio.pause();
+      audio?.pause();
       postYT('pauseVideo');
     }
-  }, [isPlaying, currentTrack]);
+  }, [isPlaying, isYTMode, currentTrack]);
 
   // 3. Seeking Synchronization (Instant scrubbing response)
   useEffect(() => {
     if (seekTarget === null || !isFinite(seekTarget)) return;
 
     const audio = audioRef.current;
-    if (audio) {
+    if (isYTMode) {
+      postYT('seekTo', [seekTarget, true]);
+      setProgress(seekTarget);
+    } else if (audio) {
       audio.currentTime = seekTarget;
       setProgress(seekTarget);
     }
-    postYT('seekTo', [seekTarget, true]);
     clearSeek();
-  }, [seekTarget, clearSeek, setProgress]);
+  }, [seekTarget, isYTMode, clearSeek, setProgress]);
 
   // 4. Volume & Mute Synchronization
   useEffect(() => {
@@ -113,19 +162,26 @@ export default function AudioEngine() {
     else postYT('unMute');
   }, [volume, isMuted]);
 
-  // 5. High-Precision Playback Timer (Updates progress every 150ms for smooth UI)
+  // 5. High-Precision Playback Timer (Updates progress every 200ms)
   useEffect(() => {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
-      const audio = audioRef.current;
-      if (audio && !audio.paused && isFinite(audio.currentTime)) {
-        setProgress(audio.currentTime);
+      if (isYTMode) {
+        // Poll YouTube currentTime
+        postYT('getCurrentTime');
+        const next = progress + 0.2;
+        setProgress(duration > 0 ? Math.min(next, duration) : next);
+      } else {
+        const audio = audioRef.current;
+        if (audio && !audio.paused && isFinite(audio.currentTime)) {
+          setProgress(audio.currentTime);
+        }
       }
-    }, 150);
+    }, 200);
 
     return () => clearInterval(interval);
-  }, [isPlaying, setProgress]);
+  }, [isPlaying, isYTMode, progress, duration, setProgress]);
 
   // 6. Media Session API (Lock screen, dynamic notifications, Bluetooth metadata)
   useEffect(() => {
@@ -179,23 +235,25 @@ export default function AudioEngine() {
     });
   }, [currentTrack, isPlaying, progress, duration, togglePlay, nextTrack, prevTrack, seek, fastForward]);
 
-  const ytQuery = currentTrack
-    ? encodeURIComponent(`${currentTrack.title} ${currentTrack.artistName} official video`)
+  const ytDirectUrl = currentTrack
+    ? `https://www.youtube.com/results?search_query=${encodeURIComponent(
+        `${currentTrack.title} ${currentTrack.artistName} official music video`,
+      )}`
     : '';
 
   return (
     <>
-      {/* Primary HTML5 Audio Engine */}
+      {/* Primary HTML5 Audio Engine (Used when audio stream is active) */}
       <audio
         ref={audioRef}
         preload="auto"
         onTimeUpdate={() => {
-          if (audioRef.current && isFinite(audioRef.current.currentTime)) {
+          if (!isYTMode && audioRef.current && isFinite(audioRef.current.currentTime)) {
             setProgress(audioRef.current.currentTime);
           }
         }}
         onLoadedMetadata={() => {
-          if (audioRef.current) {
+          if (!isYTMode && audioRef.current) {
             const d = audioRef.current.duration;
             if (isFinite(d) && d > 0) {
               setDuration(d);
@@ -203,7 +261,7 @@ export default function AudioEngine() {
           }
         }}
         onDurationChange={() => {
-          if (audioRef.current) {
+          if (!isYTMode && audioRef.current) {
             const d = audioRef.current.duration;
             if (isFinite(d) && d > 0) {
               setDuration(d);
@@ -211,11 +269,13 @@ export default function AudioEngine() {
           }
         }}
         onEnded={() => {
-          if (repeatMode === 'one' && audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(() => {});
-          } else {
-            nextTrack();
+          if (!isYTMode) {
+            if (repeatMode === 'one' && audioRef.current) {
+              audioRef.current.currentTime = 0;
+              audioRef.current.play().catch(() => {});
+            } else {
+              nextTrack();
+            }
           }
         }}
         onError={async (e) => {
@@ -236,18 +296,19 @@ export default function AudioEngine() {
         }}
       />
 
-      {/* Official YouTube Music Video / Full Song Mode (Picture-in-Picture) */}
-      {currentTrack && isNowPlayingVideoOpen && (() => {
-        const videoId = resolveVideoId(currentTrack.title, currentTrack.artistName);
-        const ytDirectUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(
-          `${currentTrack.title} ${currentTrack.artistName} official music video`,
-        )}`;
-
-        return (
-          <div className="fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col">
+      {/* Official YouTube Full Song & Video Engine */}
+      {currentTrack && videoId && (
+        <div
+          className={
+            isNowPlayingVideoOpen
+              ? 'fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col'
+              : 'fixed -bottom-96 -right-96 w-[1px] h-[1px] opacity-0 pointer-events-none'
+          }
+        >
+          {isNowPlayingVideoOpen && (
             <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
               <a
-                href={videoId ? `https://www.youtube.com/watch?v=${videoId}` : ytDirectUrl}
+                href={`https://www.youtube.com/watch?v=${videoId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
@@ -258,54 +319,55 @@ export default function AudioEngine() {
               <button
                 onClick={toggleNowPlayingVideo}
                 className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
-                title="Close Video"
+                title="Minimize Video"
               >
                 ✕
               </button>
             </div>
+          )}
 
-            {videoId ? (
-              <iframe
-                ref={ytIframeRef}
-                src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                className="w-full h-full"
-                title="Official Music Video"
-              />
-            ) : (
-              <div className="relative w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-t from-black via-zinc-900 to-black text-center">
-                {currentTrack.artworkUrl && (
-                  <img
-                    src={currentTrack.artworkUrl}
-                    alt={currentTrack.title}
-                    className="absolute inset-0 w-full h-full object-cover opacity-20 filter blur-sm"
-                  />
-                )}
-                <div className="relative z-10 flex flex-col items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-spotify-green">
-                    Official Video Mode
-                  </span>
-                  <h4 className="text-sm font-bold text-white truncate max-w-[240px]">
-                    {currentTrack.title}
-                  </h4>
-                  <p className="text-xs text-spotify-subtext truncate max-w-[200px]">
-                    {currentTrack.artistName}
-                  </p>
-                  <a
-                    href={ytDirectUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 px-4 py-1.5 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold text-xs shadow-lg transition-transform active:scale-95 flex items-center gap-1.5"
-                  >
-                    <span>Watch Full Music Video</span>
-                    <span>↗</span>
-                  </a>
-                </div>
-              </div>
-            )}
+          <iframe
+            ref={ytIframeRef}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            className="w-full h-full"
+            title="Official Master Audio / Video"
+          />
+        </div>
+      )}
+
+      {/* Fallback card when Video Mode is explicitly opened but no videoId found */}
+      {currentTrack && !videoId && isNowPlayingVideoOpen && (
+        <div className="fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col items-center justify-center p-4 bg-gradient-to-t from-black via-zinc-900 to-black text-center">
+          <div className="absolute top-2 right-2 z-20">
+            <button
+              onClick={toggleNowPlayingVideo}
+              className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
+              title="Close Video"
+            >
+              ✕
+            </button>
           </div>
-        );
-      })()}
+          <span className="text-xs font-bold uppercase tracking-wider text-spotify-green">
+            Official Video Mode
+          </span>
+          <h4 className="text-sm font-bold text-white truncate max-w-[240px] mt-1">
+            {currentTrack.title}
+          </h4>
+          <p className="text-xs text-spotify-subtext truncate max-w-[200px]">
+            {currentTrack.artistName}
+          </p>
+          <a
+            href={ytDirectUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 px-4 py-1.5 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold text-xs shadow-lg transition-transform active:scale-95 flex items-center gap-1.5"
+          >
+            <span>Watch on YouTube</span>
+            <span>↗</span>
+          </a>
+        </div>
+      )}
     </>
   );
 }

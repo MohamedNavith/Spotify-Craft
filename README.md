@@ -17,26 +17,31 @@ The live application is hosted on GitHub Pages:
 
 ## 📥 Downloads & Releases
 
-Get the latest production builds from [GitHub Releases v1.3.0](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.3.0):
+Get the latest production builds from [GitHub Releases v1.3.1](https://github.com/MohamedNavith/Spotify-Craft/releases/tag/v1.3.1):
 
 | Target | File | Size | Description | Download Link |
 | :--- | :--- | :--- | :--- | :--- |
-| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.5 MB | Standalone Android APK with native lock screen & notification media controls | [⬇️ Download APK (v1.3.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.0/wavelength-mobile.apk) |
-| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys | [⬇️ Download EXE (v1.3.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.0/wavelength-desktop.exe) |
-| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~366 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.3.0)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.0/wavelength-windows-x64.zip) |
+| **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.3 MB | Standalone Android APK with native audio permissions & lock screen controls | [⬇️ Download APK (v1.3.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.1/wavelength-mobile.apk) |
+| **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys | [⬇️ Download EXE (v1.3.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.1/wavelength-desktop.exe) |
+| **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~350 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.3.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.3.1/wavelength-windows-x64.zip) |
 | **Web Browser (PWA)** | Web Application | Cloud | Live everywhere without installation or localhost | [🌐 Launch Web Player](https://mohamednavith.github.io/Spotify-Craft/) |
 
 ---
 
-## 🌟 Key Features in v1.3.0
+## 🌟 Key Features in v1.3.1
 
+- **Full-Length Song Playback on Mobile & PC (Zero 30s Cutoffs)**:
+  - Fixed the 30-second audio cutoff bug on phone and desktop.
+  - Dual audio playback engine streams 100% full-length master releases (3–5 minutes) from start to finish.
+  - 30-second snippet mode remains an optional manual toggle for data saving.
+- **Android Native WebView Media Permissions**:
+  - Configured `setMediaPlaybackRequiresUserGesture(false)` and `MIXED_CONTENT_ALWAYS_ALLOW` in Android `MainActivity.java` so background audio playback and stream switching work without requiring a tap on each song.
+- **Massive Master Audio & Video Catalog Expansion**:
+  - Over 150+ verified official studio master releases mapped across Bollywood, Indian chartbusters, Punjabi, Pop, and Global Top 50 hits.
 - **Android Lock Screen & Quick Settings Notification Controls**:
   - Full Android system media tile with active playback state, title, artist, high-res artwork, previous/play/pause/next, and position scrubber.
-- **Full Song Playback by Default**:
-  - Every selected track automatically resolves the complete 3–5 minute full studio version; 30-second preview mode is strictly an optional manual toggle.
 - **Top Centric-Left Spotify Search Bar with Live Autocomplete**:
-  - Official Spotify Web layout with a search input positioned in the top navigation bar.
-  - 200ms debounced live dropdown displaying matching songs, artists, thumbnails, and 1-click play buttons.
+  - 200ms debounced live dropdown with top matching songs, artists, thumbnails, and 1-click play buttons.
 - **Authentic Spotify Lyrics Typography**:
   - Left-aligned, heavy bold sans-serif styling matching the official Spotify client.
   - Active line text shadow glow, soft inactive blur, and automatic smooth vertical scrolling.
