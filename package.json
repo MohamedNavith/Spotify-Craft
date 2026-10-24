@@ -10,6 +10,10 @@
     "build:backend": "npm --prefix backend run build",
     "build:frontend": "npm --prefix frontend run build",
     "desktop": "npm --prefix desktop start",
+    "bot": "npm --prefix discord-bot start",
+    "bot:dev": "npm --prefix discord-bot run dev",
+    "bot:deploy": "npm --prefix discord-bot run deploy:commands",
+    "build:bot": "npm --prefix discord-bot run build",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down"
   }

@@ -1,9 +1,10 @@
 # Wavelength 🎧 (Spotify-Craft)
 
-> A production-grade, multi-platform Spotify Web Player ecosystem (**Website**, **Android APK**, and **Windows PC Desktop App**) powered by Next.js 15, NestJS, and legal, licensed audio streaming providers.
+> A production-grade, multi-platform Spotify Web Player ecosystem (**Website**, **Android APK**, **Windows PC Desktop App**, and **Enterprise Discord Music Bot**) powered by Next.js 15, NestJS, Discord.js v14, and legal, licensed audio streaming providers.
 
 [![Deploy Wavelength to GitHub Pages](https://github.com/MohamedNavith/Spotify-Craft/actions/workflows/deploy.yml/badge.svg)](https://github.com/MohamedNavith/Spotify-Craft/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Discord Bot](https://img.shields.io/badge/Discord_Bot-Online-5865F2.svg)](discord-bot/)
 [![Design Benchmark](https://img.shields.io/badge/UI_Benchmark-Spotify_Web_Player-1ed760.svg)](https://open.spotify.com/)
 
 ---
@@ -12,6 +13,20 @@
 
 The live application is hosted on GitHub Pages:
 👉 **[https://mohamednavith.github.io/Spotify-Craft/](https://mohamednavith.github.io/Spotify-Craft/)**
+
+---
+
+## 🤖 Wavelength Discord Music Bot
+
+A dedicated, enterprise-grade Discord bot located in [`discord-bot/`](discord-bot/):
+- **320kbps Master Studio Lossless Audio**: Zero ads, byte-range instant seeking, powered by Wavelength's high-speed CDN.
+- **Universal Link Resolution**: Spotify (tracks, albums, playlists, artists), YouTube, SoundCloud, and direct audio streams.
+- **Real-Time DSP Audio Filters**: 8D Audio, Bass Boost (Low/Med/High), Nightcore, Vaporwave, Slowed+Reverb, Karaoke, and Treble Boost.
+- **Interactive Control Boards**: Persistent embeds with ⏯️ Play/Pause, ⏭️ Skip, 🔁 Loop, 🔀 Shuffle, 🔉 Vol-, 🔊 Vol+, 📜 Lyrics, and filter select menus.
+- **Dedicated Request Channel Mode**: Run `/setup` to generate a `#wavelength-music` channel like Hydra/Rythm where users can type song names directly without commands!
+- **24/7 Voice Channel Mode**: `/247` keeps the bot online forever.
+
+See the complete [Discord Bot Setup Guide](discord-bot/README.md) for step-by-step instructions.
 
 ---
 
@@ -24,6 +39,7 @@ Get the latest production builds from [GitHub Releases v1.5.1](https://github.co
 | **Android Phone / Tablet** | `wavelength-mobile.apk` | ~4.4 MB | Standalone Android APK with gesture swipe, Dynamic Island, lock screen controls & 100% Ad-Free 320kbps Master Studio Engine | [⬇️ Download APK (v1.5.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-mobile.apk) |
 | **Windows PC (Installer)** | `wavelength-desktop.exe` | ~180 MB | Standalone Windows application binary with global media keys & Ad-Free network filtering | [⬇️ Download EXE (v1.5.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-desktop.exe) |
 | **Windows PC (Portable)** | `wavelength-windows-x64.zip` | ~350 MB | Portable unpack & run folder (`wavelength-desktop.exe`) | [⬇️ Download ZIP (v1.5.1)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-windows-x64.zip) |
+| **Discord Bot** | Node.js / Docker | Standalone | 320kbps Master Audio, DSP Filters, Spotify/YouTube, Dedicated Request Channel | [🤖 Setup Discord Bot](discord-bot/) |
 | **Web Browser (PWA)** | Web Application | Cloud | Live everywhere without installation or localhost | [🌐 Launch Web Player](https://mohamednavith.github.io/Spotify-Craft/) |
 
 ---

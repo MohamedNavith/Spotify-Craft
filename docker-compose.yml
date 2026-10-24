@@ -126,6 +126,24 @@ services:
     networks:
       - wavelength-network
 
+  discord-bot:
+    build:
+      context: ./discord-bot
+      dockerfile: Dockerfile
+    container_name: wavelength-discord-bot
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      CLIENT_ID: ${CLIENT_ID}
+      DEFAULT_PREFIX: ${DEFAULT_PREFIX:-!w}
+      DEFAULT_VOLUME: ${DEFAULT_VOLUME:-80}
+      WAVELENGTH_WEB_URL: ${WAVELENGTH_WEB_URL:-https://mohamednavith.github.io/Spotify-Craft/}
+    volumes:
+      - bot_data:/app/data
+    networks:
+      - wavelength-network
+
 networks:
   wavelength-network:
     driver: bridge
@@ -135,3 +153,4 @@ volumes:
   redis_data:
   meili_data:
   minio_data:
+  bot_data:
