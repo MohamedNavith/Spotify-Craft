@@ -33,11 +33,13 @@ jobs:
       - name: Install System Audio Utilities (FFmpeg & Libopus)
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y --no-install-recommends ffmpeg
+          sudo apt-get install -y --no-install-recommends ffmpeg libopus0 libopus-dev
 
       - name: Install Bot Dependencies
         working-directory: ./discord-bot
-        run: npm ci --legacy-peer-deps
+        run: |
+          npm ci --legacy-peer-deps
+          chmod +x node_modules/ffmpeg-static/ffmpeg 2>/dev/null || true
 
       - name: Compile Bot TypeScript
         working-directory: ./discord-bot

@@ -1,10 +1,22 @@
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { spawn, execSync, ChildProcessWithoutNullStreams } from 'child_process';
 import { createAudioResource, AudioResource, StreamType } from '@discordjs/voice';
 import playdl from 'play-dl';
-import ffmpegPath from 'ffmpeg-static';
+import ffmpegStatic from 'ffmpeg-static';
 import { Track, AudioFilter } from './types';
 import { AUDIO_FILTERS } from './filters';
 import { searchMasterAudio } from './resolvers/masterResolver';
+
+function resolveFfmpegPath(): string {
+  if (process.platform === 'linux') {
+    try {
+      execSync('which ffmpeg', { stdio: 'ignore' });
+      return 'ffmpeg';
+    } catch {}
+  }
+  return ffmpegStatic || 'ffmpeg';
+}
+
+const ffmpegExecutable = resolveFfmpegPath();
 
 export class AudioStreamer {
   private static activeProcesses = new Map<string, ChildProcessWithoutNullStreams>();
@@ -103,7 +115,7 @@ export class AudioStreamer {
       'pipe:1',
     );
 
-    const proc = spawn(ffmpegPath as string, ffmpegArgs, {
+    const proc = spawn(ffmpegExecutable, ffmpegArgs, {
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
