@@ -86,6 +86,7 @@ export class AudioStreamer {
     }
 
     ffmpegArgs.push(
+      '-c:a', 'pcm_s16le',
       '-f', 's16le',
       '-ar', '48000',
       '-ac', '2',
