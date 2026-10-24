@@ -41,10 +41,16 @@ export const playCommand: Command = {
     };
 
     let tracks = [];
-    if (isSpotifyUrl(query)) {
-      tracks = await resolveSpotify(query, requester);
-    } else {
-      tracks = await resolveYouTubeOrSearch(query, requester);
+    try {
+      if (isSpotifyUrl(query)) {
+        tracks = await resolveSpotify(query, requester);
+      } else {
+        tracks = await resolveYouTubeOrSearch(query, requester);
+      }
+    } catch (err: any) {
+      return interaction.editReply({
+        content: `❌ **Failed to load audio:** ${err?.message || 'Error occurred while resolving track.'}`,
+      });
     }
 
     if (tracks.length === 0) {

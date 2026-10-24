@@ -4,11 +4,135 @@ import { searchMasterAudio } from './masterResolver';
 import { formatSeconds } from './spotifyResolver';
 
 export function isYouTubeUrl(url: string): boolean {
-  return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/.test(url);
+  return /^(https?:\/\/)?((www|music)\.)?(youtube\.com|youtu\.be)\/.+/i.test(url);
 }
 
 export function isDirectAudioUrl(url: string): boolean {
   return /^https?:\/\/.+\.(mp3|aac|ogg|flac|m4a|wav)(\?.*)?$/i.test(url);
+}
+
+/**
+ * Fetch YouTube or YouTube Music playlist tracks using official Innertube API
+ */
+async function fetchYouTubePlaylist(playlistId: string, requester: Requester): Promise<Track[]> {
+  const browseId = playlistId.startsWith('VL') ? playlistId : 'VL' + playlistId;
+
+  try {
+    const res = await fetch('https://www.youtube.com/youtubei/v1/browse?prettyPrint=false', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      body: JSON.stringify({
+        context: {
+          client: {
+            clientName: 'WEB',
+            clientVersion: '2.20241001.01.00',
+            hl: 'en',
+            gl: 'US',
+          },
+        },
+        browseId,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`YouTube API returned status ${res.status}`);
+    }
+
+    const data: any = await res.json();
+
+    // Check if YouTube returned a privacy / existence error
+    const alerts = JSON.stringify(data.alerts || []);
+    if (alerts.includes('The playlist does not exist') || alerts.includes('This playlist is private')) {
+      throw new Error('This YouTube playlist is **Private** or unviewable. Please open YouTube / YouTube Music and change the playlist visibility to **"Unlisted"** or **"Public"** so Wavelength can play it!');
+    }
+
+    const tracks: Track[] = [];
+
+    // Search for lockupViewModel (modern YouTube layout)
+    function searchItems(obj: any) {
+      if (!obj || typeof obj !== 'object') return;
+
+      if (obj.lockupViewModel) {
+        const lockup = obj.lockupViewModel;
+        const videoId = lockup.contentId;
+        const accessibility = lockup.rendererContext?.accessibilityContext?.label || '';
+        const cleanTitle = accessibility.replace(/\s*\d+\s*(?:hours?|minutes?|seconds?).*$/i, '').trim() || 'YouTube Track';
+
+        let title = cleanTitle;
+        let author = 'YouTube Music';
+        if (cleanTitle.includes(' - ')) {
+          const parts = cleanTitle.split(' - ');
+          author = parts[0].trim();
+          title = parts.slice(1).join(' - ').trim();
+        }
+
+        let duration = 210;
+        let formattedDuration = '03:30';
+        const timeMatch = accessibility.match(/(?:(\d+)\s+hours?[,\s]*)?(?:(\d+)\s+minutes?[,\s]*)?(\d+)\s+seconds?/i);
+        if (timeMatch) {
+          const h = parseInt(timeMatch[1] || '0', 10);
+          const m = parseInt(timeMatch[2] || '0', 10);
+          const s = parseInt(timeMatch[3] || '0', 10);
+          duration = h * 3600 + m * 60 + s;
+          formattedDuration = formatSeconds(duration);
+        }
+
+        const rawThumb = lockup.contentImage?.thumbnailViewModel?.image?.sources?.slice(-1)[0]?.url;
+        const thumbnail = rawThumb || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+        if (videoId) {
+          tracks.push({
+            title,
+            author,
+            url: `https://www.youtube.com/watch?v=${videoId}`,
+            streamUrl: null,
+            duration,
+            formattedDuration,
+            thumbnail,
+            requester,
+            source: 'youtube',
+          });
+        }
+        return;
+      }
+
+      if (obj.playlistVideoRenderer) {
+        const v = obj.playlistVideoRenderer;
+        if (v.videoId) {
+          const title = v.title?.runs?.[0]?.text || v.title?.simpleText || 'YouTube Video';
+          const author = v.shortBylineText?.runs?.[0]?.text || 'YouTube';
+          const duration = parseInt(v.lengthSeconds || '180', 10);
+          const thumbnail = v.thumbnail?.thumbnails?.slice(-1)[0]?.url || `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`;
+
+          tracks.push({
+            title,
+            author,
+            url: `https://www.youtube.com/watch?v=${v.videoId}`,
+            streamUrl: null,
+            duration,
+            formattedDuration: formatSeconds(duration),
+            thumbnail,
+            requester,
+            source: 'youtube',
+          });
+        }
+        return;
+      }
+
+      for (const key of Object.keys(obj)) {
+        searchItems(obj[key]);
+      }
+    }
+
+    searchItems(data.contents);
+    return tracks.slice(0, 100);
+  } catch (err: any) {
+    console.warn(`[YouTube Playlist] Error resolving playlist ${playlistId}:`, err.message);
+    throw err;
+  }
 }
 
 export async function resolveYouTubeOrSearch(query: string, requester: Requester): Promise<Track[]> {
@@ -32,31 +156,24 @@ export async function resolveYouTubeOrSearch(query: string, requester: Requester
     ];
   }
 
-  // 2. YouTube URL
+  // 2. YouTube or YouTube Music URL
   if (isYouTubeUrl(query)) {
-    try {
-      const ytType = playdl.yt_validate(query);
-
-      if (ytType === 'playlist') {
-        const playlist = await playdl.playlist_info(query, { incomplete: true });
-        const allVideos = await playlist.all_videos();
-        for (const video of allVideos.slice(0, 100)) {
-          tracks.push({
-            title: video.title || 'Untitled Track',
-            author: video.channel?.name || 'YouTube',
-            url: video.url,
-            streamUrl: null, // lazily resolved
-            duration: video.durationInSec,
-            formattedDuration: video.durationRaw || formatSeconds(video.durationInSec),
-            thumbnail: video.thumbnails[video.thumbnails.length - 1]?.url || 'https://www.youtube.com/favicon.ico',
-            requester,
-            source: 'youtube',
-          });
-        }
-        return tracks;
+    // Check if it's a playlist URL
+    const listMatch = query.match(/[?&]list=([a-zA-Z0-9_-]+)/i);
+    if (listMatch) {
+      const playlistId = listMatch[1];
+      const playlistTracks = await fetchYouTubePlaylist(playlistId, requester);
+      if (playlistTracks.length > 0) {
+        return playlistTracks;
       }
+    }
 
-      if (ytType === 'video') {
+    // Check single video
+    try {
+      const videoMatch = query.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})(?:\?|&|$)/i);
+      const videoId = videoMatch ? videoMatch[1] : null;
+
+      if (videoId) {
         const info = await playdl.video_basic_info(query);
         const details = info.video_details;
         const title = details.title || 'YouTube Video';
