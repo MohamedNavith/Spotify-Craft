@@ -2,12 +2,13 @@ FROM node:20-bullseye-slim
 
 WORKDIR /app
 
-# Install system utilities needed for native voice libraries
+# Install system utilities needed for native voice libraries and audio decoding
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     python3 \
     build-essential \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
