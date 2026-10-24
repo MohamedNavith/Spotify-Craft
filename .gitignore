@@ -17,7 +17,13 @@ backend/prisma/*.db-journal
 
 # Environment Secrets
 .env
+.env.*
+*.env
 *.env.local
+discord-bot/.env
+discord-bot/.env.*
+backend/.env
+backend/.env.*
 
 # OS Files
 .DS_Store

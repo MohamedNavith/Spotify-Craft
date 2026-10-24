@@ -19,6 +19,19 @@ client.on('interactionCreate', (interaction) => handleInteraction(interaction));
 client.on('messageCreate', (message) => handleMessage(message));
 client.on('voiceStateUpdate', (oldState, newState) => handleVoiceStateUpdate(oldState, newState));
 
+// Global Crash & Exception Immunity Guards
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ [Anti-Crash] Unhandled Promise Rejection intercepted:', reason);
+});
+
+process.on('uncaughtException', (err, origin) => {
+  console.error(`⚠️ [Anti-Crash] Uncaught Exception intercepted (${origin}):`, err);
+});
+
+process.on('uncaughtExceptionMonitor', (err, origin) => {
+  console.error(`⚠️ [Anti-Crash Monitor] Exception observed (${origin}):`, err);
+});
+
 const shutdown = () => {
   console.log('\n[Wavelength Bot] Shutting down gracefully...');
   client.destroy();

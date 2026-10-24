@@ -1,0 +1,90 @@
+name: Wavelength 24/7 Discord Bot Runner
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Trigger automatically every 5 hours (at minute 0 past every 5th hour)
+    - cron: '0 */5 * * *'
+  push:
+    paths:
+      - 'discord-bot/**'
+
+concurrency:
+  group: wavelength-discord-bot-service
+  cancel-in-progress: true
+
+jobs:
+  run-bot:
+    name: Discord Bot Daemon
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: discord-bot/package-lock.json
+
+      - name: Install System Audio Utilities (FFmpeg & Libopus)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Install Bot Dependencies
+        working-directory: ./discord-bot
+        run: npm ci --legacy-peer-deps
+
+      - name: Compile Bot TypeScript
+        working-directory: ./discord-bot
+        run: npm run build
+
+      - name: Run Wavelength Bot with Crash Immunity Supervisor
+        working-directory: ./discord-bot
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          NODE_ENV: production
+        run: |
+          if [ -z "$DISCORD_TOKEN" ]; then
+            echo "::error::DISCORD_TOKEN secret is missing! Please add DISCORD_TOKEN in Repository Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          echo "Starting Wavelength Bot 24/7 supervisor..."
+          node -e '
+            const { spawn } = require("child_process");
+            const RUN_DURATION_MS = 5 * 60 * 60 * 1000; // 5 hours per shift
+            const startTime = Date.now();
+
+            function runBot() {
+              if (Date.now() - startTime >= RUN_DURATION_MS) {
+                console.log("[Supervisor] 5-hour runner shift completed cleanly. Handing over to next scheduled runner.");
+                process.exit(0);
+              }
+
+              console.log("[Supervisor] Launching Wavelength bot process...");
+              const child = spawn("node", ["dist/index.js"], { stdio: "inherit" });
+
+              child.on("close", (code) => {
+                console.log("[Supervisor] Bot process closed with code " + code);
+                if (Date.now() - startTime < RUN_DURATION_MS) {
+                  console.log("[Supervisor] Auto-restarting bot in 3 seconds...");
+                  setTimeout(runBot, 3000);
+                } else {
+                  process.exit(0);
+                }
+              });
+
+              child.on("error", (err) => {
+                console.error("[Supervisor] Process error:", err);
+                setTimeout(runBot, 3000);
+              });
+            }
+
+            runBot();
+          '

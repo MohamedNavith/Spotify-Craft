@@ -111,8 +111,22 @@ export class AudioStreamer {
     this.activeProcesses.set(guildId, proc);
 
     if (inputStream) {
+      inputStream.on('error', (err: any) => {
+        console.warn(`[Guild ${guildId}] Input stream warning:`, err?.message || err);
+      });
+      proc.stdin.on('error', (err: any) => {
+        if (err.code !== 'EPIPE' && err.code !== 'EOF') {
+          console.warn(`[Guild ${guildId}] FFmpeg stdin warning:`, err?.message || err);
+        }
+      });
       inputStream.pipe(proc.stdin);
     }
+
+    proc.stdout.on('error', (err: any) => {
+      if (err.code !== 'EPIPE') {
+        console.warn(`[Guild ${guildId}] FFmpeg stdout warning:`, err?.message || err);
+      }
+    });
 
     proc.on('error', (err) => {
       console.error(`[Guild ${guildId}] FFmpeg process error:`, err);
