@@ -21,18 +21,18 @@ export const playCommand: Command = {
         .setRequired(true),
     ),
   execute: async (interaction: ChatInputCommandInteraction) => {
+    await interaction.deferReply();
+
     const member = interaction.member as GuildMember;
     const voiceChannel = member?.voice?.channel;
 
     if (!voiceChannel) {
-      return interaction.reply({
+      return interaction.editReply({
         content: '❌ **You must be in a voice channel to play music!**',
-        ephemeral: true,
       });
     }
 
     const query = interaction.options.getString('query', true).trim();
-    await interaction.deferReply();
 
     const requester = {
       id: interaction.user.id,

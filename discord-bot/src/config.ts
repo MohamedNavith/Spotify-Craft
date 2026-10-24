@@ -6,7 +6,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 export const config = {
   discordToken: process.env.DISCORD_TOKEN || '',
   clientId: process.env.CLIENT_ID || '',
-  defaultPrefix: process.env.DEFAULT_PREFIX || '!w',
+  defaultPrefix: process.env.DEFAULT_PREFIX || '!',
   defaultVolume: parseInt(process.env.DEFAULT_VOLUME || '80', 10),
   maxQueueSize: parseInt(process.env.MAX_QUEUE_SIZE || '1000', 10),
   idleTimeoutSeconds: parseInt(process.env.IDLE_TIMEOUT_SECONDS || '180', 10),

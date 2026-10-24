@@ -24,6 +24,7 @@ import { mode247Command } from './settings/mode247';
 import { setupCommand } from './settings/setup';
 import { settingsCommand } from './settings/settings';
 import { playlistCommand } from './settings/playlist';
+import { setprefixCommand } from './settings/setprefix';
 
 import { helpCommand } from './utility/help';
 import { pingCommand } from './utility/ping';
@@ -55,6 +56,7 @@ const commandList: Command[] = [
   setupCommand,
   settingsCommand,
   playlistCommand,
+  setprefixCommand,
 
   helpCommand,
   pingCommand,
