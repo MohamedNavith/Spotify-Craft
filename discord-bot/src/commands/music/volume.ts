@@ -15,7 +15,7 @@ export const volumeCommand: Command = {
       return interaction.reply({ content: '❌ **No active player found.**', ephemeral: true });
     }
     const percent = interaction.options.getInteger('percent', true);
-    queue.setVolume(percent);
+    await queue.setVolume(percent);
     return interaction.reply({
       content: `🔊 **Volume set to \`${percent}%\`**`,
     });

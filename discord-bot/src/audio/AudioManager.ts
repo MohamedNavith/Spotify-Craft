@@ -1,4 +1,4 @@
-import { joinVoiceChannel, VoiceConnection } from '@discordjs/voice';
+import { joinVoiceChannel, VoiceConnection, entersState, VoiceConnectionStatus } from '@discordjs/voice';
 import { Guild, TextBasedChannel, VoiceBasedChannel } from 'discord.js';
 import { GuildQueue } from './GuildQueue';
 
@@ -19,7 +19,7 @@ export class AudioManager {
     textChannel: TextBasedChannel,
   ): Promise<GuildQueue> {
     const existing = this.queues.get(guild.id);
-    if (existing) {
+    if (existing && existing.voiceConnection.state.status !== VoiceConnectionStatus.Destroyed) {
       existing.textChannel = textChannel;
       return existing;
     }
@@ -31,11 +31,17 @@ export class AudioManager {
       selfDeaf: true,
     });
 
+    try {
+      await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
+    } catch (err) {
+      console.warn(`[AudioManager] Voice connection for guild ${guild.id} took longer than 15s to reach Ready. Proceeding...`);
+    }
+
     const queue = new GuildQueue(guild.id, connection, textChannel);
     this.queues.set(guild.id, queue);
 
     connection.on('stateChange', (_, newState) => {
-      if (newState.status === 'destroyed') {
+      if (newState.status === VoiceConnectionStatus.Destroyed) {
         this.queues.delete(guild.id);
       }
     });

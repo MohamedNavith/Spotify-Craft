@@ -16,6 +16,8 @@ export async function handleMessage(message: Message) {
   const guildId = message.guild.id;
   const settings = db.getGuildSettings(guildId);
 
+  console.log(`[Text Chat - ${message.guild.name}] ${message.author.tag}: "${message.content}"`);
+
   // 1. Dedicated Song Request Channel Handler (Hydra/Rythm Style)
   if (settings.requestChannelId && message.channel.id === settings.requestChannelId) {
     const query = message.content.trim();
@@ -263,7 +265,7 @@ export async function handleMessage(message: Message) {
     if (isNaN(volNum) || volNum < 1 || volNum > 150) {
       return message.reply(`🔊 **Current volume is \`${queue.volume}%\`**. Usage: \`${currentPrefix}volume <1-150>\``);
     }
-    queue.setVolume(volNum);
+    await queue.setVolume(volNum);
     return message.reply(`🔊 **Volume set to \`${volNum}%\`**`);
   }
 

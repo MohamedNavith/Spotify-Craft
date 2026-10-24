@@ -142,6 +142,7 @@ export class GuildQueue {
         track,
         this.currentFilter,
         seekSeconds,
+        this.volume,
       );
 
       this.currentResource = resource;
@@ -233,10 +234,13 @@ export class GuildQueue {
     return true;
   }
 
-  public setVolume(vol: number): boolean {
+  public async setVolume(vol: number): Promise<boolean> {
     this.volume = Math.max(0, Math.min(150, vol));
     if (this.currentResource && this.currentResource.volume) {
       this.currentResource.volume.setVolumeLogarithmic(this.volume / 100);
+    } else if (this.currentTrack && !this.isPaused) {
+      const currentPos = this.currentPlaybackSeconds;
+      await this.startPlayback(this.currentTrack, currentPos);
     }
     this.updateNowPlayingMessage();
     return true;

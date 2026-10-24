@@ -14,6 +14,7 @@ export class AudioStreamer {
     track: Track,
     filter: AudioFilter = 'off',
     seekSeconds = 0,
+    volume = 100,
   ): Promise<AudioResource> {
     // Clean up any existing FFmpeg process for this guild
     this.killProcess(guildId);
@@ -79,15 +80,24 @@ export class AudioStreamer {
 
     ffmpegArgs.push('-i', inputArg || 'pipe:0');
 
-    // Apply DSP Audio Filter
+    // Build DSP Filter Chain + Volume
+    const filterParts: string[] = [];
     const filterString = AUDIO_FILTERS[filter];
     if (filterString) {
-      ffmpegArgs.push('-af', filterString);
+      filterParts.push(filterString);
+    }
+    if (volume !== undefined && volume !== 100) {
+      filterParts.push(`volume=${(Math.max(5, Math.min(150, volume)) / 100).toFixed(2)}`);
+    }
+
+    if (filterParts.length > 0) {
+      ffmpegArgs.push('-af', filterParts.join(','));
     }
 
     ffmpegArgs.push(
-      '-c:a', 'pcm_s16le',
-      '-f', 's16le',
+      '-c:a', 'libopus',
+      '-b:a', '128k',
+      '-f', 'opus',
       '-ar', '48000',
       '-ac', '2',
       'pipe:1',
@@ -109,7 +119,6 @@ export class AudioStreamer {
     });
 
     proc.stderr.on('data', (data) => {
-      // Only log if meaningful error
       const msg = data.toString();
       if (!msg.includes('deprecated') && !msg.includes('header')) {
         console.warn(`[Guild ${guildId}] FFmpeg: ${msg}`);
@@ -121,8 +130,8 @@ export class AudioStreamer {
     });
 
     const resource = createAudioResource(proc.stdout, {
-      inputType: StreamType.Raw,
-      inlineVolume: true,
+      inputType: StreamType.OggOpus,
+      inlineVolume: false,
     });
 
     return resource;

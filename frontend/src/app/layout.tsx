@@ -4,6 +4,7 @@ import AppUpdateChecker from '../components/AppUpdateChecker';
 import AudioEngine from '../components/AudioEngine';
 import BackButtonManager from '../components/BackButtonManager';
 import CreateSheetModal from '../components/CreateSheetModal';
+import { DiscordBotModal } from '../components/DiscordBotModal';
 import DynamicIsland from '../components/DynamicIsland';
 import PlayerBar from '../components/PlayerBar';
 import ShareModal from '../components/ShareModal';
@@ -63,6 +64,9 @@ export default function RootLayout({
 
         {/* Sleep Timer Modal */}
         <SleepTimerModal />
+
+        {/* Discord Bot Integration Modal */}
+        <DiscordBotModal />
 
         {/* Create (+) Modal Sheet */}
         <CreateSheetModal />

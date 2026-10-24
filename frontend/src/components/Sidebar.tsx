@@ -2,6 +2,7 @@
 
 import {
   ArrowDownToLine,
+  Bot,
   Clock,
   Compass,
   Download,
@@ -28,7 +29,7 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { setTrack, setIsSpotifyImportOpen, setIsCreateSheetOpen } = usePlayerStore();
+  const { setTrack, setIsSpotifyImportOpen, setIsCreateSheetOpen, setIsDiscordModalOpen } = usePlayerStore();
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
 
   useEffect(() => {
@@ -82,6 +83,20 @@ export default function Sidebar() {
               <span>Sync Spotify</span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-spotify-green text-black">
                 Pro
+              </span>
+            </span>
+          </button>
+          <button
+            onClick={() => setIsDiscordModalOpen(true)}
+            className="flex items-center gap-4 px-3 py-2 rounded-md transition-colors hover:text-white text-[#5865F2] font-semibold text-left group"
+          >
+            <div className="w-6 h-6 rounded bg-[#5865F2]/20 flex items-center justify-center text-[#5865F2] group-hover:bg-[#5865F2] group-hover:text-white transition-colors">
+              <Bot className="w-4 h-4" />
+            </div>
+            <span className="flex items-center gap-1.5 flex-1 justify-between">
+              <span className="text-white group-hover:text-white">Discord Bot</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-[#5865F2] text-white">
+                Online
               </span>
             </span>
           </button>

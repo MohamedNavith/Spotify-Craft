@@ -35,6 +35,7 @@ interface PlayerState {
   isSleepTimerModalOpen: boolean;
   sleepTimerMinutes: number | null; // e.g. 5, 10, 15, 30, 45, 60, or -1 for end of track
   sleepTimerEndTime: number | null; // epoch timestamp ms when timer expires
+  isDiscordModalOpen: boolean;
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -67,6 +68,7 @@ interface PlayerState {
   openSleepTimerModal: () => void;
   closeSleepTimerModal: () => void;
   setSleepTimer: (minutes: number | null) => void;
+  setIsDiscordModalOpen: (open: boolean) => void;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -106,6 +108,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isSleepTimerModalOpen: false,
   sleepTimerMinutes: null,
   sleepTimerEndTime: null,
+  isDiscordModalOpen: false,
 
   setTrack: (track, queue) => {
     const state = get();
@@ -400,4 +403,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ sleepTimerMinutes: minutes, sleepTimerEndTime: endTime });
     }
   },
+
+  setIsDiscordModalOpen: (open) => set({ isDiscordModalOpen: open }),
 }));
