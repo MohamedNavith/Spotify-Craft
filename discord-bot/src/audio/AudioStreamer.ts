@@ -21,9 +21,13 @@ export class AudioStreamer {
     // 1. Resolve direct stream URL if not already known
     let streamUrl = track.streamUrl;
     if (!streamUrl) {
-      // First try master CDN
-      const master = await searchMasterAudio(`${track.title} ${track.author}`);
-      if (master) {
+      // First try master CDN with title + author
+      let master = await searchMasterAudio(`${track.title} ${track.author}`);
+      if (!master) {
+        // Fallback to title only
+        master = await searchMasterAudio(track.title);
+      }
+      if (master && master.streamUrl) {
         streamUrl = master.streamUrl;
         track.streamUrl = master.streamUrl;
       }
@@ -33,25 +37,41 @@ export class AudioStreamer {
     let inputArg = streamUrl;
 
     if (!streamUrl) {
-      // Fallback: use play-dl for YouTube stream
+      // Fallback: use @distube/ytdl-core or play-dl for YouTube stream
       try {
-        const streamInfo = await playdl.stream(track.url, { quality: 2 });
-        inputStream = streamInfo.stream;
+        const { Ytdl } = require('@distube/ytdl-core');
+        const ytdl = new Ytdl();
+        inputStream = await ytdl.download(track.url, {
+          filter: { hasAudio: true, hasVideo: false },
+        });
         inputArg = 'pipe:0';
       } catch (err) {
-        console.warn('play-dl stream error, attempting direct YouTube query:', err);
-        throw new Error('Could not resolve audio stream for track: ' + track.title);
+        try {
+          const streamInfo = await playdl.stream(track.url, { quality: 2 });
+          inputStream = streamInfo.stream;
+          inputArg = 'pipe:0';
+        } catch (e2) {
+          console.warn('Audio extraction failed for:', track.title, err);
+          throw new Error('Could not resolve audio stream for track: ' + track.title);
+        }
       }
     }
 
     // Build FFmpeg Arguments
-    const ffmpegArgs: string[] = [
-      '-reconnect', '1',
-      '-reconnect_streamed', '1',
-      '-reconnect_delay_max', '5',
+    const ffmpegArgs: string[] = [];
+
+    if (inputArg && (inputArg.startsWith('http://') || inputArg.startsWith('https://'))) {
+      ffmpegArgs.push(
+        '-reconnect', '1',
+        '-reconnect_streamed', '1',
+        '-reconnect_delay_max', '5',
+      );
+    }
+
+    ffmpegArgs.push(
       '-analyzeduration', '0',
       '-loglevel', 'error',
-    ];
+    );
 
     if (seekSeconds > 0) {
       ffmpegArgs.push('-ss', seekSeconds.toString());
