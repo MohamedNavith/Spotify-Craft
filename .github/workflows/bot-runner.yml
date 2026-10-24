@@ -46,12 +46,14 @@ jobs:
       - name: Run Wavelength Bot with Crash Immunity Supervisor
         working-directory: ./discord-bot
         env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN || vars.DISCORD_TOKEN || secrets.discord_token || vars.discord_token }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID || vars.CLIENT_ID || secrets.client_id || vars.client_id }}
           NODE_ENV: production
         run: |
           if [ -z "$DISCORD_TOKEN" ]; then
-            echo "::error::DISCORD_TOKEN secret is missing! Please add DISCORD_TOKEN in Repository Settings -> Secrets and variables -> Actions."
+            echo "::error::DISCORD_TOKEN secret is missing in GitHub repository settings!"
+            echo "Please go to: https://github.com/MohamedNavith/Spotify-Craft/settings/secrets/actions"
+            echo "Click 'New repository secret', name it DISCORD_TOKEN, and paste your bot token."
             exit 1
           fi
 
