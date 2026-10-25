@@ -3,7 +3,7 @@ name: Wavelength 24/7 Discord Bot Runner
 on:
   workflow_dispatch:
   schedule:
-    # Trigger automatically every 5 hours (at minute 0 past every 5th hour)
+    # Fallback safety net trigger every 5 hours
     - cron: '0 */5 * * *'
   push:
     paths:
@@ -12,6 +12,10 @@ on:
 concurrency:
   group: wavelength-discord-bot-service
   cancel-in-progress: true
+
+permissions:
+  actions: write
+  contents: read
 
 jobs:
   run-bot:
@@ -45,11 +49,13 @@ jobs:
         working-directory: ./discord-bot
         run: npm run build
 
-      - name: Run Wavelength Bot with Crash Immunity Supervisor
+      - name: Run Wavelength Bot with Daisy-Chain Relay Supervisor
         working-directory: ./discord-bot
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN || vars.DISCORD_TOKEN || secrets.discord_token || vars.discord_token }}
           CLIENT_ID: ${{ secrets.CLIENT_ID || vars.CLIENT_ID || secrets.client_id || vars.client_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           NODE_ENV: production
         run: |
           if [ -z "$DISCORD_TOKEN" ]; then
@@ -59,36 +65,5 @@ jobs:
             exit 1
           fi
 
-          echo "Starting Wavelength Bot 24/7 supervisor..."
-          node -e '
-            const { spawn } = require("child_process");
-            const RUN_DURATION_MS = 5 * 60 * 60 * 1000; // 5 hours per shift
-            const startTime = Date.now();
-
-            function runBot() {
-              if (Date.now() - startTime >= RUN_DURATION_MS) {
-                console.log("[Supervisor] 5-hour runner shift completed cleanly. Handing over to next scheduled runner.");
-                process.exit(0);
-              }
-
-              console.log("[Supervisor] Launching Wavelength bot process...");
-              const child = spawn("node", ["dist/index.js"], { stdio: "inherit" });
-
-              child.on("close", (code) => {
-                console.log("[Supervisor] Bot process closed with code " + code);
-                if (Date.now() - startTime < RUN_DURATION_MS) {
-                  console.log("[Supervisor] Auto-restarting bot in 3 seconds...");
-                  setTimeout(runBot, 3000);
-                } else {
-                  process.exit(0);
-                }
-              });
-
-              child.on("error", (err) => {
-                console.error("[Supervisor] Process error:", err);
-                setTimeout(runBot, 3000);
-              });
-            }
-
-            runBot();
-          '
+          echo "Starting Wavelength Bot 24/7 Daisy-Chain Relay Supervisor..."
+          node supervisor.js
