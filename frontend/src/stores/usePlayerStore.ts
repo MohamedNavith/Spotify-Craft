@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
-import { resolveFullAudioStream } from '../lib/fullAudioResolver';
-import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { UnifiedPlayback, UnifiedTrack } from '../types';
 
@@ -151,42 +149,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         }
       });
     }
-
-    // Auto-resolve 100% full master ad-free version (3-5 mins) via direct 320kbps CDN stream
-    resolveMasterAudioStream(track.title, track.artistName).then((master) => {
-      if (master && master.streamUrl) {
-        const current = get().currentTrack;
-        if (current && current.id === track.id) {
-          set({
-            currentTrack: {
-              ...current,
-              streamUrl: master.streamUrl,
-              duration: master.duration,
-              audioQuality: '320kbps (Master Studio Lossless)',
-            },
-            duration: master.duration,
-          });
-        }
-      } else {
-        // Fallback to fullAudioStream
-        resolveFullAudioStream(track.title, track.artistName).then((full) => {
-          if (full) {
-            const current = get().currentTrack;
-            if (current && current.id === track.id) {
-              set({
-                currentTrack: {
-                  ...current,
-                  streamUrl: full.streamUrl,
-                  duration: full.duration,
-                  audioQuality: '320kbps (Full Master Audio)',
-                },
-                duration: full.duration,
-              });
-            }
-          }
-        });
-      }
-    });
   },
 
   openShareModal: (track) => {
@@ -234,28 +196,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     }
 
     const nextTrack = queue[nextIndex];
+    const instantVideoId = resolveVideoId(nextTrack.title, nextTrack.artistName);
     set({
       currentTrack: nextTrack,
       queueIndex: nextIndex,
       progress: 0,
       duration: nextTrack.duration || 180,
       isPlaying: true,
+      dynamicVideoId: instantVideoId,
     });
 
-    if (get().playbackMode === 'full') {
-      resolveFullAudioStream(nextTrack.title, nextTrack.artistName).then((full) => {
-        if (full) {
+    if (!instantVideoId) {
+      resolveVideoIdAsync(nextTrack.title, nextTrack.artistName).then((resolved) => {
+        if (resolved) {
           const current = get().currentTrack;
           if (current && current.id === nextTrack.id) {
-            set({
-              currentTrack: {
-                ...current,
-                streamUrl: full.streamUrl,
-                duration: full.duration,
-                audioQuality: '320kbps (Full Master Audio)',
-              },
-              duration: full.duration,
-            });
+            set({ dynamicVideoId: resolved });
           }
         }
       });
@@ -273,28 +229,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     const prevIndex = queueIndex > 0 ? queueIndex - 1 : queue.length - 1;
     const prevTrack = queue[prevIndex];
+    const instantVideoId = resolveVideoId(prevTrack.title, prevTrack.artistName);
     set({
       currentTrack: prevTrack,
       queueIndex: prevIndex,
       progress: 0,
       duration: prevTrack.duration || 180,
       isPlaying: true,
+      dynamicVideoId: instantVideoId,
     });
 
-    if (get().playbackMode === 'full') {
-      resolveFullAudioStream(prevTrack.title, prevTrack.artistName).then((full) => {
-        if (full) {
+    if (!instantVideoId) {
+      resolveVideoIdAsync(prevTrack.title, prevTrack.artistName).then((resolved) => {
+        if (resolved) {
           const current = get().currentTrack;
           if (current && current.id === prevTrack.id) {
-            set({
-              currentTrack: {
-                ...current,
-                streamUrl: full.streamUrl,
-                duration: full.duration,
-                audioQuality: '320kbps (Full Master Audio)',
-              },
-              duration: full.duration,
-            });
+            set({ dynamicVideoId: resolved });
           }
         }
       });
@@ -335,26 +285,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       return { repeatMode: modes[(currentIndex + 1) % modes.length] };
     }),
 
-  togglePlaybackMode: () => {
-    const nextMode = get().playbackMode === 'full' ? 'preview' : 'full';
-    set({ playbackMode: nextMode });
-    const current = get().currentTrack;
-    if (nextMode === 'full' && current) {
-      resolveFullAudioStream(current.title, current.artistName).then((full) => {
-        if (full) {
-          set({
-            currentTrack: {
-              ...current,
-              streamUrl: full.streamUrl,
-              duration: full.duration,
-              audioQuality: '320kbps (Full Master Audio)',
-            },
-            duration: full.duration,
-          });
-        }
-      });
-    }
-  },
+  togglePlaybackMode: () =>
+    set((state) => ({
+      playbackMode: state.playbackMode === 'full' ? 'preview' : 'full',
+    })),
 
   toggleNowPlayingVideo: () =>
     set((state) => ({

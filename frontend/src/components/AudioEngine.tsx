@@ -2,11 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
-import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
-// Ultra-light silent WAV audio carrier (1 sample) used to keep Android MediaSession active during full video mode
+// Ultra-light silent WAV audio carrier (1 sample) used to keep Android MediaSession active during full mode
 const SILENT_AUDIO_URI = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A/w==';
 
 export default function AudioEngine() {
@@ -41,37 +40,28 @@ export default function AudioEngine() {
     setIsPlaying,
   } = usePlayerStore();
 
-  const videoId = dynamicVideoId || (currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null);
-  // If track only has a 30s snippet or missing URL, use YouTube player for 100% full song version
-  const isSnippet = !currentTrack?.streamUrl || currentTrack.streamUrl.includes('itunes.apple.com') || currentTrack.streamUrl.includes('mzstatic.com') || (currentTrack.duration <= 35 && currentTrack.duration > 0);
-  const isYTMode = !!videoId && (isNowPlayingVideoOpen || (playbackMode === 'full' && isSnippet));
+  const isLocalOrOffline =
+    currentTrack?.provider === 'upload' ||
+    currentTrack?.id?.startsWith('offline-');
 
-  // Resolve dynamic master audio stream and upgrade any low-quality/preview stream immediately
-  useEffect(() => {
-    if (!currentTrack) return;
-    if (!currentTrack.streamUrl || currentTrack.streamUrl.includes('itunes.apple.com')) {
-      resolveMasterAudioStream(currentTrack.title, currentTrack.artistName).then((master) => {
-        if (master && master.streamUrl) {
-          const current = usePlayerStore.getState().currentTrack;
-          if (current && current.id === currentTrack.id) {
-            usePlayerStore.setState({
-              currentTrack: {
-                ...current,
-                streamUrl: master.streamUrl,
-                duration: master.duration,
-                audioQuality: '320kbps (Master Studio Lossless)',
-              },
-              duration: master.duration,
-            });
-          }
-        }
-      });
-    }
-  }, [currentTrack]);
+  const videoId =
+    dynamicVideoId ||
+    (currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null);
+
+  // In full mode, any online track uses YouTube full song playback
+  const isYTMode = !isLocalOrOffline && playbackMode === 'full' && !!currentTrack;
+
+  const ytEmbedSrc = videoId
+    ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1`
+    : currentTrack
+    ? `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(
+        `${currentTrack.title} ${currentTrack.artistName} official audio`,
+      )}&autoplay=1&enablejsapi=1&playsinline=1`
+    : '';
 
   // Resolve dynamic video ID asynchronously if not already known
   useEffect(() => {
-    if (!currentTrack) return;
+    if (!currentTrack || isLocalOrOffline) return;
     if (videoId) return;
 
     let active = true;
@@ -84,12 +74,11 @@ export default function AudioEngine() {
     return () => {
       active = false;
     };
-  }, [currentTrack, videoId, setDynamicVideoId]);
+  }, [currentTrack, videoId, isLocalOrOffline, setDynamicVideoId]);
 
   // Universal Track Finished Handler (Handles Sleep Timer & Auto-Next)
   const handleTrackEnded = () => {
     if (sleepTimerMinutes === -1) {
-      // Sleep timer was configured for "End of this track"
       setIsPlaying(false);
       setSleepTimer(null);
       if (audioRef.current) audioRef.current.pause();
@@ -137,35 +126,18 @@ export default function AudioEngine() {
     } catch {}
   };
 
-  // Listen for YouTube IFrame Player API postMessage events (Ended, Time update, Ad silencing)
+  // Listen for YouTube IFrame Player API postMessage events (Ended, Time update)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (typeof event.data !== 'string') return;
       try {
         const data = JSON.parse(event.data);
-
-        // Dynamic Ad Silencer & Auto-Skipper
-        if (data.event === 'infoDelivery' && data.info) {
-          const isAd = Boolean(
-            data.info.adVideoId ||
-            data.info.isAd ||
-            (data.info.videoData && data.info.videoData.isAd)
-          );
-
-          if (isAd) {
-            // Mute ad and fast-forward past commercial slot
-            postYT('mute');
-            postYT('setPlaybackRate', [16]);
-            if (data.info.duration && data.info.duration > 0) {
-              postYT('seekTo', [data.info.duration, true]);
-            }
-            return;
-          } else {
-            // Restore regular playback audio rate
-            if (!isMuted) postYT('unMute');
-            postYT('setPlaybackRate', [1]);
+        if (data.event === 'onStateChange') {
+          // YT.PlayerState.ENDED = 0
+          if (data.info === 0) {
+            handleTrackEnded();
           }
-
+        } else if (data.event === 'infoDelivery' && data.info) {
           if (typeof data.info.currentTime === 'number' && isFinite(data.info.currentTime)) {
             setProgress(data.info.currentTime);
           }
@@ -173,19 +145,12 @@ export default function AudioEngine() {
             setDuration(data.info.duration);
           }
         }
-
-        if (data.event === 'onStateChange') {
-          // YT.PlayerState.ENDED = 0
-          if (data.info === 0) {
-            handleTrackEnded();
-          }
-        }
       } catch {}
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [repeatMode, nextTrack, setProgress, setDuration, isMuted, sleepTimerMinutes]);
+  }, [repeatMode, nextTrack, setProgress, setDuration, sleepTimerMinutes]);
 
   // 1. Audio Source Loading: Synchronize streamUrl or YouTube embed
   useEffect(() => {
@@ -204,7 +169,7 @@ export default function AudioEngine() {
     }
 
     if (isYTMode) {
-      // In full YouTube mode, use silent audio carrier to keep Android Lock Screen & MediaSession alive
+      // In full mode with YouTube video, use silent audio carrier to keep Android Lock Screen & MediaSession alive
       if (audio.src !== SILENT_AUDIO_URI) {
         audio.src = SILENT_AUDIO_URI;
         audio.loop = true;
@@ -218,11 +183,12 @@ export default function AudioEngine() {
         postYT('pauseVideo');
       }
     } else {
-      // Pure Master Audio Mode: Play directly through HTML5 Audio with 100% Zero Ads
+      // Preview mode or direct offline file: use HTML5 audio element
       postYT('pauseVideo');
       audio.loop = false;
-      if (currentTrack.streamUrl && audio.src !== currentTrack.streamUrl) {
-        audio.src = currentTrack.streamUrl;
+      const targetSrc = currentTrack.streamUrl || '';
+      if (targetSrc && audio.src !== targetSrc) {
+        audio.src = targetSrc;
         audio.load();
       }
 
@@ -287,32 +253,25 @@ export default function AudioEngine() {
     else postYT('unMute');
   }, [volume, isMuted]);
 
-  // 5. High-Precision Playback Timer (Updates progress every 200ms)
+  // 5. High-Precision Playback Timer (Updates progress every 250ms)
   useEffect(() => {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
       if (isYTMode) {
-        // Poll YouTube currentTime
         postYT('getCurrentTime');
-        const next = progress + 0.2;
-        if (duration > 5 && next >= duration) {
-          handleTrackEnded();
-        } else {
-          setProgress(duration > 0 ? Math.min(next, duration) : next);
-        }
       } else {
         const audio = audioRef.current;
         if (audio && !audio.paused && isFinite(audio.currentTime)) {
           setProgress(audio.currentTime);
         }
       }
-    }, 200);
+    }, 250);
 
     return () => clearInterval(interval);
-  }, [isPlaying, isYTMode, progress, duration, setProgress, repeatMode, nextTrack, sleepTimerMinutes]);
+  }, [isPlaying, isYTMode, setProgress]);
 
-  // 6. Media Session API (Lock screen, dynamic notifications, Bluetooth metadata)
+  // 6. Media Session API (Lock screen, notifications, Bluetooth metadata)
   useEffect(() => {
     if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
     if (!currentTrack) {
@@ -372,7 +331,7 @@ export default function AudioEngine() {
 
   return (
     <>
-      {/* Primary HTML5 Audio Engine (Used when audio stream is active) */}
+      {/* Primary HTML5 Audio Engine (Used when audio stream / preview / offline is active) */}
       <audio
         ref={audioRef}
         preload="auto"
@@ -397,18 +356,18 @@ export default function AudioEngine() {
             }
           }
         }}
-        onEnded={() => {
-          if (!isYTMode) {
-            handleTrackEnded();
-          }
-        }}
+        onEnded={handleTrackEnded}
         onError={async (e) => {
-          console.warn('Audio stream error, attempting self-healing with master CDN:', e);
-          if (currentTrack) {
+          console.warn('Audio stream error, attempting fallback:', e);
+          if (currentTrack && currentTrack.provider === 'official') {
             try {
-              const fresh = await resolveMasterAudioStream(currentTrack.title, currentTrack.artistName);
-              if (fresh && fresh.streamUrl && audioRef.current) {
-                audioRef.current.src = fresh.streamUrl;
+              const { searchOfficialMusic } = await import('../lib/officialMusic');
+              const fresh = await searchOfficialMusic(
+                `${currentTrack.title} ${currentTrack.artistName}`,
+                1,
+              );
+              if (fresh.length > 0 && fresh[0].streamUrl && audioRef.current) {
+                audioRef.current.src = fresh[0].streamUrl;
                 audioRef.current.play().catch(() => {});
               }
             } catch {}
@@ -416,19 +375,23 @@ export default function AudioEngine() {
         }}
       />
 
-      {/* Official YouTube Music Video & Full Background Audio Engine */}
-      {videoId && (
+      {/* Official YouTube Full Song & Video Engine */}
+      {currentTrack && isYTMode && (
         <div
           className={
             isNowPlayingVideoOpen
               ? 'fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col'
-              : 'fixed bottom-1 right-1 w-2 h-2 opacity-[0.02] pointer-events-none z-0 overflow-hidden'
+              : 'fixed -bottom-96 -right-96 w-[1px] h-[1px] opacity-0 pointer-events-none'
           }
         >
           {isNowPlayingVideoOpen && (
             <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
               <a
-                href={`https://www.youtube.com/watch?v=${videoId}`}
+                href={
+                  videoId
+                    ? `https://www.youtube.com/watch?v=${videoId}`
+                    : ytDirectUrl
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
@@ -448,7 +411,8 @@ export default function AudioEngine() {
 
           <iframe
             ref={ytIframeRef}
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&iv_load_policy=3&modestbranding=1`}
+            key={currentTrack?.id || videoId || 'player'}
+            src={ytEmbedSrc}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             className="w-full h-full"
             title="Official Master Audio / Video"
@@ -456,7 +420,7 @@ export default function AudioEngine() {
         </div>
       )}
 
-      {/* Fallback card when Video Mode is explicitly opened but no videoId found */}
+      {/* Fallback card when Video Mode is explicitly opened but video is unavailable */}
       {currentTrack && !videoId && isNowPlayingVideoOpen && (
         <div className="fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col items-center justify-center p-4 bg-gradient-to-t from-black via-zinc-900 to-black text-center">
           <div className="absolute top-2 right-2 z-20">
