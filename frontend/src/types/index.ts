@@ -88,4 +88,7 @@ export interface UserProfile {
   avatarUrl?: string | null;
   isPremium: boolean;
   role: string;
+  watchTimeSeconds?: number;
+  songsWatchedCount?: number;
+  createdAt?: number;
 }

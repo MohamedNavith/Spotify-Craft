@@ -1,6 +1,6 @@
 'use client';
 
-import { Radio } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Lock, Mail, Radio, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -8,7 +8,7 @@ import { useAuthStore } from '../../stores/useAuthStore';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { login, demoLogin } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,85 +19,102 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    try {
-      const res = await fetch('http://localhost:4000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+    const result = await login(email, password);
+    setLoading(false);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      setAuth(data.user, data.accessToken, data.refreshToken);
+    if (result.success) {
       router.push('/');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.message || 'Login failed. Please check your credentials.');
     }
   };
 
+  const handleDemoLogin = () => {
+    demoLogin();
+    router.push('/');
+  };
+
   return (
-    <div className="min-h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-spotify-elevated/40 to-spotify-base">
-      <div className="w-full max-w-sm flex flex-col items-center gap-6 bg-black/80 border border-spotify-border p-8 rounded-xl shadow-2xl">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-full bg-spotify-green flex items-center justify-center text-black">
-            <Radio className="w-6 h-6 stroke-[2.5]" />
+    <div className="min-h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-spotify-elevated/40 to-spotify-base select-none">
+      <div className="w-full max-w-md flex flex-col items-center gap-6 bg-black/85 border border-white/10 p-8 rounded-3xl shadow-2xl backdrop-blur-xl">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="w-12 h-12 rounded-full bg-spotify-green flex items-center justify-center text-black shadow-lg group-hover:scale-105 transition-transform">
+            <Radio className="w-7 h-7 stroke-[2.5]" />
           </div>
-          <span className="font-black text-2xl tracking-tight text-white">Wavelength</span>
+          <span className="font-black text-3xl tracking-tight text-white group-hover:text-spotify-green transition-colors">
+            Wavelength
+          </span>
         </Link>
 
-        <h1 className="text-2xl font-bold text-white text-center">
-          Log in to Wavelength
-        </h1>
+        <div className="text-center">
+          <h1 className="text-2xl md:text-3xl font-black text-white">
+            Log in to your account
+          </h1>
+          <p className="text-xs text-spotify-subtext mt-1">
+            Access your full listening history, watch time, custom library &amp; liked songs
+          </p>
+        </div>
 
         {error && (
-          <div className="w-full p-3 bg-red-950/80 border border-red-500/50 rounded text-red-200 text-xs">
+          <div className="w-full p-3 bg-red-950/80 border border-red-500/50 rounded-xl text-red-200 text-xs font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-white">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@domain.com"
-              className="bg-spotify-card border border-spotify-border focus:border-white rounded px-3 py-2.5 text-sm text-white outline-none transition-colors"
-            />
+            <label className="text-xs font-bold text-white/80">Email address</label>
+            <div className="relative flex items-center">
+              <Mail className="w-4 h-4 text-spotify-subtext absolute left-3.5 pointer-events-none" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@domain.com"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-spotify-subtext focus:border-spotify-green outline-none transition-colors"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-white">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="bg-spotify-card border border-spotify-border focus:border-white rounded px-3 py-2.5 text-sm text-white outline-none transition-colors"
-            />
+            <label className="text-xs font-bold text-white/80">Password</label>
+            <div className="relative flex items-center">
+              <Lock className="w-4 h-4 text-spotify-subtext absolute left-3.5 pointer-events-none" />
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-spotify-subtext focus:border-spotify-green outline-none transition-colors"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold rounded-full transition-transform active:scale-95 disabled:opacity-50"
+            className="w-full mt-2 py-3 bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold text-sm rounded-full transition-transform active:scale-95 disabled:opacity-50 shadow-lg flex items-center justify-center gap-2"
           >
-            {loading ? 'Logging in...' : 'Log In'}
+            <span>{loading ? 'Logging in...' : 'Log In'}</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="w-full border-t border-spotify-border pt-4 text-center">
-          <p className="text-xs text-spotify-subtext">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-white hover:underline font-bold">
+        {/* Instant 1-Click Demo Account */}
+        <div className="w-full flex flex-col gap-3 pt-4 border-t border-white/10">
+          <button
+            onClick={handleDemoLogin}
+            className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-full border border-white/10 flex items-center justify-center gap-2 transition-all hover:scale-102 active:scale-98 shadow"
+          >
+            <Sparkles className="w-4 h-4 text-spotify-green" />
+            <span>1-Click Demo Login (Pre-loaded Profile)</span>
+          </button>
+
+          <p className="text-center text-xs text-spotify-subtext">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="text-white hover:text-spotify-green underline font-bold">
               Sign up for Wavelength
             </Link>
           </p>

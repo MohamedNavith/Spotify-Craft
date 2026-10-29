@@ -1,9 +1,9 @@
 'use client';
 
-import { Flame, Heart, Headphones, Music2, Radio, Sparkles, Play, Disc3, Mic2, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Disc3, Flame, Headphones, Heart, Mic2, Music2, Play, Radio, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TrackCard from '../components/TrackCard';
 import { CURATED_OFFICIAL_HITS, searchOfficialMusic } from '../lib/officialMusic';
 import { generateDailyMixes } from '../lib/recommendations';
@@ -93,6 +93,14 @@ export default function HomePage() {
   const [loadingArtist, setLoadingArtist] = useState<string | null>(null);
 
   const { setTrack, history } = usePlayerStore();
+  const historyScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollShelf = (direction: 'left' | 'right') => {
+    if (historyScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -380 : 380;
+      historyScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     // Dynamic greeting calculation
@@ -264,7 +272,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Shelf: Recently Played (Listening History) */}
+        {/* Shelf: Recently Played (Listening History - Smooth Horizontally Scrollable across Mobile, Web & Desktop) */}
         {history && history.length > 0 && (
           <section className="flex flex-col gap-4 mt-6">
             <div className="flex items-center justify-between">
@@ -273,17 +281,39 @@ export default function HomePage() {
                   Recently Played
                 </h2>
                 <p className="text-spotify-subtext text-xs">
-                  Pick up right where you left off
+                  Pick up right where you left off &bull; Scroll to browse full history
                 </p>
               </div>
-              <Link href="/history" className="text-xs font-bold text-spotify-subtext hover:text-white hover:underline">
-                Show all
-              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => scrollShelf('left')}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow"
+                  title="Scroll left"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => scrollShelf('right')}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow"
+                  title="Scroll right"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <Link href="/history" className="text-xs font-bold text-spotify-subtext hover:text-white hover:underline ml-2">
+                  Show all
+                </Link>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {history.slice(0, 6).map((track) => (
-                <TrackCard key={track.id} track={track} queue={history} />
+            <div
+              ref={historyScrollRef}
+              className="flex gap-4 overflow-x-auto scrollbar-none scroll-smooth pb-3 pt-1 -mx-2 px-2"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {history.map((track) => (
+                <div key={track.id} className="w-40 sm:w-44 md:w-48 shrink-0">
+                  <TrackCard track={track} queue={history} />
+                </div>
               ))}
             </div>
           </section>

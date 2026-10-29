@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getOfflineTracks } from '../../lib/offlineStorage';
 import { searchOfficialMusic } from '../../lib/officialMusic';
-import { deleteUserPlaylist, getUserPlaylists, UserPlaylist } from '../../lib/userPlaylists';
+import { deleteUserPlaylist, getLikedTracks, getUserPlaylists, UserPlaylist } from '../../lib/userPlaylists';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 
 const CURATED_ALBUMS = [
@@ -131,6 +131,7 @@ export default function LibraryPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<'all' | 'playlists' | 'artists' | 'albums'>('all');
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
+  const [likedTracks, setLikedTracks] = useState<any[]>([]);
   const [searchFilter, setSearchFilter] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
@@ -139,9 +140,19 @@ export default function LibraryPage() {
 
   useEffect(() => {
     setUserPlaylists(getUserPlaylists());
-    const handleUpdate = () => setUserPlaylists(getUserPlaylists());
+    setLikedTracks(getLikedTracks());
+
+    const handleUpdate = () => {
+      setUserPlaylists(getUserPlaylists());
+      setLikedTracks(getLikedTracks());
+    };
+
     window.addEventListener('wavelength_playlists_updated', handleUpdate);
-    return () => window.removeEventListener('wavelength_playlists_updated', handleUpdate);
+    window.addEventListener('wavelength_liked_tracks_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('wavelength_playlists_updated', handleUpdate);
+      window.removeEventListener('wavelength_liked_tracks_updated', handleUpdate);
+    };
   }, []);
 
   const handlePlayQuery = async (key: string, queryText: string) => {
@@ -239,6 +250,27 @@ export default function LibraryPage() {
         ))}
       </div>
 
+      {/* "Create Custom Playlist / Add Desired Songs" Banner */}
+      <div
+        onClick={() => setIsCreateSheetOpen(true)}
+        className="w-full bg-gradient-to-r from-spotify-green/20 via-spotify-card to-black border border-spotify-green/40 hover:border-spotify-green rounded-2xl p-4 flex items-center justify-between mb-3 cursor-pointer active:scale-[0.99] transition-all shadow-xl group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-spotify-green text-black flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition-transform">
+            <Plus className="w-6 h-6 stroke-[3]" />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="text-sm font-black text-white group-hover:text-spotify-green transition-colors">
+              Create Playlist &bull; Add Your Desired Songs
+            </h3>
+            <span className="text-xs text-[#b3b3b3]">
+              Search and add any song, singer, or album directly to your library
+            </span>
+          </div>
+        </div>
+        <ChevronRight className="w-5 h-5 text-white/50 group-hover:text-white transition-colors" />
+      </div>
+
       {/* "Import your music from other apps" Banner */}
       <div
         onClick={() => setIsSpotifyImportOpen(true)}
@@ -270,11 +302,17 @@ export default function LibraryPage() {
         {(filter === 'all' || filter === 'playlists') && (
           <>
             {/* Pinned: Liked Songs */}
-            <Link
-              href="/search"
+            <div
+              onClick={() => {
+                if (likedTracks.length > 0) {
+                  setTrack(likedTracks[0], likedTracks);
+                } else {
+                  setIsCreateSheetOpen(true);
+                }
+              }}
               className="flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
             >
-              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
+              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-transform">
                 <Heart className="w-6 h-6 fill-white" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
@@ -282,10 +320,10 @@ export default function LibraryPage() {
                   Liked Songs
                 </span>
                 <span className="text-xs text-[#b3b3b3] flex items-center gap-1 mt-0.5">
-                  <span className="text-spotify-green font-bold">📌 Pinned</span> • Playlist
+                  <span className="text-spotify-green font-bold">📌 Pinned</span> &bull; {likedTracks.length > 0 ? `${likedTracks.length} songs` : 'Add songs you desire'}
                 </span>
               </div>
-            </Link>
+            </div>
 
             {/* Pinned: Downloaded Songs */}
             <div

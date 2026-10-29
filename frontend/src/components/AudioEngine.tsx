@@ -4,11 +4,13 @@ import { useEffect, useRef } from 'react';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
 import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
+import { useAuthStore } from '../stores/useAuthStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function AudioEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ytIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const prevTrackIdRef = useRef<string | null>(null);
 
   const {
     currentTrack,
@@ -112,15 +114,24 @@ export default function AudioEngine() {
 
     const currentSrc = audio.src;
     const newSrc = currentTrack.streamUrl;
+    const isNewTrack = prevTrackIdRef.current !== currentTrack.id;
 
     if (currentSrc !== newSrc) {
       const prevTime = audio.currentTime;
       audio.src = newSrc;
       audio.load();
 
-      // If upgrading from preview to full master while playing, resume smoothly from current position
-      if (prevTime > 1 && prevTime < (currentTrack.duration || 300)) {
-        audio.currentTime = prevTime;
+      if (isNewTrack) {
+        // Changing to a new track: ALWAYS start from 0:00!
+        prevTrackIdRef.current = currentTrack.id;
+        audio.currentTime = 0;
+        setProgress(0);
+        useAuthStore.getState().incrementSongCount();
+      } else {
+        // Same track upgrading from preview to full master 320kbps while playing: resume smoothly from current position
+        if (prevTime > 1 && prevTime < (currentTrack.duration || 300)) {
+          audio.currentTime = prevTime;
+        }
       }
 
       if (isPlaying) {
@@ -132,7 +143,18 @@ export default function AudioEngine() {
         }
       }
     }
-  }, [currentTrack?.streamUrl, currentTrack?.duration, setDuration, isPlaying]);
+  }, [currentTrack?.id, currentTrack?.streamUrl, currentTrack?.duration, setDuration, setProgress, isPlaying]);
+
+  // Real-time Listening Watchtime Tracker
+  useEffect(() => {
+    if (!isPlaying || !currentTrack) return;
+
+    const timer = setInterval(() => {
+      useAuthStore.getState().incrementWatchTime(1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isPlaying, currentTrack]);
 
   // 2. Play / Pause Synchronization
   useEffect(() => {

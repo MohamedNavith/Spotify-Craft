@@ -18,6 +18,7 @@ import { searchOfficialMusic } from '../lib/officialMusic';
 import { useAuthStore } from '../stores/useAuthStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { UnifiedTrack } from '../types';
+import UserProfileModal from './UserProfileModal';
 
 interface TopBarProps {
   showSearch?: boolean;
@@ -271,17 +272,23 @@ export default function TopBar({
         {/* User Profile Avatar */}
         {isAuthenticated && user ? (
           <div className="flex items-center gap-2">
-            <div
-              title={user.displayName}
-              className="w-9 h-9 rounded-full bg-[#282828] hover:scale-105 border-2 border-black flex items-center justify-center cursor-pointer transition-transform shadow-md"
-            >
-              <User className="w-4 h-4 text-white" />
-            </div>
             <button
-              onClick={() => logout()}
-              className="hidden lg:inline text-xs text-spotify-subtext hover:text-white transition-colors ml-1"
+              onClick={() => useAuthStore.getState().setIsProfileModalOpen(true)}
+              title={`${user.displayName} - View Listening Profile`}
+              className="w-9 h-9 rounded-full bg-[#282828] hover:scale-105 border-2 border-spotify-green flex items-center justify-center cursor-pointer transition-transform shadow-md overflow-hidden"
             >
-              Log out
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-white" />
+              )}
+            </button>
+            <button
+              onClick={() => useAuthStore.getState().setIsProfileModalOpen(true)}
+              className="hidden lg:flex flex-col text-left cursor-pointer"
+            >
+              <span className="text-xs font-bold text-white leading-tight max-w-[120px] truncate">{user.displayName}</span>
+              <span className="text-[10px] text-spotify-green font-mono">Profile &amp; Stats</span>
             </button>
           </div>
         ) : (
@@ -294,13 +301,15 @@ export default function TopBar({
             </Link>
             <Link
               href="/login"
-              className="px-4 py-2 rounded-full bg-white hover:bg-white/90 text-black font-extrabold text-xs transition-transform active:scale-95"
+              className="px-4 py-2 rounded-full bg-white hover:bg-white/90 text-black font-extrabold text-xs transition-transform active:scale-95 shadow-md"
             >
               Log in
             </Link>
           </div>
         )}
       </div>
+
+      <UserProfileModal />
     </header>
   );
 }
