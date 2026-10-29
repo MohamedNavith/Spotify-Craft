@@ -130,7 +130,7 @@ export default function Sidebar() {
     {
       name: 'Sabrina Carpenter',
       listeners: '86.7M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/57/e8/7b/57e87ba0-5057-9bb9-c247-ce7dbe426e89/24UMGIM55213.rgb.jpg/600x600bb.jpg',
     },
     {
       name: 'The Weeknd',

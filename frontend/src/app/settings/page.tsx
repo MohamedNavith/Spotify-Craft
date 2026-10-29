@@ -43,7 +43,7 @@ const DEFAULT_POPULAR_ARTISTS: PopularArtist[] = [
   },
   {
     name: 'Sabrina Carpenter',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/57/e8/7b/57e87ba0-5057-9bb9-c247-ce7dbe426e89/24UMGIM55213.rgb.jpg/600x600bb.jpg',
     genre: 'Pop & Dance',
   },
   {
@@ -194,13 +194,13 @@ export default function SettingsPage() {
                       : 'bg-spotify-card hover:bg-spotify-hover border-white/5'
                   }`}
                 >
-                  <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-xl border-2 border-transparent group-hover:scale-105 transition-transform">
+                  <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-xl border-2 border-transparent group-hover:scale-105 transition-transform bg-spotify-elevated flex items-center justify-center">
                     <img
                       src={artist.image}
                       alt={artist.name}
                       referrerPolicy="no-referrer"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300';
+                        (e.target as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23282828'/><circle cx='50' cy='50' r='30' fill='%231DB954'/><path d='M45 40 L65 50 L45 60 Z' fill='black'/></svg>";
                       }}
                       className="w-full h-full object-cover"
                     />
