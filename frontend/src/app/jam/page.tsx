@@ -2,7 +2,6 @@
 
 import { Copy, Headphones, Music, Play, Radio, Share2, Users } from 'lucide-react';
 import { useState } from 'react';
-import TopBar from '../../components/TopBar';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 
 export default function JamSessionPage() {
@@ -25,8 +24,6 @@ export default function JamSessionPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-16 select-none">
-      <TopBar />
-
       <div className="px-8 max-w-4xl mx-auto w-full flex flex-col gap-8 mt-6">
         {/* Header Banner */}
         <div className="p-8 rounded-2xl bg-gradient-to-r from-emerald-950 via-spotify-card to-spotify-elevated border border-spotify-border flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">

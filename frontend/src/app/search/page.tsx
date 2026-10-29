@@ -1,8 +1,7 @@
 'use client';
 
-import { Clock3, Heart, Pause, Play } from 'lucide-react';
+import { Clock3, Heart, Pause, Play, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import TopBar from '../../components/TopBar';
 import TrackCard from '../../components/TrackCard';
 import { searchTracks } from '../../lib/api';
 import { usePlayerStore } from '../../stores/usePlayerStore';
@@ -37,6 +36,15 @@ export default function SearchPage() {
   const { currentTrack, isPlaying, setTrack, togglePlay, likedTrackIds, toggleLike } =
     usePlayerStore();
 
+  // Read URL query parameter on load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const q = urlParams.get('q');
+      if (q) setQuery(q);
+    }
+  }, []);
+
   useEffect(() => {
     if (!query.trim()) {
       setResults(null);
@@ -62,14 +70,28 @@ export default function SearchPage() {
   const otherTracks = results?.tracks?.slice(1, 5) || [];
 
   return (
-    <div className="flex flex-col min-h-full pb-12">
-      <TopBar
-        showSearch={true}
-        searchQuery={query}
-        onSearchChange={setQuery}
-      />
+    <div className="flex flex-col min-h-full pb-12 p-6">
+      {/* Inline Search Bar on Search Page for Mobile / Direct Typing */}
+      <div className="relative max-w-md w-full mb-6">
+        <Search className="w-5 h-5 text-spotify-subtext absolute left-4 top-1/2 -translate-y-1/2" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="What do you want to play?"
+          className="w-full h-12 bg-[#242424] hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-white text-sm pl-11 pr-10 rounded-full outline-none border border-transparent focus:border-white/40 transition-all shadow-inner placeholder:text-spotify-subtext"
+        />
+        {query && (
+          <button
+            onClick={() => setQuery('')}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-spotify-subtext hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
 
-      <div className="px-6 flex flex-col gap-6 mt-4">
+      <div className="flex flex-col gap-6">
         {/* If no query, show Spotify Browse Categories */}
         {!query.trim() && (
           <section className="flex flex-col gap-4">

@@ -4,7 +4,6 @@ import { Flame, Heart, Headphones, Music2, Radio, Sparkles, Play, Disc3, Mic2, S
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import TopBar from '../components/TopBar';
 import TrackCard from '../components/TrackCard';
 import { CURATED_OFFICIAL_HITS, searchOfficialMusic } from '../lib/officialMusic';
 import { generateDailyMixes } from '../lib/recommendations';
@@ -195,17 +194,15 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-full pb-16 relative overflow-hidden">
-      <TopBar />
-
-      <div className="px-6 flex flex-col gap-6">
+    <div className="flex flex-col min-h-full pb-16 relative overflow-hidden bg-gradient-to-b from-[#1e3264]/40 via-spotify-base to-spotify-base">
+      <div className="p-6 flex flex-col gap-6">
         {/* Category Pills */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sticky top-0 py-2 -mt-2 bg-spotify-base/80 backdrop-blur-md z-20">
           {(['all', 'music', 'podcasts'] as const).map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold capitalize transition-colors ${
+              className={`px-4 py-1.5 rounded-full text-sm font-bold capitalize transition-colors ${
                 activeCategory === cat
                   ? 'bg-white text-black'
                   : 'bg-spotify-elevated hover:bg-spotify-hover text-white'

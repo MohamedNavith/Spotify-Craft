@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Pause } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { UnifiedTrack } from '../types';
 
@@ -25,23 +25,24 @@ export default function TrackCard({ track, queue }: TrackCardProps) {
   return (
     <div
       onClick={() => setTrack(track, queue)}
-      className="group bg-spotify-card hover:bg-spotify-hover p-4 rounded-md transition-all duration-300 cursor-pointer flex flex-col gap-3 relative shadow-md hover:shadow-xl"
+      className="group bg-[#181818] hover:bg-[#282828] p-3.5 rounded-lg transition-all duration-300 cursor-pointer flex flex-col gap-3 relative shadow-md hover:shadow-2xl border border-white/5"
     >
       {/* Artwork container */}
-      <div className="relative aspect-square w-full rounded overflow-hidden bg-spotify-elevated shadow-lg">
+      <div className="relative aspect-square w-full rounded-md overflow-hidden bg-[#242424] shadow-lg">
         {track.artworkUrl ? (
           <img
             src={track.artworkUrl}
             alt={track.title}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-spotify-subtext font-bold text-2xl">
+          <div className="w-full h-full flex items-center justify-center text-spotify-subtext font-black text-2xl">
             W
           </div>
         )}
 
-        {/* Floating Spotify Green Play Button */}
+        {/* Signature Spotify Floating Green Play Button */}
         <button
           onClick={handlePlayClick}
           aria-label={isCurrent && isPlaying ? 'Pause' : 'Play'}
@@ -64,15 +65,15 @@ export default function TrackCard({ track, queue }: TrackCardProps) {
         <h3
           className={`font-bold text-sm truncate ${
             isCurrent ? 'text-spotify-green' : 'text-white'
-          }`}
+          } group-hover:underline`}
         >
           {track.title}
         </h3>
-        <p className="text-spotify-subtext text-xs truncate mt-1">
+        <p className="text-spotify-subtext text-xs truncate mt-1 hover:underline">
           {track.artistName}
         </p>
         {track.license && (
-          <span className="text-[10px] text-spotify-subtext/70 truncate mt-1">
+          <span className="text-[10px] text-spotify-subtext/60 truncate mt-0.5">
             {track.license}
           </span>
         )}

@@ -6,10 +6,12 @@ import BackButtonManager from '../components/BackButtonManager';
 import CreateSheetModal from '../components/CreateSheetModal';
 import { DiscordBotModal } from '../components/DiscordBotModal';
 import DynamicIsland from '../components/DynamicIsland';
+import NowPlayingPanel from '../components/NowPlayingPanel';
 import PlayerBar from '../components/PlayerBar';
 import ShareModal from '../components/ShareModal';
 import Sidebar from '../components/Sidebar';
 import SleepTimerModal from '../components/SleepTimerModal';
+import TopBar from '../components/TopBar';
 import './globals.css';
 
 const figtree = Figtree({
@@ -42,15 +44,21 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${figtree.variable}`}>
       <body className={`${figtree.className} font-sans h-screen w-screen flex flex-col overflow-hidden bg-black text-white select-none`}>
-        {/* Main Application Shell */}
-        <div className="flex-1 flex overflow-hidden min-h-0 p-2 gap-2">
-          {/* Left Navigation Sidebar */}
+        {/* Global Spotify Top Navigation Bar */}
+        <TopBar />
+
+        {/* Main 3-Column Bento Shell */}
+        <div className="flex-1 flex overflow-hidden min-h-0 px-2 pb-2 gap-2">
+          {/* Left Navigation Sidebar ("Your Library") */}
           <Sidebar />
 
           {/* Main Content Viewport */}
-          <main className="flex-1 bg-spotify-base rounded-lg overflow-y-auto custom-scrollbar flex flex-col relative pb-32 md:pb-0">
+          <main className="flex-1 bg-spotify-base rounded-lg overflow-y-auto custom-scrollbar flex flex-col relative pb-32 md:pb-0 border border-white/5 shadow-2xl">
             {children}
           </main>
+
+          {/* Right-Hand Spotify "Now Playing View" Drawer */}
+          <NowPlayingPanel />
         </div>
 
         {/* Bottom Persistent Spotify Playback Bar */}

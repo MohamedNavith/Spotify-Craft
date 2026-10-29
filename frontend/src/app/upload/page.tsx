@@ -2,7 +2,6 @@
 
 import { CheckCircle2, ShieldCheck, Upload, UploadCloud } from 'lucide-react';
 import { useState } from 'react';
-import TopBar from '../../components/TopBar';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 
 export default function UploadPage() {
@@ -62,8 +61,6 @@ export default function UploadPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-16 select-none">
-      <TopBar />
-
       <div className="px-8 max-w-2xl mx-auto w-full flex flex-col gap-8 mt-6">
         <div>
           <h1 className="text-3xl font-extrabold text-white">Upload Your Audio</h1>

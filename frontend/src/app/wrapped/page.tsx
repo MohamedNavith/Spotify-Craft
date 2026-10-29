@@ -2,7 +2,6 @@
 
 import { Award, Clock, Flame, Headphones, Music, Radio, Share2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import TopBar from '../../components/TopBar';
 
 export default function WrappedPage() {
   const stats = {
@@ -29,8 +28,6 @@ export default function WrappedPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-16 bg-gradient-to-b from-indigo-950/60 via-spotify-base to-black select-none">
-      <TopBar />
-
       <div className="px-8 max-w-5xl mx-auto w-full flex flex-col gap-10 mt-6">
         {/* Hero Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 rounded-2xl bg-gradient-to-r from-emerald-900 via-teal-900 to-indigo-900 shadow-2xl relative overflow-hidden">

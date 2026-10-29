@@ -1,7 +1,6 @@
 'use client';
 
 import { Clock, Play, Trash2 } from 'lucide-react';
-import TopBar from '../../components/TopBar';
 import TrackCard from '../../components/TrackCard';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 
@@ -15,8 +14,6 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-32 md:pb-16 select-none">
-      <TopBar />
-
       <div className="px-6 md:px-8 py-6 flex flex-col gap-6 max-w-7xl mx-auto w-full">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-6">

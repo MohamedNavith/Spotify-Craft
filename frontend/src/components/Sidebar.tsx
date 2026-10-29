@@ -2,23 +2,22 @@
 
 import {
   ArrowDownToLine,
-  Bot,
-  Clock,
-  Compass,
-  Download,
+  ArrowUpDown,
+  BookMarked,
+  Check,
   FolderPlus,
   Heart,
   Home,
   Library,
-  ListPlus,
+  ListMusic,
   Music,
   Plus,
   Radio,
   Search,
-  Settings,
   Sparkles,
-  UploadCloud,
-  Users,
+  Trash2,
+  Volume2,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -29,8 +28,11 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { setTrack, setIsSpotifyImportOpen, setIsCreateSheetOpen, setIsDiscordModalOpen } = usePlayerStore();
+  const { currentTrack, isPlaying, setTrack, setIsSpotifyImportOpen, setIsCreateSheetOpen } = usePlayerStore();
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'playlists' | 'artists' | 'albums'>('all');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     setUserPlaylists(getUserPlaylists());
@@ -39,336 +41,279 @@ export default function Sidebar() {
     return () => window.removeEventListener('wavelength_playlists_updated', handleUpdate);
   }, []);
 
+  const curatedPlaylists = [
+    { title: "Today's Top Hits", author: 'Spotify Curated', coverBg: 'bg-emerald-900', tracksCount: 50 },
+    { title: 'Global Top 50', author: 'Daily Chart', coverBg: 'bg-cyan-900', tracksCount: 50 },
+    { title: 'Hot Hits India', author: 'Bollywood & Desi', coverBg: 'bg-amber-900', tracksCount: 40 },
+    { title: 'Chill Waves & Lo-Fi', author: 'Lofi Records', coverBg: 'bg-violet-900', tracksCount: 60 },
+  ];
+
+  const filteredPlaylists = userPlaylists.filter((p) =>
+    p.title.toLowerCase().includes(searchFilter.toLowerCase())
+  );
+
   return (
     <>
-      <aside className="hidden md:flex w-64 flex-col gap-2 p-2 select-none h-full text-spotify-subtext text-sm font-medium shrink-0">
-      {/* Top Nav Block */}
-      <div className="bg-spotify-card rounded-lg p-4 flex flex-col gap-4">
-        <Link href="/" className="flex items-center gap-2 text-white font-bold text-lg px-2 py-1">
-          <div className="w-8 h-8 rounded-full bg-spotify-green flex items-center justify-center text-black">
-            <Radio className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <span className="tracking-tight text-white font-black text-xl">Wavelength</span>
-        </Link>
-
-        <nav className="flex flex-col gap-1">
-          <Link
-            href="/"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <Home className="w-6 h-6" />
-            <span>Home</span>
-          </Link>
-          <Link
-            href="/search"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/search'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <Search className="w-6 h-6" />
-            <span>Search</span>
-          </Link>
-          <button
-            onClick={() => setIsSpotifyImportOpen(true)}
-            className="flex items-center gap-4 px-3 py-2 rounded-md transition-colors hover:text-white text-spotify-green font-semibold text-left"
-          >
-            <Sparkles className="w-6 h-6 text-spotify-green" />
-            <span className="flex items-center gap-1.5">
-              <span>Sync Spotify</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-spotify-green text-black">
-                Pro
-              </span>
-            </span>
-          </button>
-          <button
-            onClick={() => setIsDiscordModalOpen(true)}
-            className="flex items-center gap-4 px-3 py-2 rounded-md transition-colors hover:text-white text-[#5865F2] font-semibold text-left group"
-          >
-            <div className="w-6 h-6 rounded bg-[#5865F2]/20 flex items-center justify-center text-[#5865F2] group-hover:bg-[#5865F2] group-hover:text-white transition-colors">
-              <Bot className="w-4 h-4" />
-            </div>
-            <span className="flex items-center gap-1.5 flex-1 justify-between">
-              <span className="text-white group-hover:text-white">Discord Bot</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-[#5865F2] text-white">
-                Online
-              </span>
-            </span>
-          </button>
-          <Link
-            href="/wrapped"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/wrapped'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <Compass className="w-6 h-6" />
-            <span>Wrapped</span>
-          </Link>
-          <Link
-            href="/podcasts"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/podcasts'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <Radio className="w-6 h-6" />
-            <span>Podcasts</span>
-          </Link>
-          <Link
-            href="/jam"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/jam'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <Users className="w-6 h-6" />
-            <span>Jam Session</span>
-          </Link>
-          <Link
-            href="/history"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/history'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <Clock className="w-6 h-6" />
-            <span>Recently Played</span>
-          </Link>
-          <Link
-            href="/settings"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/settings'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <Settings className="w-6 h-6" />
-            <span>Settings</span>
-          </Link>
-          <Link
-            href="/upload"
-            className={`flex items-center gap-4 px-3 py-2 rounded-md transition-colors ${
-              pathname === '/upload'
-                ? 'text-white bg-spotify-hover font-semibold'
-                : 'hover:text-white'
-            }`}
-          >
-            <UploadCloud className="w-6 h-6" />
-            <span>Upload Audio</span>
-          </Link>
-        </nav>
-      </div>
-
-      {/* Your Library Block */}
-      <div className="bg-spotify-card rounded-lg flex-1 flex flex-col overflow-hidden">
-        <div className="p-4 pb-2 flex items-center justify-between">
-          <button className="flex items-center gap-3 text-spotify-subtext hover:text-white transition-colors">
-            <Library className="w-6 h-6" />
-            <span className="font-bold text-base">Your Library</span>
-          </button>
-          <button
-            onClick={() => setIsSpotifyImportOpen(true)}
-            title="Import or Sync Spotify Playlist"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black text-xs font-bold transition-all shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>Import</span>
-          </button>
-        </div>
-
-        {/* Scrollable Library List */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-1 custom-scrollbar">
-          {/* Liked Songs Entry */}
-          <Link
-            href="/search"
-            className="flex items-center gap-3 p-2 rounded-md hover:bg-spotify-hover transition-colors group"
-          >
-            <div className="w-12 h-12 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
-              <Heart className="w-5 h-5 fill-white" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-white font-medium truncate group-hover:text-spotify-green transition-colors">
-                Liked Songs
-              </span>
-              <span className="text-xs text-spotify-subtext">Playlist • Auto</span>
-            </div>
-          </Link>
-
-          {/* Offline Downloaded Songs */}
-          <div
-            onClick={async () => {
-              const offTracks = await getOfflineTracks();
-              if (offTracks.length > 0) {
-                setTrack(offTracks[0], offTracks);
-              } else {
-                alert('No tracks saved offline yet. Click the download icon on any track to save it to your device storage!');
-              }
-            }}
-            className="flex items-center gap-3 p-2 rounded-md hover:bg-spotify-hover transition-colors group cursor-pointer"
-          >
-            <div className="w-12 h-12 rounded bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white shrink-0 shadow-md">
-              <ArrowDownToLine className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-white font-medium truncate group-hover:text-spotify-green transition-colors">
-                Downloaded Songs
-              </span>
-              <span className="text-xs text-spotify-subtext">Offline Storage • In-App</span>
-            </div>
-          </div>
-
-          {/* User Imported / Synced Spotify Playlists */}
-          {userPlaylists.map((playlist) => (
-            <div
-              key={playlist.id}
-              onClick={() => {
-                if (playlist.tracks.length > 0) {
-                  setTrack(playlist.tracks[0], playlist.tracks);
-                }
-              }}
-              className="flex items-center justify-between p-2 rounded-md hover:bg-spotify-hover transition-colors cursor-pointer group"
+      {/* Desktop Spotify Bento Sidebar */}
+      <aside className="hidden md:flex w-[280px] lg:w-[300px] xl:w-[320px] flex-col gap-2 select-none h-full text-spotify-subtext text-sm font-medium shrink-0">
+        <div className="bg-spotify-base rounded-lg flex-1 flex flex-col overflow-hidden border border-white/5 shadow-xl">
+          {/* Header Row: Your Library + Create (+) Button */}
+          <div className="p-4 pb-2 flex items-center justify-between">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className="flex items-center gap-3 text-spotify-subtext hover:text-white transition-colors group"
             >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-12 h-12 rounded bg-gradient-to-br from-spotify-green to-emerald-950 overflow-hidden flex items-center justify-center text-black shrink-0 font-bold shadow">
-                  {playlist.coverArt ? (
-                    <img src={playlist.coverArt} alt={playlist.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <Music className="w-6 h-6 stroke-[2.5]" />
-                  )}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-white font-medium truncate group-hover:text-spotify-green transition-colors">
-                    {playlist.title}
-                  </span>
-                  <span className="text-xs text-spotify-subtext truncate">
-                    Playlist • {playlist.tracks.length} songs
-                  </span>
-                </div>
-              </div>
+              <Library className="w-6 h-6 group-hover:scale-105 transition-transform" />
+              <span className="font-extrabold text-base tracking-tight text-spotify-subtext group-hover:text-white">
+                Your Library
+              </span>
+            </button>
+
+            <div className="flex items-center gap-1">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteUserPlaylist(playlist.id);
-                }}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:text-white text-spotify-subtext transition-opacity text-xs"
-                title="Remove from Library"
+                onClick={() => setIsCreateSheetOpen(true)}
+                title="Create playlist or blend"
+                className="w-8 h-8 rounded-full hover:bg-white/10 text-spotify-subtext hover:text-white flex items-center justify-center transition-colors"
               >
-                ✕
+                <Plus className="w-5 h-5" />
               </button>
             </div>
-          ))}
+          </div>
 
-          {/* Spotify Synced Presets */}
-          {[
-            { title: "Today's Top Hits", author: 'Spotify Curated', coverBg: 'bg-emerald-900' },
-            { title: 'Global Top 50', author: 'Daily Chart', coverBg: 'bg-cyan-900' },
-            { title: 'Hot Hits India', author: 'Bollywood & Desi', coverBg: 'bg-amber-900' },
-            { title: 'Chill Waves & Lo-Fi', author: 'Lofi Records', coverBg: 'bg-violet-900' },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              onClick={() => setIsSpotifyImportOpen(true)}
-              className="flex items-center gap-3 p-2 rounded-md hover:bg-spotify-hover transition-colors cursor-pointer group"
-            >
-              <div
-                className={`w-12 h-12 rounded ${item.coverBg} flex items-center justify-center text-white/70 shrink-0 font-bold text-base shadow`}
+          {/* Authentic Spotify Filter Pills: Playlists, Artists, Albums */}
+          <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {(['playlists', 'artists', 'albums'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(activeFilter === filter ? 'all' : filter)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-colors shrink-0 ${
+                  activeFilter === filter
+                    ? 'bg-white text-black'
+                    : 'bg-[#232323] hover:bg-[#2a2a2a] text-white'
+                }`}
               >
-                <Music className="w-5 h-5" />
+                {filter}
+              </button>
+            ))}
+          </div>
+
+          {/* Search & Sort Bar inside Library */}
+          <div className="px-4 py-1.5 flex items-center justify-between text-xs text-spotify-subtext">
+            {isSearchOpen ? (
+              <div className="flex items-center gap-1.5 bg-[#242424] px-2 py-1 rounded-md w-full">
+                <Search className="w-3.5 h-3.5 text-spotify-subtext" />
+                <input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search in Your Library"
+                  className="bg-transparent text-white text-xs outline-none w-full placeholder:text-spotify-subtext"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setSearchFilter('');
+                  }}
+                  className="text-spotify-subtext hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-white font-medium truncate group-hover:text-spotify-green transition-colors">
-                  {item.title}
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="w-7 h-7 rounded-full hover:bg-white/10 flex items-center justify-center text-spotify-subtext hover:text-white transition-colors"
+                  title="Search in Your Library"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-1 hover:text-white cursor-pointer group">
+                  <span className="font-semibold text-[11px]">Recents</span>
+                  <ArrowUpDown className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Scrollable Library List */}
+          <div className="flex-1 overflow-y-auto px-2 py-1 flex flex-col gap-0.5 custom-scrollbar">
+            {/* Pinned: Liked Songs */}
+            <Link
+              href="/search"
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group"
+            >
+              <div className="w-12 h-12 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
+                <Heart className="w-5 h-5 fill-white" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                  Liked Songs
                 </span>
-                <span className="text-xs text-spotify-subtext truncate">
-                  Playlist • {item.author}
+                <span className="text-xs text-spotify-subtext flex items-center gap-1 mt-0.5">
+                  <span className="text-spotify-green font-bold">📌 Pinned</span> • Playlist
+                </span>
+              </div>
+            </Link>
+
+            {/* Pinned: Downloaded Songs (Offline In-App) */}
+            <div
+              onClick={async () => {
+                const offTracks = await getOfflineTracks();
+                if (offTracks.length > 0) {
+                  setTrack(offTracks[0], offTracks);
+                } else {
+                  alert('No tracks saved offline yet. Click the download checkmark on any track to save it offline!');
+                }
+              }}
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group cursor-pointer"
+            >
+              <div className="w-12 h-12 rounded bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white shrink-0 shadow-md">
+                <ArrowDownToLine className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                  Downloaded Songs
+                </span>
+                <span className="text-xs text-spotify-subtext flex items-center gap-1 mt-0.5">
+                  <span className="text-spotify-green font-bold">📌 Pinned</span> • Offline Storage
                 </span>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Sidebar Footer: App Version & Check for Updates */}
-        <div className="p-3 border-t border-spotify-border bg-black/20 flex items-center justify-between text-[11px] text-spotify-subtext">
-          <span className="font-mono">v1.4.0</span>
-          <button
-            onClick={async () => {
-              try {
-                const res = await fetch('https://api.github.com/repos/MohamedNavith/Spotify-Craft/releases/latest');
-                if (res.ok) {
-                  const data = await res.json();
-                  if (data.tag_name && data.tag_name !== 'v1.4.0') {
-                    window.open(data.html_url, '_blank');
-                  } else {
-                    alert('You are on the latest version of Wavelength (v1.4.0)!');
+            {/* User Custom Playlists */}
+            {filteredPlaylists.map((playlist) => (
+              <div
+                key={playlist.id}
+                onClick={() => {
+                  if (playlist.tracks.length > 0) {
+                    setTrack(playlist.tracks[0], playlist.tracks);
                   }
-                }
-              } catch {
-                alert('You are on the latest version of Wavelength (v1.4.0)!');
-              }
-            }}
-            className="hover:text-spotify-green hover:underline font-semibold transition-colors"
-          >
-            Check for Updates
-          </button>
-        </div>
-      </div>
-    </aside>
+                }}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-12 h-12 rounded bg-gradient-to-br from-spotify-green to-emerald-950 overflow-hidden flex items-center justify-center text-black shrink-0 font-bold shadow">
+                    {playlist.coverArt ? (
+                      <img src={playlist.coverArt} alt={playlist.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <Music className="w-5 h-5 stroke-[2.5]" />
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                      {playlist.title}
+                    </span>
+                    <span className="text-xs text-spotify-subtext truncate mt-0.5">
+                      Playlist • {playlist.tracks.length} songs
+                    </span>
+                  </div>
+                </div>
 
-    {/* Authentic Spotify Mobile Bottom Navigation Bar (Matching Spotify.apk) */}
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-t border-white/10 flex items-center justify-around py-1.5 px-3 text-spotify-subtext safe-area-pb">
-      <Link
-        href="/"
-        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-          pathname === '/' || pathname === '/Spotify-Craft/' ? 'text-white font-bold' : 'hover:text-white'
-        }`}
-      >
-        <Home className="w-5 h-5" />
-        <span className="text-[10px] tracking-tight">Home</span>
-      </Link>
-      <Link
-        href="/search"
-        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-          pathname === '/search' ? 'text-white font-bold' : 'hover:text-white'
-        }`}
-      >
-        <Search className="w-5 h-5" />
-        <span className="text-[10px] tracking-tight">Search</span>
-      </Link>
-      <Link
-        href="/library"
-        className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-          pathname === '/library' ? 'text-white font-bold' : 'hover:text-white'
-        }`}
-      >
-        <Library className="w-5 h-5" />
-        <span className="text-[10px] tracking-tight">Your Library</span>
-      </Link>
-      <button
-        onClick={() => setIsSpotifyImportOpen(true)}
-        className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white text-spotify-green"
-      >
-        <Sparkles className="w-5 h-5" />
-        <span className="text-[10px] tracking-tight font-bold">Sync</span>
-      </button>
-      <button
-        onClick={() => setIsCreateSheetOpen(true)}
-        className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white"
-        title="Create Playlist or Blend"
-      >
-        <Plus className="w-6 h-6" />
-        <span className="text-[10px] tracking-tight">Create</span>
-      </button>
-    </nav>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteUserPlaylist(playlist.id);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-rose-400 text-spotify-subtext transition-all"
+                  title="Remove from Library"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+
+            {/* Curated Spotify Presets */}
+            {curatedPlaylists.map((item, idx) => (
+              <div
+                key={idx}
+                onClick={() => setIsSpotifyImportOpen(true)}
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
+              >
+                <div
+                  className={`w-12 h-12 rounded ${item.coverBg} flex items-center justify-center text-white/80 shrink-0 font-bold shadow`}
+                >
+                  <Music className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                    {item.title}
+                  </span>
+                  <span className="text-xs text-spotify-subtext truncate mt-0.5">
+                    Playlist • {item.author}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer: Version & Check For Updates */}
+          <div className="p-3 border-t border-white/5 bg-black/40 flex items-center justify-between text-[11px] text-spotify-subtext">
+            <span className="font-mono">v1.4.0</span>
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch('https://api.github.com/repos/MohamedNavith/Spotify-Craft/releases/latest');
+                  if (res.ok) {
+                    const data = await res.json();
+                    if (data.tag_name && data.tag_name !== 'v1.4.0') {
+                      window.open(data.html_url, '_blank');
+                    } else {
+                      alert('You are on the latest version of Wavelength (v1.4.0)!');
+                    }
+                  }
+                } catch {
+                  alert('You are on the latest version of Wavelength (v1.4.0)!');
+                }
+              }}
+              className="hover:text-spotify-green hover:underline font-semibold transition-colors"
+            >
+              Check for Updates
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile Bottom Navigation Bar (Spotify Android/iOS App Bar) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-t border-white/10 flex items-center justify-around py-1.5 px-3 text-spotify-subtext safe-area-pb">
+        <Link
+          href="/"
+          className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+            pathname === '/' || pathname === '/Spotify-Craft/' ? 'text-white font-bold' : 'hover:text-white'
+          }`}
+        >
+          <Home className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight">Home</span>
+        </Link>
+        <Link
+          href="/search"
+          className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+            pathname === '/search' ? 'text-white font-bold' : 'hover:text-white'
+          }`}
+        >
+          <Search className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight">Search</span>
+        </Link>
+        <Link
+          href="/library"
+          className={`flex flex-col items-center gap-1 py-1 transition-colors ${
+            pathname === '/library' ? 'text-white font-bold' : 'hover:text-white'
+          }`}
+        >
+          <Library className="w-5 h-5" />
+          <span className="text-[10px] tracking-tight">Your Library</span>
+        </Link>
+        <button
+          onClick={() => setIsCreateSheetOpen(true)}
+          className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white"
+          title="Create Playlist or Blend"
+        >
+          <Plus className="w-6 h-6" />
+          <span className="text-[10px] tracking-tight">Create</span>
+        </button>
+      </nav>
     </>
   );
 }

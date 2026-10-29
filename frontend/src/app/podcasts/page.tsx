@@ -2,7 +2,6 @@
 
 import { Clock, Mic, Play, Radio, Sparkles } from 'lucide-react';
 import { useState } from 'react';
-import TopBar from '../../components/TopBar';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 
 const SAMPLE_PODCASTS = [
@@ -75,8 +74,6 @@ export default function PodcastsPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-16 select-none">
-      <TopBar />
-
       <div className="px-8 max-w-5xl mx-auto w-full flex flex-col gap-8 mt-4">
         <div>
           <h1 className="text-3xl font-extrabold text-white">Podcasts & Shows</h1>

@@ -29,6 +29,7 @@ interface PlayerState {
   shareTrack: UnifiedTrack | null;
   isCreateSheetOpen: boolean;
   isExpandedNowPlaying: boolean;
+  isNowPlayingViewOpen: boolean;
   dynamicVideoId: string | null;
   likedTrackIds: Set<string>;
   downloadedTrackIds: Set<string>;
@@ -60,6 +61,8 @@ interface PlayerState {
   closeShareModal: () => void;
   setIsCreateSheetOpen: (open: boolean) => void;
   setIsExpandedNowPlaying: (open: boolean) => void;
+  toggleNowPlayingView: () => void;
+  setIsNowPlayingViewOpen: (open: boolean) => void;
   setDynamicVideoId: (id: string | null) => void;
   toggleLike: (trackId: string) => void;
   markTrackDownloaded: (id: string) => void;
@@ -102,6 +105,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   shareTrack: null,
   isCreateSheetOpen: false,
   isExpandedNowPlaying: false,
+  isNowPlayingViewOpen: false,
   dynamicVideoId: null,
   likedTrackIds: new Set<string>(),
   downloadedTrackIds: new Set<string>(),
@@ -405,4 +409,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   setIsDiscordModalOpen: (open) => set({ isDiscordModalOpen: open }),
+  toggleNowPlayingView: () =>
+    set((state) => ({ isNowPlayingViewOpen: !state.isNowPlayingViewOpen })),
+  setIsNowPlayingViewOpen: (open) => set({ isNowPlayingViewOpen: open }),
 }));

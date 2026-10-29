@@ -70,6 +70,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.2);
 }
 
+/* Hide scrollbars for horizontal pill rows */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area padding for mobile devices */
+.safe-area-pb {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
 /* Lyrics synced smooth scrolling and glow */
 .lyric-line {
   transition: color 0.3s ease, font-size 0.3s ease, opacity 0.3s ease, transform 0.3s ease;

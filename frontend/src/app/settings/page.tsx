@@ -2,7 +2,6 @@
 
 import { Check, Download, Heart, Music, Plus, RefreshCw, Settings, Sparkles, Trash2, UserCheck, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import TopBar from '../../components/TopBar';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 
 interface PopularArtist {
@@ -127,8 +126,6 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-32 md:pb-16 select-none">
-      <TopBar />
-
       <div className="px-6 md:px-8 py-6 max-w-5xl mx-auto w-full flex flex-col gap-10">
         {/* Settings Header */}
         <div className="flex items-center gap-4 border-b border-white/10 pb-6">
