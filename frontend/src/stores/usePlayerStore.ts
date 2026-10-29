@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
+import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { UnifiedPlayback, UnifiedTrack } from '../types';
 
@@ -149,6 +150,26 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         }
       });
     }
+
+    // Seamlessly upgrade to 100% full-length 320kbps master ad-free stream
+    if (track.provider !== 'upload' && !track.id.startsWith('offline-')) {
+      resolveMasterAudioStream(track.title, track.artistName).then((master) => {
+        if (master && master.streamUrl) {
+          const current = get().currentTrack;
+          if (current && current.id === track.id) {
+            set({
+              currentTrack: {
+                ...current,
+                streamUrl: master.streamUrl,
+                duration: master.duration,
+                audioQuality: '320kbps (Master Studio Lossless)',
+              },
+              duration: master.duration,
+            });
+          }
+        }
+      });
+    }
   },
 
   openShareModal: (track) => {
@@ -216,6 +237,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         }
       });
     }
+
+    if (nextTrack.provider !== 'upload' && !nextTrack.id.startsWith('offline-')) {
+      resolveMasterAudioStream(nextTrack.title, nextTrack.artistName).then((master) => {
+        if (master && master.streamUrl) {
+          const current = get().currentTrack;
+          if (current && current.id === nextTrack.id) {
+            set({
+              currentTrack: {
+                ...current,
+                streamUrl: master.streamUrl,
+                duration: master.duration,
+                audioQuality: '320kbps (Master Studio Lossless)',
+              },
+              duration: master.duration,
+            });
+          }
+        }
+      });
+    }
   },
 
   prevTrack: () => {
@@ -245,6 +285,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
           const current = get().currentTrack;
           if (current && current.id === prevTrack.id) {
             set({ dynamicVideoId: resolved });
+          }
+        }
+      });
+    }
+
+    if (prevTrack.provider !== 'upload' && !prevTrack.id.startsWith('offline-')) {
+      resolveMasterAudioStream(prevTrack.title, prevTrack.artistName).then((master) => {
+        if (master && master.streamUrl) {
+          const current = get().currentTrack;
+          if (current && current.id === prevTrack.id) {
+            set({
+              currentTrack: {
+                ...current,
+                streamUrl: master.streamUrl,
+                duration: master.duration,
+                audioQuality: '320kbps (Master Studio Lossless)',
+              },
+              duration: master.duration,
+            });
           }
         }
       });

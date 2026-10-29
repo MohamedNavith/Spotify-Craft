@@ -2,11 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
+import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { usePlayerStore } from '../stores/usePlayerStore';
-
-// Ultra-light silent WAV audio carrier (1 sample) used to keep Android MediaSession active during full mode
-const SILENT_AUDIO_URI = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A/w==';
 
 export default function AudioEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -29,7 +27,6 @@ export default function AudioEngine() {
     prevTrack,
     togglePlay,
     repeatMode,
-    playbackMode,
     isNowPlayingVideoOpen,
     toggleNowPlayingVideo,
     dynamicVideoId,
@@ -48,18 +45,7 @@ export default function AudioEngine() {
     dynamicVideoId ||
     (currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null);
 
-  // In full mode, any online track uses YouTube full song playback
-  const isYTMode = !isLocalOrOffline && playbackMode === 'full' && !!currentTrack;
-
-  const ytEmbedSrc = videoId
-    ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1`
-    : currentTrack
-    ? `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(
-        `${currentTrack.title} ${currentTrack.artistName} official audio`,
-      )}&autoplay=1&enablejsapi=1&playsinline=1`
-    : '';
-
-  // Resolve dynamic video ID asynchronously if not already known
+  // Background resolution for official music video
   useEffect(() => {
     if (!currentTrack || isLocalOrOffline) return;
     if (videoId) return;
@@ -76,21 +62,17 @@ export default function AudioEngine() {
     };
   }, [currentTrack, videoId, isLocalOrOffline, setDynamicVideoId]);
 
-  // Universal Track Finished Handler (Handles Sleep Timer & Auto-Next)
+  // Track Ended Handler
   const handleTrackEnded = () => {
     if (sleepTimerMinutes === -1) {
       setIsPlaying(false);
       setSleepTimer(null);
       if (audioRef.current) audioRef.current.pause();
-      postYT('pauseVideo');
       return;
     }
 
     if (repeatMode === 'one') {
-      if (isYTMode) {
-        postYT('seekTo', [0, true]);
-        postYT('playVideo');
-      } else if (audioRef.current) {
+      if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
       }
@@ -108,220 +90,150 @@ export default function AudioEngine() {
         setIsPlaying(false);
         setSleepTimer(null);
         if (audioRef.current) audioRef.current.pause();
-        postYT('pauseVideo');
       }
     }, 1000);
     return () => clearInterval(interval);
   }, [sleepTimerEndTime, setIsPlaying, setSleepTimer]);
 
-  // Helper to send postMessage commands to YouTube IFrame
-  const postYT = (func: string, args: any[] = []) => {
-    try {
-      if (ytIframeRef.current?.contentWindow) {
-        ytIframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func, args }),
-          '*',
-        );
-      }
-    } catch {}
-  };
-
-  // Listen for YouTube IFrame Player API postMessage events (Ended, Time update)
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (typeof event.data !== 'string') return;
-      try {
-        const data = JSON.parse(event.data);
-        if (data.event === 'onStateChange') {
-          // YT.PlayerState.ENDED = 0
-          if (data.info === 0) {
-            handleTrackEnded();
-          }
-        } else if (data.event === 'infoDelivery' && data.info) {
-          if (typeof data.info.currentTime === 'number' && isFinite(data.info.currentTime)) {
-            setProgress(data.info.currentTime);
-          }
-          if (typeof data.info.duration === 'number' && isFinite(data.info.duration) && data.info.duration > 0) {
-            setDuration(data.info.duration);
-          }
-        }
-      } catch {}
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [repeatMode, nextTrack, setProgress, setDuration, sleepTimerMinutes]);
-
-  // 1. Audio Source Loading: Synchronize streamUrl or YouTube embed
+  // 1. Audio Source Loading: Directly bind HTML5 Audio to streamUrl
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (!currentTrack) {
+    if (!currentTrack || !currentTrack.streamUrl) {
       audio.pause();
       audio.removeAttribute('src');
-      postYT('pauseVideo');
       return;
     }
 
-    if (currentTrack.duration) {
+    if (currentTrack.duration && currentTrack.duration > 0) {
       setDuration(currentTrack.duration);
     }
 
-    if (isYTMode) {
-      // In full mode with YouTube video, use silent audio carrier to keep Android Lock Screen & MediaSession alive
-      if (audio.src !== SILENT_AUDIO_URI) {
-        audio.src = SILENT_AUDIO_URI;
-        audio.loop = true;
-        audio.volume = 0.001;
-      }
-      if (isPlaying) {
-        audio.play().catch(() => {});
-        postYT('playVideo');
-      } else {
-        audio.pause();
-        postYT('pauseVideo');
-      }
-    } else {
-      // Preview mode or direct offline file: use HTML5 audio element
-      postYT('pauseVideo');
-      audio.loop = false;
-      const targetSrc = currentTrack.streamUrl || '';
-      if (targetSrc && audio.src !== targetSrc) {
-        audio.src = targetSrc;
-        audio.load();
+    const currentSrc = audio.src;
+    const newSrc = currentTrack.streamUrl;
+
+    if (currentSrc !== newSrc) {
+      const prevTime = audio.currentTime;
+      audio.src = newSrc;
+      audio.load();
+
+      // If upgrading from preview to full master while playing, resume smoothly from current position
+      if (prevTime > 1 && prevTime < (currentTrack.duration || 300)) {
+        audio.currentTime = prevTime;
       }
 
       if (isPlaying) {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.catch((err) => {
-            console.warn('Autoplay waiting for user gesture:', err.message);
+            console.warn('Waiting for user gesture to play:', err.message);
           });
         }
       }
     }
-  }, [currentTrack, isYTMode, isPlaying, setDuration]);
+  }, [currentTrack?.streamUrl, currentTrack?.duration, setDuration, isPlaying]);
 
   // 2. Play / Pause Synchronization
   useEffect(() => {
     const audio = audioRef.current;
-    if (!currentTrack) return;
+    if (!audio || !currentTrack?.streamUrl) return;
 
     if (isPlaying) {
-      if (isYTMode) {
-        if (audio && audio.src !== SILENT_AUDIO_URI) {
-          audio.src = SILENT_AUDIO_URI;
-          audio.loop = true;
-          audio.volume = 0.001;
-        }
-        audio?.play().catch(() => {});
-        postYT('playVideo');
-      } else if (audio) {
-        audio.play().catch(() => {});
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('Play interrupted or waiting for user gesture:', err.message);
+        });
       }
     } else {
-      audio?.pause();
-      postYT('pauseVideo');
+      audio.pause();
     }
-  }, [isPlaying, isYTMode, currentTrack]);
+  }, [isPlaying, currentTrack?.streamUrl]);
 
-  // 3. Seeking Synchronization (Instant scrubbing response)
+  // 3. Volume and Mute Control
   useEffect(() => {
-    if (seekTarget === null || !isFinite(seekTarget)) return;
-
-    const audio = audioRef.current;
-    if (isYTMode) {
-      postYT('seekTo', [seekTarget, true]);
-      setProgress(seekTarget);
-    } else if (audio) {
-      audio.currentTime = seekTarget;
-      setProgress(seekTarget);
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
     }
-    clearSeek();
-  }, [seekTarget, isYTMode, clearSeek, setProgress]);
-
-  // 4. Volume & Mute Synchronization
-  useEffect(() => {
-    const audio = audioRef.current;
-    const vol = isMuted ? 0 : volume;
-    if (audio) {
-      audio.volume = Math.max(0, Math.min(1, vol));
-    }
-    postYT('setVolume', [Math.round(vol * 100)]);
-    if (isMuted) postYT('mute');
-    else postYT('unMute');
   }, [volume, isMuted]);
 
-  // 5. High-Precision Playback Timer (Updates progress every 250ms)
+  // 4. Seek Handling
   useEffect(() => {
-    if (!isPlaying) return;
-
-    const interval = setInterval(() => {
-      if (isYTMode) {
-        postYT('getCurrentTime');
-      } else {
-        const audio = audioRef.current;
-        if (audio && !audio.paused && isFinite(audio.currentTime)) {
-          setProgress(audio.currentTime);
-        }
-      }
-    }, 250);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, isYTMode, setProgress]);
-
-  // 6. Media Session API (Lock screen, notifications, Bluetooth metadata)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
-    if (!currentTrack) {
-      navigator.mediaSession.playbackState = 'none';
-      return;
+    if (seekTarget !== null && audioRef.current) {
+      audioRef.current.currentTime = seekTarget;
+      clearSeek();
     }
+  }, [seekTarget, clearSeek]);
+
+  // 5. Hardware Lock Screen & MediaSession Integration
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentTrack) return;
+
+    const artwork = currentTrack.artworkUrl
+      ? [
+          {
+            src: currentTrack.artworkUrl,
+            sizes: '512x512',
+            type: 'image/jpeg',
+          },
+        ]
+      : [];
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.title,
       artist: currentTrack.artistName,
       album: currentTrack.albumName || 'Wavelength Master',
-      artwork: currentTrack.artworkUrl
-        ? [
-            { src: currentTrack.artworkUrl, sizes: '96x96', type: 'image/jpeg' },
-            { src: currentTrack.artworkUrl, sizes: '128x128', type: 'image/jpeg' },
-            { src: currentTrack.artworkUrl, sizes: '192x192', type: 'image/jpeg' },
-            { src: currentTrack.artworkUrl, sizes: '256x256', type: 'image/jpeg' },
-            { src: currentTrack.artworkUrl, sizes: '512x512', type: 'image/jpeg' },
-          ]
-        : [],
+      artwork,
     });
 
-    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-
-    if ('setPositionState' in navigator.mediaSession && duration > 0 && isFinite(progress)) {
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: Math.max(1, duration),
-          playbackRate: 1,
-          position: Math.max(0, Math.min(progress, duration)),
-        });
-      } catch (e) {}
+    try {
+      navigator.mediaSession.setActionHandler('play', () => {
+        setIsPlaying(true);
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        setIsPlaying(false);
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        prevTrack();
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        nextTrack();
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined && details.seekTime !== null) {
+          seek(details.seekTime);
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekforward', () => {
+        fastForward(10);
+      });
+      navigator.mediaSession.setActionHandler('seekbackward', () => {
+        fastForward(-10);
+      });
+    } catch (e) {
+      console.warn('MediaSession handler setup failed:', e);
     }
+  }, [currentTrack, nextTrack, prevTrack, setIsPlaying, seek, fastForward]);
 
-    navigator.mediaSession.setActionHandler('play', () => togglePlay());
-    navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-    navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
-    navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
-    navigator.mediaSession.setActionHandler('seekto', (details) => {
-      if (typeof details.seekTime === 'number') {
-        seek(details.seekTime);
+  // 6. Update MediaSession Position State for active timeline on lock screen
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentTrack) return;
+    try {
+      if (
+        'setPositionState' in navigator.mediaSession &&
+        duration > 0 &&
+        progress >= 0 &&
+        progress <= duration
+      ) {
+        navigator.mediaSession.setPositionState({
+          duration: Math.max(duration, 1),
+          playbackRate: isPlaying ? 1 : 0,
+          position: Math.min(progress, duration),
+        });
       }
-    });
-    navigator.mediaSession.setActionHandler('seekforward', (details) => {
-      fastForward(details.seekOffset || 10);
-    });
-    navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-      fastForward(-(details.seekOffset || 10));
-    });
-  }, [currentTrack, isPlaying, progress, duration, togglePlay, nextTrack, prevTrack, seek, fastForward]);
+    } catch {}
+  }, [progress, duration, isPlaying, currentTrack]);
 
   const ytDirectUrl = currentTrack
     ? `https://www.youtube.com/results?search_query=${encodeURIComponent(
@@ -331,17 +243,17 @@ export default function AudioEngine() {
 
   return (
     <>
-      {/* Primary HTML5 Audio Engine (Used when audio stream / preview / offline is active) */}
+      {/* 100% Ad-Free, Instant, High-Fidelity Native HTML5 Audio Engine */}
       <audio
         ref={audioRef}
         preload="auto"
         onTimeUpdate={() => {
-          if (!isYTMode && audioRef.current && isFinite(audioRef.current.currentTime)) {
+          if (audioRef.current && isFinite(audioRef.current.currentTime)) {
             setProgress(audioRef.current.currentTime);
           }
         }}
         onLoadedMetadata={() => {
-          if (!isYTMode && audioRef.current) {
+          if (audioRef.current) {
             const d = audioRef.current.duration;
             if (isFinite(d) && d > 0) {
               setDuration(d);
@@ -349,7 +261,7 @@ export default function AudioEngine() {
           }
         }}
         onDurationChange={() => {
-          if (!isYTMode && audioRef.current) {
+          if (audioRef.current) {
             const d = audioRef.current.duration;
             if (isFinite(d) && d > 0) {
               setDuration(d);
@@ -358,16 +270,15 @@ export default function AudioEngine() {
         }}
         onEnded={handleTrackEnded}
         onError={async (e) => {
-          console.warn('Audio stream error, attempting fallback:', e);
-          if (currentTrack && currentTrack.provider === 'official') {
+          console.warn('Audio stream error, self-healing with master resolver:', e);
+          if (currentTrack && !isLocalOrOffline) {
             try {
-              const { searchOfficialMusic } = await import('../lib/officialMusic');
-              const fresh = await searchOfficialMusic(
-                `${currentTrack.title} ${currentTrack.artistName}`,
-                1,
+              const fresh = await resolveMasterAudioStream(
+                currentTrack.title,
+                currentTrack.artistName,
               );
-              if (fresh.length > 0 && fresh[0].streamUrl && audioRef.current) {
-                audioRef.current.src = fresh[0].streamUrl;
+              if (fresh && fresh.streamUrl && audioRef.current) {
+                audioRef.current.src = fresh.streamUrl;
                 audioRef.current.play().catch(() => {});
               }
             } catch {}
@@ -375,47 +286,34 @@ export default function AudioEngine() {
         }}
       />
 
-      {/* Official YouTube Full Song & Video Engine */}
-      {currentTrack && isYTMode && (
-        <div
-          className={
-            isNowPlayingVideoOpen
-              ? 'fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col'
-              : 'fixed -bottom-96 -right-96 w-[1px] h-[1px] opacity-0 pointer-events-none'
-          }
-        >
-          {isNowPlayingVideoOpen && (
-            <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
-              <a
-                href={
-                  videoId
-                    ? `https://www.youtube.com/watch?v=${videoId}`
-                    : ytDirectUrl
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
-                title="Open in YouTube"
-              >
-                ↗
-              </a>
-              <button
-                onClick={toggleNowPlayingVideo}
-                className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
-                title="Minimize Video"
-              >
-                ✕
-              </button>
-            </div>
-          )}
+      {/* Official Music Video Overlay - ONLY mounted when the user explicitly requests Video */}
+      {isNowPlayingVideoOpen && videoId && (
+        <div className="fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col">
+          <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+            <a
+              href={`https://www.youtube.com/watch?v=${videoId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
+              title="Open in YouTube"
+            >
+              ↗
+            </a>
+            <button
+              onClick={toggleNowPlayingVideo}
+              className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
+              title="Minimize Video"
+            >
+              ✕
+            </button>
+          </div>
 
           <iframe
             ref={ytIframeRef}
-            key={currentTrack?.id || videoId || 'player'}
-            src={ytEmbedSrc}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             className="w-full h-full"
-            title="Official Master Audio / Video"
+            title="Official Music Video"
           />
         </div>
       )}
