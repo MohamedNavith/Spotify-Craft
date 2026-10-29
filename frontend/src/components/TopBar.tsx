@@ -4,6 +4,7 @@ import {
   Compass,
   Home,
   Play,
+  Radio,
   Search,
   Settings,
   Sparkles,
@@ -88,15 +89,13 @@ export default function TopBar({
 
   return (
     <header className="h-16 bg-black px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 select-none border-b border-[#282828]/60 shrink-0">
-      {/* Left: Spotify / Wavelength Brand Logo + Signature Spotify Home Button */}
+      {/* Left: Official Wavelength Brand Logo + Signature Spotify Home Button */}
       <div className="flex items-center gap-3 shrink-0">
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-full bg-spotify-green flex items-center justify-center text-black font-black shadow-lg group-hover:scale-105 transition-transform">
-            <svg className="w-5 h-5 fill-black" viewBox="0 0 24 24">
-              <path d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10zm4.587 14.425c-.18.295-.563.387-.857.207-2.35-1.435-5.308-1.76-8.793-.963-.335.077-.67-.133-.746-.468-.077-.334.132-.67.467-.746 3.808-.87 7.076-.496 9.722 1.115.294.18.386.562.207.855zm1.226-2.724c-.226.367-.706.482-1.072.257-2.687-1.652-6.785-2.131-9.965-1.166-.413.127-.848-.106-.973-.517-.125-.413.108-.848.52-9.73 3.632-1.102 8.147-.568 11.233 1.328.366.226.481.707.257 1.072zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71c-.493.15-1.016-.129-1.165-.623-.149-.495.13-1.016.624-1.165 3.532-1.072 9.404-.866 13.115 1.337.445.264.59.838.327 1.282-.264.443-.838.59-1.28.325z" />
-            </svg>
+            <Radio className="w-5 h-5 text-black stroke-[2.5]" />
           </div>
-          <span className="hidden sm:inline font-black text-xl tracking-tight text-white group-hover:text-spotify-green transition-colors">
+          <span className="font-black text-xl tracking-tight text-white group-hover:text-spotify-green transition-colors">
             Wavelength
           </span>
         </Link>

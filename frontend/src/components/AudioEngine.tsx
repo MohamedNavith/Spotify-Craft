@@ -42,8 +42,9 @@ export default function AudioEngine() {
   } = usePlayerStore();
 
   const videoId = dynamicVideoId || (currentTrack ? resolveVideoId(currentTrack.title, currentTrack.artistName) : null);
-  // Pure audio mode by default. Video mode is ONLY active when the user explicitly clicks Watch Video!
-  const isVideoModeActive = isNowPlayingVideoOpen && !!videoId;
+  // If track only has a 30s snippet or missing URL, use YouTube player for 100% full song version
+  const isSnippet = !currentTrack?.streamUrl || currentTrack.streamUrl.includes('itunes.apple.com') || currentTrack.streamUrl.includes('mzstatic.com') || (currentTrack.duration <= 35 && currentTrack.duration > 0);
+  const isYTMode = !!videoId && (isNowPlayingVideoOpen || (playbackMode === 'full' && isSnippet));
 
   // Resolve dynamic master audio stream and upgrade any low-quality/preview stream immediately
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function AudioEngine() {
     }
 
     if (repeatMode === 'one') {
-      if (isVideoModeActive) {
+      if (isYTMode) {
         postYT('seekTo', [0, true]);
         postYT('playVideo');
       } else if (audioRef.current) {
@@ -202,8 +203,8 @@ export default function AudioEngine() {
       setDuration(currentTrack.duration);
     }
 
-    if (isVideoModeActive) {
-      // In video mode with YouTube video, use silent audio carrier to keep Android Lock Screen & MediaSession alive
+    if (isYTMode) {
+      // In full YouTube mode, use silent audio carrier to keep Android Lock Screen & MediaSession alive
       if (audio.src !== SILENT_AUDIO_URI) {
         audio.src = SILENT_AUDIO_URI;
         audio.loop = true;
@@ -234,7 +235,7 @@ export default function AudioEngine() {
         }
       }
     }
-  }, [currentTrack, isVideoModeActive, isPlaying, setDuration]);
+  }, [currentTrack, isYTMode, isPlaying, setDuration]);
 
   // 2. Play / Pause Synchronization
   useEffect(() => {
@@ -242,7 +243,7 @@ export default function AudioEngine() {
     if (!currentTrack) return;
 
     if (isPlaying) {
-      if (isVideoModeActive) {
+      if (isYTMode) {
         if (audio && audio.src !== SILENT_AUDIO_URI) {
           audio.src = SILENT_AUDIO_URI;
           audio.loop = true;
@@ -257,14 +258,14 @@ export default function AudioEngine() {
       audio?.pause();
       postYT('pauseVideo');
     }
-  }, [isPlaying, isVideoModeActive, currentTrack]);
+  }, [isPlaying, isYTMode, currentTrack]);
 
   // 3. Seeking Synchronization (Instant scrubbing response)
   useEffect(() => {
     if (seekTarget === null || !isFinite(seekTarget)) return;
 
     const audio = audioRef.current;
-    if (isVideoModeActive) {
+    if (isYTMode) {
       postYT('seekTo', [seekTarget, true]);
       setProgress(seekTarget);
     } else if (audio) {
@@ -272,7 +273,7 @@ export default function AudioEngine() {
       setProgress(seekTarget);
     }
     clearSeek();
-  }, [seekTarget, isVideoModeActive, clearSeek, setProgress]);
+  }, [seekTarget, isYTMode, clearSeek, setProgress]);
 
   // 4. Volume & Mute Synchronization
   useEffect(() => {
@@ -291,7 +292,7 @@ export default function AudioEngine() {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
-      if (isVideoModeActive) {
+      if (isYTMode) {
         // Poll YouTube currentTime
         postYT('getCurrentTime');
         const next = progress + 0.2;
@@ -309,7 +310,7 @@ export default function AudioEngine() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [isPlaying, isVideoModeActive, progress, duration, setProgress, repeatMode, nextTrack, sleepTimerMinutes]);
+  }, [isPlaying, isYTMode, progress, duration, setProgress, repeatMode, nextTrack, sleepTimerMinutes]);
 
   // 6. Media Session API (Lock screen, dynamic notifications, Bluetooth metadata)
   useEffect(() => {
@@ -376,12 +377,12 @@ export default function AudioEngine() {
         ref={audioRef}
         preload="auto"
         onTimeUpdate={() => {
-          if (!isVideoModeActive && audioRef.current && isFinite(audioRef.current.currentTime)) {
+          if (!isYTMode && audioRef.current && isFinite(audioRef.current.currentTime)) {
             setProgress(audioRef.current.currentTime);
           }
         }}
         onLoadedMetadata={() => {
-          if (!isVideoModeActive && audioRef.current) {
+          if (!isYTMode && audioRef.current) {
             const d = audioRef.current.duration;
             if (isFinite(d) && d > 0) {
               setDuration(d);
@@ -389,7 +390,7 @@ export default function AudioEngine() {
           }
         }}
         onDurationChange={() => {
-          if (!isVideoModeActive && audioRef.current) {
+          if (!isYTMode && audioRef.current) {
             const d = audioRef.current.duration;
             if (isFinite(d) && d > 0) {
               setDuration(d);
@@ -397,7 +398,7 @@ export default function AudioEngine() {
           }
         }}
         onEnded={() => {
-          if (!isVideoModeActive) {
+          if (!isYTMode) {
             handleTrackEnded();
           }
         }}
@@ -415,34 +416,42 @@ export default function AudioEngine() {
         }}
       />
 
-      {/* Official YouTube Music Video Mode - ONLY mounted when user explicitly requests Video */}
-      {isNowPlayingVideoOpen && videoId && (
-        <div className="fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col">
-          <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
-            <a
-              href={`https://www.youtube.com/watch?v=${videoId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
-              title="Open in YouTube"
-            >
-              ↗
-            </a>
-            <button
-              onClick={toggleNowPlayingVideo}
-              className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
-              title="Minimize Video"
-            >
-              ✕
-            </button>
-          </div>
+      {/* Official YouTube Music Video & Full Background Audio Engine */}
+      {videoId && (
+        <div
+          className={
+            isNowPlayingVideoOpen
+              ? 'fixed bottom-24 right-4 md:right-8 z-50 w-80 md:w-96 aspect-video rounded-xl overflow-hidden shadow-2xl border border-spotify-border bg-black transition-all animate-in fade-in slide-in-from-bottom-4 flex flex-col'
+              : 'fixed bottom-1 right-1 w-2 h-2 opacity-[0.02] pointer-events-none z-0 overflow-hidden'
+          }
+        >
+          {isNowPlayingVideoOpen && (
+            <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+              <a
+                href={`https://www.youtube.com/watch?v=${videoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
+                title="Open in YouTube"
+              >
+                ↗
+              </a>
+              <button
+                onClick={toggleNowPlayingVideo}
+                className="w-7 h-7 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center text-xs shadow-md"
+                title="Minimize Video"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <iframe
             ref={ytIframeRef}
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1`}
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&iv_load_policy=3&modestbranding=1`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             className="w-full h-full"
-            title="Official Music Video"
+            title="Official Master Audio / Video"
           />
         </div>
       )}

@@ -60,7 +60,51 @@ export async function importSpotifyPlaylist(
     console.warn('Spotify oEmbed lookup failed:', err);
   }
 
-  // 2. Resolve tracks: Query official catalog for the playlist's title or top hits
+  // 2. Fetch full Spotify playlist tracks via CORS-proxied embed data
+  try {
+    const embedUrl = `https://open.spotify.com/embed/playlist/${targetId}`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(embedUrl)}`;
+    const embedRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(6000) });
+    if (embedRes.ok) {
+      const html = await embedRes.text();
+      const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+      if (match) {
+        const data = JSON.parse(match[1]);
+        const entity = data?.props?.pageProps?.state?.data?.entity;
+        if (entity) {
+          if (entity.name) playlistTitle = entity.name;
+          if (entity.visualIdentity?.image?.[2]?.url) {
+            coverUrl = entity.visualIdentity.image[2].url;
+          }
+          if (Array.isArray(entity.trackList) && entity.trackList.length > 0) {
+            const scrapedTracks: UnifiedTrack[] = entity.trackList.map((t: any, idx: number) => ({
+              id: t.uri || `spotify-${targetId}-${idx}`,
+              provider: 'spotify' as const,
+              title: t.title || 'Unknown Track',
+              artist: t.subtitle || 'Unknown Artist',
+              album: playlistTitle,
+              duration: Math.round((t.duration || 180000) / 1000),
+              artworkUrl: coverUrl,
+              audioUrl: t.audioPreview?.url || undefined,
+              previewUrl: t.audioPreview?.url || undefined,
+              isLossless: true,
+            }));
+
+            return {
+              title: playlistTitle,
+              author: 'Spotify User',
+              coverUrl,
+              tracks: scrapedTracks,
+            };
+          }
+        }
+      }
+    }
+  } catch (scrapeErr) {
+    console.warn('Scraping Spotify embed trackList failed, falling back to catalog search:', scrapeErr);
+  }
+
+  // 3. Fallback: Query official catalog for the playlist's title or top hits
   const sampleTracks = await searchOfficialMusic(playlistTitle, 15);
 
   return {

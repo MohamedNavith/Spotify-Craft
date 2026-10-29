@@ -21,50 +21,62 @@ const POPULAR_ARTISTS_CATALOG: PopularArtistItem[] = [
   {
     id: 'pritam',
     name: 'Pritam',
-    image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500&auto=format&fit=crop&q=80',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/3d/c7/43/3dc74387-e7f4-2342-397c-4cf2037c69a5/8902894623223_cover.jpg/600x600bb.jpg',
     genre: 'Bollywood',
   },
   {
     id: 'arijit',
     name: 'Arijit Singh',
-    image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=80',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/600x600bb.jpg',
     genre: 'Soulful & Melodic',
   },
   {
     id: 'ar-rahman',
     name: 'A.R. Rahman',
-    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/600x600bb.jpg',
     genre: 'Composer & Master',
-  },
-  {
-    id: 'sachin-jigar',
-    name: 'Sachin-Jigar',
-    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80',
-    genre: 'Bollywood Pop',
   },
   {
     id: 'anirudh',
     name: 'Anirudh Ravichander',
-    image: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500&auto=format&fit=crop&q=80',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/600x600bb.jpg',
     genre: 'Tamil & Bollywood Rock',
   },
   {
     id: 'taylor-swift',
     name: 'Taylor Swift',
-    image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=80',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/600x600bb.jpg',
     genre: 'Pop Superstar',
+  },
+  {
+    id: 'sabrina-carpenter',
+    name: 'Sabrina Carpenter',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
+    genre: 'Pop & Dance',
   },
   {
     id: 'billie-eilish',
     name: 'Billie Eilish',
-    image: 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=500&auto=format&fit=crop&q=80',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
     genre: 'Alternative Pop',
   },
   {
     id: 'bruno-mars',
     name: 'Bruno Mars',
-    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500&auto=format&fit=crop&q=80',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
     genre: 'R&B & Pop',
+  },
+  {
+    id: 'the-weeknd',
+    name: 'The Weeknd',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/600x600bb.jpg',
+    genre: 'Synthwave & R&B',
+  },
+  {
+    id: 'diljit',
+    name: 'Diljit Dosanjh',
+    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/600x600bb.jpg',
+    genre: 'Punjabi & Global Fusion',
   },
 ];
 
@@ -405,6 +417,10 @@ export default function HomePage() {
                   <img
                     src={artist.image}
                     alt={artist.name}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500';
+                    }}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
 

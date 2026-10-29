@@ -14,18 +14,78 @@ function formatDuration(sec: number): string {
 }
 
 const BROWSE_CATEGORIES = [
-  { name: 'Pop', color: 'from-pink-600 to-rose-700' },
-  { name: 'Hip-Hop', color: 'from-orange-600 to-amber-700' },
-  { name: 'Electronic', color: 'from-teal-600 to-cyan-700' },
-  { name: 'Rock', color: 'from-red-600 to-red-800' },
-  { name: 'Indie', color: 'from-emerald-600 to-green-700' },
-  { name: 'Chill', color: 'from-indigo-600 to-blue-700' },
-  { name: 'Focus & Study', color: 'from-sky-600 to-cyan-800' },
-  { name: 'Ambient', color: 'from-purple-600 to-violet-800' },
-  { name: 'Jazz & Blues', color: 'from-yellow-600 to-amber-800' },
-  { name: 'Acoustic', color: 'from-lime-600 to-emerald-800' },
-  { name: 'Sleep', color: 'from-slate-700 to-indigo-900' },
-  { name: 'Workout', color: 'from-fuchsia-600 to-pink-800' },
+  {
+    name: 'Bollywood & Desi',
+    query: 'Bollywood Hits Arijit Singh Pritam',
+    color: 'from-amber-600 to-orange-800',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/fb/11/bffb111e-b834-c360-1e5b-b98a0033faea/8902894358899.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Pop Hits',
+    query: 'Pop Music Hits Charts 2024',
+    color: 'from-pink-600 to-rose-700',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Punjabi Hits',
+    query: 'Punjabi Hits Diljit Dosanjh Karan Aujla',
+    color: 'from-emerald-600 to-teal-800',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Hip-Hop & Rap',
+    query: 'Hip Hop Rap Top Hits',
+    color: 'from-orange-600 to-amber-700',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f7/6d/78/f76d78c5-cc9c-f2d6-8603-ba690eaa5c7d/5064089826918_cover.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Tamil & South Beats',
+    query: 'Tamil Hits Anirudh Ravichander AR Rahman',
+    color: 'from-red-600 to-red-900',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Chill & Lo-Fi',
+    query: 'Chill Lo-Fi study beats relaxing',
+    color: 'from-indigo-600 to-blue-800',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Rock Classics',
+    query: 'Rock Classics Legends Queen AC/DC',
+    color: 'from-stone-700 to-stone-900',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'R&B & Soul',
+    query: 'R&B Soul Bruno Mars The Weeknd',
+    color: 'from-purple-600 to-violet-800',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Alternative & Indie',
+    query: 'Alternative Indie Billie Eilish',
+    color: 'from-teal-600 to-cyan-800',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Romantic Melodies',
+    query: 'Romantic Love Songs Melodies Arijit',
+    color: 'from-rose-600 to-pink-800',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/300x300bb.jpg',
+  },
+  {
+    name: 'Workout Energy',
+    query: 'Workout Gym High Energy EDM Beats',
+    color: 'from-fuchsia-600 to-pink-800',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/300x300bb.jpg',
+  },
+  {
+    name: 'Punjabi Legends',
+    query: 'Sidhu Moose Wala Punjabi Classics',
+    color: 'from-blue-700 to-indigo-950',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/37/ca/50/37ca5028-a2dc-975b-6366-6427c2b81761/5064089945930_cover.jpg/300x300bb.jpg',
+  },
 ];
 
 export default function SearchPage() {
@@ -100,13 +160,34 @@ export default function SearchPage() {
               {BROWSE_CATEGORIES.map((cat) => (
                 <div
                   key={cat.name}
-                  onClick={() => setQuery(cat.name)}
-                  className={`h-40 rounded-lg p-4 bg-gradient-to-br ${cat.color} cursor-pointer hover:scale-[1.02] transition-transform shadow-md relative overflow-hidden flex flex-col justify-between`}
+                  onClick={() => setQuery(cat.query)}
+                  className={`group h-44 rounded-xl p-4 bg-gradient-to-br ${cat.color} cursor-pointer hover:scale-[1.02] transition-all duration-300 shadow-md hover:shadow-xl relative overflow-hidden flex flex-col justify-between`}
                 >
-                  <span className="text-white font-extrabold text-xl tracking-tight">
+                  <span className="text-white font-extrabold text-lg leading-tight tracking-tight z-10 drop-shadow">
                     {cat.name}
                   </span>
-                  <div className="w-16 h-16 bg-black/20 rounded-md rotate-25 translate-x-3 translate-y-3 self-end shadow-inner" />
+
+                  {/* Rotated Album Cover Art */}
+                  <div className="absolute -bottom-2 -right-3 w-24 h-24 rounded-lg shadow-2xl overflow-hidden rotate-[25deg] group-hover:rotate-[15deg] group-hover:scale-110 transition-all duration-300">
+                    <img
+                      src={cat.cover}
+                      alt={cat.name}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Hover Floating Play Button */}
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setQuery(cat.query);
+                    }}
+                    title={`Play ${cat.name}`}
+                    className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-20 hover:scale-105 active:scale-95"
+                  >
+                    <Play className="w-5 h-5 fill-black ml-0.5" />
+                  </button>
                 </div>
               ))}
             </div>

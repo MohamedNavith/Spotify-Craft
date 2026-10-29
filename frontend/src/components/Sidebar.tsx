@@ -5,12 +5,14 @@ import {
   ArrowUpDown,
   BookMarked,
   Check,
+  Disc3,
   FolderPlus,
   Heart,
   Home,
   Library,
   ListMusic,
   Music,
+  Play,
   Plus,
   Radio,
   Search,
@@ -24,6 +26,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getOfflineTracks } from '../lib/offlineStorage';
 import { deleteUserPlaylist, getUserPlaylists, UserPlaylist } from '../lib/userPlaylists';
+import { searchOfficialMusic } from '../lib/officialMusic';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function Sidebar() {
@@ -48,8 +51,128 @@ export default function Sidebar() {
     { title: 'Chill Waves & Lo-Fi', author: 'Lofi Records', coverBg: 'bg-violet-900', tracksCount: 60 },
   ];
 
+  const curatedAlbums = [
+    {
+      title: 'Aashiqui 2',
+      artist: 'Mithoon, Ankit Tiwari',
+      year: '2013',
+      coverArt: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/fb/11/bffb111e-b834-c360-1e5b-b98a0033faea/8902894358899.jpg/600x600bb.jpg',
+      query: 'Aashiqui 2 songs'
+    },
+    {
+      title: "1989 (Taylor's Version)",
+      artist: 'Taylor Swift',
+      year: '2023',
+      coverArt: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/600x600bb.jpg',
+      query: 'Taylor Swift 1989'
+    },
+    {
+      title: "Short n' Sweet",
+      artist: 'Sabrina Carpenter',
+      year: '2024',
+      coverArt: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
+      query: 'Sabrina Carpenter Taste Espresso'
+    },
+    {
+      title: 'Starboy',
+      artist: 'The Weeknd',
+      year: '2016',
+      coverArt: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/600x600bb.jpg',
+      query: 'The Weeknd Starboy'
+    },
+    {
+      title: '24K Magic',
+      artist: 'Bruno Mars',
+      year: '2016',
+      coverArt: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
+      query: 'Bruno Mars 24K Magic'
+    },
+    {
+      title: 'Rockstar',
+      artist: 'A.R. Rahman',
+      year: '2011',
+      coverArt: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/600x600bb.jpg',
+      query: 'Rockstar AR Rahman'
+    },
+  ];
+
+  const libraryArtists = [
+    {
+      name: 'Anirudh Ravichander',
+      listeners: '28.4M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'A.R. Rahman',
+      listeners: '32.1M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'Arijit Singh',
+      listeners: '44.8M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/600x600bb.jpg',
+    },
+    {
+      name: 'Taylor Swift',
+      listeners: '104.2M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'Billie Eilish',
+      listeners: '98.5M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'Bruno Mars',
+      listeners: '110.3M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'Sabrina Carpenter',
+      listeners: '86.7M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'The Weeknd',
+      listeners: '118.0M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'Diljit Dosanjh',
+      listeners: '24.9M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/600x600bb.jpg',
+    },
+    {
+      name: 'Karan Aujla',
+      listeners: '18.2M listeners',
+      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f7/6d/78/f76d78c5-cc9c-f2d6-8603-ba690eaa5c7d/5064089826918_cover.jpg/600x600bb.jpg',
+    },
+  ];
+
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+
+  const handlePlayQuery = async (key: string, queryText: string) => {
+    try {
+      setLoadingKey(key);
+      const tracks = await searchOfficialMusic(queryText, 25);
+      if (tracks.length > 0) {
+        setTrack(tracks[0], tracks);
+      }
+    } catch (err) {
+      console.error('Failed to load tracks for library item:', err);
+    } finally {
+      setLoadingKey(null);
+    }
+  };
   const filteredPlaylists = userPlaylists.filter((p) =>
     p.title.toLowerCase().includes(searchFilter.toLowerCase())
+  );
+  const filteredArtists = libraryArtists.filter((a) =>
+    a.name.toLowerCase().includes(searchFilter.toLowerCase())
+  );
+  const filteredAlbums = curatedAlbums.filter((al) =>
+    al.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    al.artist.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
   return (
@@ -140,132 +263,217 @@ export default function Sidebar() {
 
           {/* Scrollable Library List */}
           <div className="flex-1 overflow-y-auto px-2 py-1 flex flex-col gap-0.5 custom-scrollbar">
-            {/* Pinned: Liked Songs */}
-            <Link
-              href="/search"
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group"
-            >
-              <div className="w-12 h-12 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
-                <Heart className="w-5 h-5 fill-white" />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
-                  Liked Songs
-                </span>
-                <span className="text-xs text-spotify-subtext flex items-center gap-1 mt-0.5">
-                  <span className="text-spotify-green font-bold">📌 Pinned</span> • Playlist
-                </span>
-              </div>
-            </Link>
-
-            {/* Pinned: Downloaded Songs (Offline In-App) */}
-            <div
-              onClick={async () => {
-                const offTracks = await getOfflineTracks();
-                if (offTracks.length > 0) {
-                  setTrack(offTracks[0], offTracks);
-                } else {
-                  alert('No tracks saved offline yet. Click the download checkmark on any track to save it offline!');
-                }
-              }}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group cursor-pointer"
-            >
-              <div className="w-12 h-12 rounded bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white shrink-0 shadow-md">
-                <ArrowDownToLine className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
-                  Downloaded Songs
-                </span>
-                <span className="text-xs text-spotify-subtext flex items-center gap-1 mt-0.5">
-                  <span className="text-spotify-green font-bold">📌 Pinned</span> • Offline Storage
-                </span>
-              </div>
-            </div>
-
-            {/* User Custom Playlists */}
-            {filteredPlaylists.map((playlist) => (
-              <div
-                key={playlist.id}
-                onClick={() => {
-                  if (playlist.tracks.length > 0) {
-                    setTrack(playlist.tracks[0], playlist.tracks);
-                  }
-                }}
-                className="flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-12 h-12 rounded bg-gradient-to-br from-spotify-green to-emerald-950 overflow-hidden flex items-center justify-center text-black shrink-0 font-bold shadow">
-                    {playlist.coverArt ? (
-                      <img src={playlist.coverArt} alt={playlist.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <Music className="w-5 h-5 stroke-[2.5]" />
-                    )}
+            {/* Playlists Section */}
+            {(activeFilter === 'all' || activeFilter === 'playlists') && (
+              <>
+                {/* Pinned: Liked Songs */}
+                <Link
+                  href="/search"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
+                    <Heart className="w-5 h-5 fill-white" />
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
-                      {playlist.title}
+                      Liked Songs
                     </span>
-                    <span className="text-xs text-spotify-subtext truncate mt-0.5">
-                      Playlist • {playlist.tracks.length} songs
+                    <span className="text-xs text-spotify-subtext flex items-center gap-1 mt-0.5">
+                      <span className="text-spotify-green font-bold">📌 Pinned</span> • Playlist
+                    </span>
+                  </div>
+                </Link>
+
+                {/* Pinned: Downloaded Songs (Offline In-App) */}
+                <div
+                  onClick={async () => {
+                    const offTracks = await getOfflineTracks();
+                    if (offTracks.length > 0) {
+                      setTrack(offTracks[0], offTracks);
+                    } else {
+                      alert('No tracks saved offline yet. Click the download checkmark on any track to save it offline!');
+                    }
+                  }}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white shrink-0 shadow-md">
+                    <ArrowDownToLine className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                      Downloaded Songs
+                    </span>
+                    <span className="text-xs text-spotify-subtext flex items-center gap-1 mt-0.5">
+                      <span className="text-spotify-green font-bold">📌 Pinned</span> • Offline Storage
                     </span>
                   </div>
                 </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteUserPlaylist(playlist.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-rose-400 text-spotify-subtext transition-all"
-                  title="Remove from Library"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+                {/* User Custom Playlists */}
+                {filteredPlaylists.map((playlist) => (
+                  <div
+                    key={playlist.id}
+                    onClick={() => {
+                      if (playlist.tracks.length > 0) {
+                        setTrack(playlist.tracks[0], playlist.tracks);
+                      }
+                    }}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-12 h-12 rounded bg-gradient-to-br from-spotify-green to-emerald-950 overflow-hidden flex items-center justify-center text-black shrink-0 font-bold shadow">
+                        {playlist.coverArt ? (
+                          <img src={playlist.coverArt} alt={playlist.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <Music className="w-5 h-5 stroke-[2.5]" />
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                          {playlist.title}
+                        </span>
+                        <span className="text-xs text-spotify-subtext truncate mt-0.5">
+                          Playlist • {playlist.tracks.length} songs
+                        </span>
+                      </div>
+                    </div>
 
-            {/* Curated Spotify Presets */}
-            {curatedPlaylists.map((item, idx) => (
-              <div
-                key={idx}
-                onClick={() => setIsSpotifyImportOpen(true)}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
-              >
-                <div
-                  className={`w-12 h-12 rounded ${item.coverBg} flex items-center justify-center text-white/80 shrink-0 font-bold shadow`}
-                >
-                  <Music className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
-                    {item.title}
-                  </span>
-                  <span className="text-xs text-spotify-subtext truncate mt-0.5">
-                    Playlist • {item.author}
-                  </span>
-                </div>
-              </div>
-            ))}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteUserPlaylist(playlist.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-rose-400 text-spotify-subtext transition-all"
+                      title="Remove from Library"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Curated Spotify Presets */}
+                {curatedPlaylists.map((item, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setIsSpotifyImportOpen(true)}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
+                  >
+                    <div
+                      className={`w-12 h-12 rounded ${item.coverBg} flex items-center justify-center text-white/80 shrink-0 font-bold shadow`}
+                    >
+                      <Music className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                        {item.title}
+                      </span>
+                      <span className="text-xs text-spotify-subtext truncate mt-0.5">
+                        Playlist • {item.author}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Artists Section */}
+            {(activeFilter === 'all' || activeFilter === 'artists') && (
+              <>
+                {activeFilter === 'all' && (
+                  <div className="pt-3 pb-1 px-2 text-xs font-bold text-spotify-subtext uppercase tracking-wider">
+                    Artists
+                  </div>
+                )}
+                {filteredArtists.map((artist) => (
+                  <div
+                    key={artist.name}
+                    onClick={() => handlePlayQuery(`artist-${artist.name}`, artist.name)}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
+                  >
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden bg-neutral-800 shrink-0 shadow">
+                      <img
+                        src={artist.image}
+                        alt={artist.name}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      {loadingKey === `artist-${artist.name}` && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                          <Disc3 className="w-5 h-5 text-spotify-green animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                        {artist.name}
+                      </span>
+                      <span className="text-xs text-spotify-subtext truncate mt-0.5">
+                        Artist • {artist.listeners}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Albums Section */}
+            {(activeFilter === 'all' || activeFilter === 'albums') && (
+              <>
+                {activeFilter === 'all' && (
+                  <div className="pt-3 pb-1 px-2 text-xs font-bold text-spotify-subtext uppercase tracking-wider">
+                    Albums
+                  </div>
+                )}
+                {filteredAlbums.map((album) => (
+                  <div
+                    key={album.title}
+                    onClick={() => handlePlayQuery(`album-${album.title}`, album.query)}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
+                  >
+                    <div className="relative w-12 h-12 rounded-md overflow-hidden bg-neutral-800 shrink-0 shadow">
+                      <img
+                        src={album.coverArt}
+                        alt={album.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      {loadingKey === `album-${album.title}` && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                          <Disc3 className="w-5 h-5 text-spotify-green animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
+                        {album.title}
+                      </span>
+                      <span className="text-xs text-spotify-subtext truncate mt-0.5">
+                        Album • {album.artist}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
           {/* Footer: Version & Check For Updates */}
           <div className="p-3 border-t border-white/5 bg-black/40 flex items-center justify-between text-[11px] text-spotify-subtext">
-            <span className="font-mono">v1.4.0</span>
+            <span className="font-mono">v1.5.0</span>
             <button
               onClick={async () => {
                 try {
                   const res = await fetch('https://api.github.com/repos/MohamedNavith/Spotify-Craft/releases/latest');
                   if (res.ok) {
                     const data = await res.json();
-                    if (data.tag_name && data.tag_name !== 'v1.4.0') {
+                    if (data.tag_name && data.tag_name !== 'v1.5.0') {
                       window.open(data.html_url, '_blank');
                     } else {
-                      alert('You are on the latest version of Wavelength (v1.4.0)!');
+                      alert('You are on the latest version of Wavelength (v1.5.0)!');
                     }
                   }
                 } catch {
-                  alert('You are on the latest version of Wavelength (v1.4.0)!');
+                  alert('You are on the latest version of Wavelength (v1.5.0)!');
                 }
               }}
               className="hover:text-spotify-green hover:underline font-semibold transition-colors"
