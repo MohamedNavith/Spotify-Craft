@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits, Events } from 'discord.js';
 import { config } from './config';
 import { handleReady } from './events/ready';
 import { handleInteraction } from './events/interactionCreate';
@@ -14,7 +14,7 @@ const client = new Client({
   ],
 });
 
-client.once('ready', () => handleReady(client));
+client.once(Events.ClientReady, () => handleReady(client));
 client.on('interactionCreate', (interaction) => handleInteraction(interaction));
 client.on('messageCreate', (message) => handleMessage(message));
 client.on('voiceStateUpdate', (oldState, newState) => handleVoiceStateUpdate(oldState, newState));

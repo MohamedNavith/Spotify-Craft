@@ -146,7 +146,13 @@ export class AudioStreamer {
 
     proc.stderr.on('data', (data) => {
       const msg = data.toString();
-      if (!msg.includes('deprecated') && !msg.includes('header')) {
+      if (
+        !msg.includes('deprecated') &&
+        !msg.includes('header') &&
+        !msg.includes('Connection reset by peer') &&
+        !msg.includes('Broken pipe') &&
+        !msg.includes('Premature close')
+      ) {
         console.warn(`[Guild ${guildId}] FFmpeg: ${msg}`);
       }
     });
