@@ -3,14 +3,11 @@
   "appName": "Wavelength",
   "webDir": "../frontend/out",
   "bundledWebRuntime": false,
-  "server": {
-    "url": "https://mohamednavith.github.io/Spotify-Craft/",
-    "cleartext": true
-  },
   "android": {
     "allowMixedContent": true,
     "captureInput": true,
-    "webContentsDebuggingEnabled": true
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#121212"
   },
   "plugins": {
     "SplashScreen": {

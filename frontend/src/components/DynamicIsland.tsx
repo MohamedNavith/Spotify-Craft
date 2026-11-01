@@ -5,6 +5,7 @@ import {
   ChevronUp,
   GripHorizontal,
   Heart,
+  Orbit,
   Pause,
   Play,
   SkipBack,
@@ -27,6 +28,7 @@ export default function DynamicIsland() {
     likedTrackIds,
     queue,
     setTrack,
+    setIsVerciOpen,
   } = usePlayerStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -315,6 +317,18 @@ export default function DynamicIsland() {
               }`}
             >
               <Heart className={`w-5 h-5 ${isLiked ? 'fill-spotify-green' : ''}`} />
+            </button>
+
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsVerciOpen(true);
+              }}
+              title="Open Verci & Lumn Cosmic Mode"
+              className="p-2 text-amber-400 hover:text-amber-300 active:scale-75 transition-transform cursor-pointer"
+            >
+              <Orbit className="w-5 h-5 animate-spin-slow" />
             </button>
           </div>
 

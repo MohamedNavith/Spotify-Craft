@@ -6,12 +6,14 @@ import BackButtonManager from '../components/BackButtonManager';
 import CreateSheetModal from '../components/CreateSheetModal';
 import { DiscordBotModal } from '../components/DiscordBotModal';
 import DynamicIsland from '../components/DynamicIsland';
+import MobileBottomNav from '../components/MobileBottomNav';
 import NowPlayingPanel from '../components/NowPlayingPanel';
 import PlayerBar from '../components/PlayerBar';
 import ShareModal from '../components/ShareModal';
 import Sidebar from '../components/Sidebar';
 import SleepTimerModal from '../components/SleepTimerModal';
 import TopBar from '../components/TopBar';
+import VerciExperience from '../components/VerciExperience';
 import './globals.css';
 
 const figtree = Figtree({
@@ -34,6 +36,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#121212',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -63,6 +70,12 @@ export default function RootLayout({
 
         {/* Bottom Persistent Spotify Playback Bar */}
         <PlayerBar />
+
+        {/* Dedicated Mobile Spotify Bottom Navigation Bar */}
+        <MobileBottomNav />
+
+        {/* Dedicated Lumn & Verci Cosmic Mode Visualizer */}
+        <VerciExperience />
 
         {/* Floating Dynamic Island Media Controller (Mobile & Desktop) */}
         <DynamicIsland />

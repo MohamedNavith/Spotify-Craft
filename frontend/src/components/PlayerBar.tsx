@@ -9,6 +9,7 @@ import {
   Maximize2,
   Mic2,
   Moon,
+  Orbit,
   Pause,
   Play,
   Repeat,
@@ -71,6 +72,8 @@ export default function PlayerBar() {
     toggleNowPlayingVideo,
     toggleNowPlayingView,
     setIsSpotifyImportOpen,
+    isVerciOpen,
+    setIsVerciOpen,
   } = usePlayerStore();
 
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
@@ -416,6 +419,20 @@ export default function PlayerBar() {
             <Mic2 className="w-4 h-4" />
             {isLyricsOpen && (
               <span className="w-1 h-1 bg-spotify-green rounded-full absolute bottom-0 left-1/2 -translate-x-1/2" />
+            )}
+          </button>
+
+          {/* Verci & Lumn Cosmic Mode Button */}
+          <button
+            onClick={() => setIsVerciOpen(!isVerciOpen)}
+            title="Verci & Lumn Cosmic Mode (Constellation Lyrics & Ambient Glow)"
+            className={`p-1.5 transition-colors relative ${
+              isVerciOpen ? 'text-amber-400' : 'hover:text-amber-300 text-white/70'
+            }`}
+          >
+            <Orbit className="w-4 h-4 animate-spin-slow" />
+            {isVerciOpen && (
+              <span className="w-1 h-1 bg-amber-400 rounded-full absolute bottom-0 left-1/2 -translate-x-1/2 shadow-[0_0_8px_#fbbf24]" />
             )}
           </button>
 

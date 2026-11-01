@@ -27,15 +27,19 @@ function createWindow() {
     },
   });
 
-  const appUrl = process.env.APP_URL || 'https://mohamednavith.github.io/Spotify-Craft/';
   const localOutHtml = path.join(__dirname, '..', 'frontend', 'out', 'index.html');
   const fs = require('fs');
+  const appUrl = process.env.APP_URL || 'https://mohamednavith.github.io/Spotify-Craft/';
 
-  mainWindow.loadURL(appUrl).catch(() => {
-    if (fs.existsSync(localOutHtml)) {
-      mainWindow.loadFile(localOutHtml);
-    }
-  });
+  if (!process.env.APP_URL && fs.existsSync(localOutHtml)) {
+    mainWindow.loadFile(localOutHtml);
+  } else {
+    mainWindow.loadURL(appUrl).catch(() => {
+      if (fs.existsSync(localOutHtml)) {
+        mainWindow.loadFile(localOutHtml);
+      }
+    });
+  }
 
   // Global Media Key Shortcuts for Windows
   try {

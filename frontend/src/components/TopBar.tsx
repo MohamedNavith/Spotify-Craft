@@ -105,14 +105,14 @@ export default function TopBar({
         <Link
           href="/"
           title="Home"
-          className="w-12 h-12 rounded-full bg-[#1f1f1f] hover:bg-[#282828] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md ml-1"
+          className="hidden md:flex w-12 h-12 rounded-full bg-[#1f1f1f] hover:bg-[#282828] text-white items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md ml-1"
         >
           <Home className="w-6 h-6 stroke-[2.2]" />
         </Link>
       </div>
 
       {/* Center: Authentic Spotify Search Pill with Browse Icon & Shortcut */}
-      <div className="flex-1 max-w-[500px] mx-4 relative" ref={dropdownRef}>
+      <div className="hidden md:flex flex-1 max-w-[500px] mx-4 relative" ref={dropdownRef}>
         <div className="w-full h-12 bg-[#1f1f1f] hover:bg-[#282828] focus-within:bg-[#282828] rounded-full flex items-center px-3 border border-transparent focus-within:border-white/70 transition-all shadow-inner group">
           {/* Search Icon */}
           <button

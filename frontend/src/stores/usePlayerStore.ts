@@ -36,6 +36,9 @@ interface PlayerState {
   sleepTimerMinutes: number | null; // e.g. 5, 10, 15, 30, 45, 60, or -1 for end of track
   sleepTimerEndTime: number | null; // epoch timestamp ms when timer expires
   isDiscordModalOpen: boolean;
+  isVerciOpen: boolean;
+  verciStyle: 'constellation' | 'fisheye' | 'minimal';
+  isLumnGlowEnabled: boolean;
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -71,6 +74,9 @@ interface PlayerState {
   closeSleepTimerModal: () => void;
   setSleepTimer: (minutes: number | null) => void;
   setIsDiscordModalOpen: (open: boolean) => void;
+  setIsVerciOpen: (open: boolean) => void;
+  setVerciStyle: (style: 'constellation' | 'fisheye' | 'minimal') => void;
+  toggleLumnGlow: () => void;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -112,6 +118,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   sleepTimerMinutes: null,
   sleepTimerEndTime: null,
   isDiscordModalOpen: false,
+  isVerciOpen: false,
+  verciStyle: 'constellation',
+  isLumnGlowEnabled: true,
 
   setTrack: (track, queue) => {
     const state = get();
@@ -405,4 +414,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   toggleNowPlayingView: () =>
     set((state) => ({ isNowPlayingViewOpen: !state.isNowPlayingViewOpen })),
   setIsNowPlayingViewOpen: (open) => set({ isNowPlayingViewOpen: open }),
+  setIsVerciOpen: (open) => set({ isVerciOpen: open }),
+  setVerciStyle: (style) => set({ verciStyle: style }),
+  toggleLumnGlow: () => set((state) => ({ isLumnGlowEnabled: !state.isLumnGlowEnabled })),
 }));

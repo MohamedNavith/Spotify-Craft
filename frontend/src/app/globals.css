@@ -101,3 +101,39 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: rgba(255, 255, 255, 0.4);
   opacity: 0.5;
 }
+
+/* Mobile App Shell Locks (Spotify Mobile UX) */
+html, body {
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 12s linear infinite;
+}
+
+@keyframes lumnPulse {
+  0%, 100% {
+    opacity: 0.85;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.25);
+  }
+}
+
+.animate-lumn-pulse {
+  animation: lumnPulse 3.5s ease-in-out infinite;
+}

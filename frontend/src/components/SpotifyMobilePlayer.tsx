@@ -8,6 +8,7 @@ import {
   Heart,
   ListMusic,
   MoreVertical,
+  Orbit,
   Pause,
   Play,
   Plus,
@@ -58,6 +59,7 @@ export default function SpotifyMobilePlayer({
     sleepTimerMinutes,
     isExpandedNowPlaying,
     setIsExpandedNowPlaying,
+    setIsVerciOpen,
     queue,
     queueIndex,
   } = usePlayerStore();
@@ -167,7 +169,10 @@ export default function SpotifyMobilePlayer({
             setIsExpandedNowPlaying(true);
             triggerHaptic(12);
           }}
-          className="md:hidden fixed bottom-[60px] left-2 right-2 z-40 bg-[#0f2d26]/95 backdrop-blur-md border border-emerald-500/20 rounded-lg p-2 flex items-center justify-between shadow-2xl transition-all duration-150 active:scale-[0.98] select-none cursor-pointer"
+          style={{
+            bottom: 'calc(58px + max(env(safe-area-inset-bottom, 0px), 8px))',
+          }}
+          className="md:hidden fixed left-2 right-2 z-40 bg-[#181818]/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.85)] transition-all duration-150 active:scale-[0.98] select-none cursor-pointer overflow-hidden"
         >
           {/* Left: Thumbnail & Info */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -440,10 +445,18 @@ export default function SpotifyMobilePlayer({
               </button>
             </div>
 
-            {/* Bottom Quick Row: Device, Share, Queue */}
+            {/* Bottom Quick Row: Device, Share, Verci Cosmic, Queue */}
             <div className="flex items-center justify-between pt-1 pb-3 text-white/80">
-              <button className="p-2 hover:text-white active:scale-90">
-                <Cast className="w-5 h-5" />
+              <button
+                onClick={() => {
+                  setIsVerciOpen(true);
+                  triggerHaptic(15);
+                }}
+                className="p-2 hover:text-white active:scale-90 flex items-center gap-1.5 text-amber-400"
+                title="Launch Verci & Lumn Cosmic Mode"
+              >
+                <Orbit className="w-5 h-5 animate-spin-slow" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">Verci</span>
               </button>
 
               <button
