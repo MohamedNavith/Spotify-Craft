@@ -25,7 +25,7 @@ async function main() {
 
   const owner = 'MohamedNavith';
   const repo = 'Spotify-Craft';
-  const tag = 'v1.5.1';
+  const tag = 'v1.6.1';
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
   const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
@@ -52,39 +52,42 @@ async function main() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'Wavelength v1.5.1 - 100% Ad-Free 320kbps Master Studio Audio Engine & Complete Ecosystem',
-        body: `## 🎧 Wavelength v1.5.1 (Spotify-Craft)
+        name: 'Wavelength v1.6.1 - Constellation Procedural Star Map, Pure OLED Space & Mobile Exit Controls',
+        body: `## 🌌 Wavelength v1.6.1 (Constellation Evolution)
 
-Production-grade Spotify-style music streaming ecosystem across **Web**, **Android Mobile (APK)**, and **Windows PC Desktop (.exe)**.
+This release implements major requested visual and interactive upgrades to the **Verci Constellation Engine**, inspired by modern open-source audio architectures like **OpenTune**, while polishing mobile controls.
 
 ---
 
 ### 📦 Downloads & Platforms
 | Platform | Asset | Description |
 | :--- | :--- | :--- |
-| 📱 **Android** | [\`wavelength-mobile.apk\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) | Direct APK install with native audio playback permissions, gesture controls, lock screen controls & 100% Ad-Free 320kbps Master Engine |
-| 💻 **Windows PC** | [\`wavelength-windows-x64.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-windows-x64.zip) | Portable desktop player with Windows global media key shortcuts & Ad-Free network filtering |
-| 💻 **Windows PC Executable** | [\`wavelength-desktop.exe\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-desktop.exe) | Standalone Windows application binary |
-| 🌐 **Live Web App** | [https://mohamednavith.github.io/Spotify-Craft/](https://mohamednavith.github.io/Spotify-Craft/) | Hosted remotely on GitHub Pages (always online) |
+| 📱 **Android Mobile** | [\`wavelength-mobile.apk\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) | Native Spotify Mobile experience: Bottom navigation bar, floating mini-player, full-screen swipe sheet, offline-first local bundling & safe area insets |
+| 💻 **Windows PC Standalone** | [\`wavelength-desktop.exe\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-desktop.exe) | Single portable executable with media keys, ad-blocking, and Lumn border glow |
+| 💻 **Windows PC Portable Zip** | [\`wavelength-windows-x64.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-windows-x64.zip) | Portable folder distribution for Windows x64 |
+| 🤖 **Discord Music Bot** | [\`wavelength-bot-wispbyte.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-bot-wispbyte.zip) | Wispbyte/Pterodactyl container-ready bot package (Node 22, DAVE encryption, 320kbps streams) |
+| 🌐 **Live Web Player** | [https://mohamednavith.github.io/Spotify-Craft/](https://mohamednavith.github.io/Spotify-Craft/) | Hosted remotely on GitHub Pages with instant PWA capabilities |
 
 ---
 
-### ✨ What's New in v1.5.1 (Zero-Ad Master Audio Parity Release)
-1. 🚫 **Permanently Eliminated Commercial Video Ads**:
-   - Replaced hidden background YouTube player with direct 320kbps master studio audio CDN stream (\`https://aac.saavncdn.com/..._320.mp4\`).
-   - Zero YouTube pre-roll ads, zero audio watermarks, zero commercial interruptions.
-   - YouTube video iframe is strictly mounted ONLY when the user explicitly taps "Watch Video".
-2. 🎵 **Full Master Studio 320kbps Lossless Audio Quality**:
-   - Original audio tracks by the true composer and artist.
-   - Native byte-range seeking for instantaneous scrubbing with zero lag.
-3. ⏭️ **Guaranteed Auto-Next Track Playback**:
-   - Seamless transition to the next queued track when the current song completes.
-4. 🌙 **Interactive Sleep Timer**:
-   - Flexible timer presets (5m, 10m, 15m, 30m, 45m, 1h, End of track) with automatic fade and pause.
-5. 🏝️ **Translucent Dynamic Island**:
-   - Non-intrusive translucent glass pill that expands smoothly into full player controls upon touch.
-6. 📸 **Spotify-Style Visual Photo Card Sharing**:
-   - Generates high-res 9:16 story cards with album cover, wave barcode, and deep link for Snapchat, Instagram, and WhatsApp.
+### ✨ What's New in v1.6.1
+
+#### 1. 🌟 Procedural Randomized Constellation Star Placements
+- Words no longer spawn in the same static 9-point coordinates.
+- Each lyric line's layout is procedurally seeded by the line's text and timestamp.
+- The initial word can anchor in any quadrant (top-right, bottom-left, center, top-left, bottom-right, etc.), branching organically across the canvas along curved celestial paths with collision avoidance to prevent word overlap.
+
+#### 2. 📱 Guaranteed Mobile Exit & Touch Gestures
+- **Floating Safe-Area Exit Pill**: Added a high-contrast floating Exit pill at top-right with \`env(safe-area-inset-top)\` spacing to prevent interference from camera notches or camera cutouts.
+- **Bottom HUD Exit Button**: Direct thumb-reachable "Exit" button in the bottom playback control bar.
+- **Swipe-Down Dismiss**: Natural vertical swipe-down gesture anywhere on the screen cleanly dismisses Constellation mode.
+
+#### 3. 🌑 Pure Pitch-Black OLED Space
+- Completely eliminated the background dotted \`+\` grid pattern (\`bg-[radial-gradient(...)]\`).
+- Pure true-black \`#000000\` background lets OLED and AMOLED screens turn pixels completely off, highlighted only by subtle nebula color blooms and Lumn ambient display perimeter rim glow.
+
+#### 4. 💎 Liquid Frosted Glass Specular Contours
+- Subtle top specular edge highlight (\`inset 0 1px 0 0 rgba(255, 255, 255, 0.18)\`) applied to floating headers and bars for depth and realism.
 `,
         draft: false,
         prerelease: false,
@@ -102,8 +105,6 @@ Production-grade Spotify-style music streaming ecosystem across **Web**, **Andro
   }
 
   const uploadBaseUrl = `https://uploads.github.com/repos/${owner}/${repo}/releases/${release.id}/assets`;
-
-  // List existing assets to avoid duplicate names
   const existingAssets = release.assets || [];
 
   const filesToUpload = [
@@ -121,6 +122,11 @@ Production-grade Spotify-style music streaming ecosystem across **Web**, **Andro
       name: 'wavelength-desktop.exe',
       path: path.join(__dirname, '..', 'wavelength-desktop.exe'),
       contentType: 'application/vnd.microsoft.portable-executable',
+    },
+    {
+      name: 'wavelength-bot-wispbyte.zip',
+      path: path.join(__dirname, '..', 'wavelength-bot-wispbyte.zip'),
+      contentType: 'application/zip',
     },
   ];
 

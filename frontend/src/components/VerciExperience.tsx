@@ -44,6 +44,26 @@ function cleanTitleString(str: string): string {
     .trim();
 }
 
+function hashLyricLine(str: string, time: number): number {
+  let hash = 2166136261;
+  const combined = `${str}_${Math.floor(time * 10)}`;
+  for (let i = 0; i < combined.length; i++) {
+    hash ^= combined.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function createLineRng(seed: number) {
+  let s = seed || 1;
+  return () => {
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    return ((s >>> 0) % 100000) / 100000;
+  };
+}
+
 function parseLRC(lrcText: string): LyricLine[] {
   const lines: LyricLine[] = [];
   const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
@@ -93,6 +113,26 @@ export default function VerciExperience() {
   const [secondaryColor, setSecondaryColor] = useState<string>('rgba(255, 255, 255, 0.2)');
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current !== null && touchStartX.current !== null) {
+      const diffY = e.changedTouches[0].clientY - touchStartY.current;
+      const diffX = Math.abs(e.changedTouches[0].clientX - touchStartX.current);
+      // Downward swipe of more than 75px that is mostly vertical triggers exit
+      if (diffY > 75 && diffY > diffX * 1.2) {
+        setIsVerciOpen(false);
+      }
+    }
+    touchStartY.current = null;
+    touchStartX.current = null;
+  };
 
   // Extract dynamic colors from album artwork for Lumn ambient rim
   useEffect(() => {
@@ -216,7 +256,7 @@ export default function VerciExperience() {
   const activeLine = lyrics[activeLineIndex] || null;
   const nextLine = lyrics[activeLineIndex + 1] || null;
 
-  // Build Constellation Node coordinates for the active line's words
+  // Build Constellation Node coordinates for the active line's words (Procedural Celestial Placement)
   const constellationNodes: WordNode[] = useMemo(() => {
     if (!activeLine || !activeLine.text) return [];
 
@@ -228,33 +268,75 @@ export default function VerciExperience() {
     const totalDuration = Math.max(1.5, lineEnd - lineStart);
     const wordDuration = totalDuration / words.length;
 
-    // Fixed harmonic constellation positions (like constellations Orion, Ursa, Cassiopeia)
-    const basePositions = [
-      { x: 18, y: 46 },
-      { x: 28, y: 56 },
-      { x: 42, y: 42 },
-      { x: 50, y: 64 },
-      { x: 60, y: 48 },
-      { x: 74, y: 38 },
-      { x: 84, y: 55 },
-      { x: 34, y: 32 },
-      { x: 66, y: 68 },
+    // Seeded procedural random generator for this specific lyric sentence
+    const seed = hashLyricLine(activeLine.text, activeLine.time);
+    const rng = createLineRng(seed);
+
+    // Anchors across all canvas sectors (right corner, top left, center, bottom, etc.)
+    const anchorZones = [
+      { x: 74, y: 28 }, // Top right
+      { x: 24, y: 32 }, // Top left
+      { x: 76, y: 64 }, // Bottom right
+      { x: 26, y: 68 }, // Bottom left
+      { x: 50, y: 28 }, // Top center
+      { x: 50, y: 70 }, // Bottom center
+      { x: 50, y: 50 }, // Dead center
+      { x: 80, y: 46 }, // Center right
+      { x: 20, y: 46 }, // Center left
     ];
 
-    return words.map((word, i) => {
-      const pos = basePositions[i % basePositions.length];
-      // Subtle organic jitter based on index
-      const jitterX = ((i * 17) % 8) - 4;
-      const jitterY = ((i * 23) % 8) - 4;
+    // Select starting anchor randomly for word 0
+    const startZone = anchorZones[Math.floor(rng() * anchorZones.length)];
+    let curX = Math.max(16, Math.min(84, startZone.x + (rng() * 16 - 8)));
+    let curY = Math.max(22, Math.min(76, startZone.y + (rng() * 14 - 7)));
 
-      return {
-        word,
+    // Direction vector of constellation drift
+    let heading = rng() * Math.PI * 2;
+    const nodes: WordNode[] = [];
+
+    for (let i = 0; i < words.length; i++) {
+      if (i > 0) {
+        // Step distance between 15% and 24% of canvas
+        const stepDist = 15 + rng() * 9;
+        // Organic curve jitter
+        heading += (rng() - 0.5) * 1.3;
+
+        let nextX = curX + Math.cos(heading) * stepDist;
+        let nextY = curY + Math.sin(heading) * stepDist;
+
+        // Bounce back from horizontal boundaries
+        if (nextX < 14 || nextX > 86) {
+          heading = Math.PI - heading;
+          nextX = Math.max(14, Math.min(86, nextX));
+        }
+
+        // Bounce back from vertical boundaries
+        if (nextY < 20 || nextY > 78) {
+          heading = -heading;
+          nextY = Math.max(20, Math.min(78, nextY));
+        }
+
+        // Steer towards center if near perimeter
+        if (nextX < 18 || nextX > 82 || nextY < 24 || nextY > 74) {
+          const toCenterX = 50 - nextX;
+          const toCenterY = 50 - nextY;
+          heading = Math.atan2(toCenterY, toCenterX) + (rng() - 0.5) * 0.6;
+        }
+
+        curX = nextX;
+        curY = nextY;
+      }
+
+      nodes.push({
+        word: words[i],
         startTime: lineStart + i * wordDuration,
         endTime: lineStart + (i + 1) * wordDuration,
-        x: Math.max(10, Math.min(90, pos.x + jitterX)),
-        y: Math.max(15, Math.min(85, pos.y + jitterY)),
-      };
-    });
+        x: Math.round(curX * 10) / 10,
+        y: Math.round(curY * 10) / 10,
+      });
+    }
+
+    return nodes;
   }, [activeLine, nextLine]);
 
   // Active word index in constellation
@@ -285,6 +367,8 @@ export default function VerciExperience() {
   return (
     <div
       ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       className="fixed inset-0 z-[100] bg-black text-white select-none flex flex-col items-center justify-between overflow-hidden"
       style={{
         boxShadow: isLumnGlowEnabled
@@ -292,6 +376,21 @@ export default function VerciExperience() {
           : 'none',
       }}
     >
+      {/* FLOATING MOBILE CLOSE BUTTON (Guaranteed notch & viewport immunity) */}
+      <button
+        onClick={() => setIsVerciOpen(false)}
+        aria-label="Exit Constellation Mode"
+        className="fixed z-[120] sm:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/85 hover:bg-black active:scale-95 text-white text-xs font-bold border border-white/20 shadow-2xl backdrop-blur-2xl transition-all"
+        style={{
+          top: 'max(env(safe-area-inset-top, 0px) + 8px, 12px)',
+          right: 'max(env(safe-area-inset-right, 0px) + 10px, 12px)',
+          boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.25), 0 8px 30px rgba(0, 0, 0, 0.85)',
+        }}
+      >
+        <X className="w-3.5 h-3.5 text-spotify-green" />
+        <span>Exit</span>
+      </button>
+
       {/* LUMN AMBIENT RIM BORDER (trylumn.xyz) */}
       {isLumnGlowEnabled && (
         <div
@@ -303,22 +402,25 @@ export default function VerciExperience() {
         />
       )}
 
-      {/* BACKGROUND PARTICLES & NEBULA */}
+      {/* BACKGROUND PARTICLES & NEBULA (PURE PITCH-BLACK OLED SPACE) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div
-          className="absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[120px] opacity-25"
+          className="absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[140px] opacity-20"
           style={{ backgroundColor: dominantColor }}
         />
         <div
-          className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full blur-[140px] opacity-25"
+          className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full blur-[160px] opacity-20"
           style={{ backgroundColor: secondaryColor }}
         />
-        {/* Twinkling ambient star field */}
-        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:32px_32px]" />
       </div>
 
       {/* TOP BAR: Track Info + Verci Controls */}
-      <header className="w-full relative z-30 px-6 py-5 flex items-center justify-between backdrop-blur-sm bg-black/20">
+      <header
+        className="w-full relative z-30 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between backdrop-blur-xl bg-black/40 border-b border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)]"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px) + 6px, 0.75rem)',
+        }}
+      >
         {/* Left: Active Track Badge */}
         <div className="flex items-center gap-3.5">
           {currentTrack.artworkUrl ? (
@@ -645,7 +747,12 @@ export default function VerciExperience() {
       </main>
 
       {/* BOTTOM FLOATING PLAYER HUD */}
-      <footer className="w-full relative z-30 px-6 py-4 flex flex-col items-center gap-2 backdrop-blur-md bg-black/30 border-t border-white/5">
+      <footer
+        className="w-full relative z-30 px-4 md:px-6 py-3 md:py-4 flex flex-col items-center gap-2 backdrop-blur-xl bg-black/40 border-t border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)]"
+        style={{
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px) + 6px, 0.75rem)',
+        }}
+      >
         {/* Scrubber Range */}
         <div className="w-full max-w-xl flex items-center gap-3 text-xs text-white/60 font-mono">
           <span>
@@ -674,30 +781,54 @@ export default function VerciExperience() {
           </span>
         </div>
 
-        {/* Playback Controls */}
-        <div className="flex items-center gap-6">
-          <button
-            onClick={prevTrack}
-            className="p-2 text-white/70 hover:text-white hover:scale-110 active:scale-95 transition-all"
-          >
-            <SkipBack className="w-5 h-5" />
-          </button>
-          <button
-            onClick={togglePlay}
-            className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl"
-          >
-            {isPlaying ? (
-              <Pause className="w-5 h-5 fill-current" />
-            ) : (
-              <Play className="w-5 h-5 fill-current ml-0.5" />
-            )}
-          </button>
-          <button
-            onClick={nextTrack}
-            className="p-2 text-white/70 hover:text-white hover:scale-110 active:scale-95 transition-all"
-          >
-            <SkipForward className="w-5 h-5" />
-          </button>
+        {/* Playback Controls & Explicit Exit Mode Button */}
+        <div className="w-full max-w-xl flex items-center justify-between px-2 pt-1">
+          {/* Left indicator / hint */}
+          <div className="w-20 hidden sm:block text-[10px] text-white/40 font-mono">
+            ESC to exit
+          </div>
+          <div className="w-20 sm:hidden" />
+
+          {/* Center Playback Controls */}
+          <div className="flex items-center gap-5 md:gap-6">
+            <button
+              onClick={prevTrack}
+              aria-label="Previous track"
+              className="p-2 text-white/70 hover:text-white hover:scale-110 active:scale-95 transition-all"
+            >
+              <SkipBack className="w-5 h-5" />
+            </button>
+            <button
+              onClick={togglePlay}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+              className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl"
+            >
+              {isPlaying ? (
+                <Pause className="w-5 h-5 fill-current" />
+              ) : (
+                <Play className="w-5 h-5 fill-current ml-0.5" />
+              )}
+            </button>
+            <button
+              onClick={nextTrack}
+              aria-label="Next track"
+              className="p-2 text-white/70 hover:text-white hover:scale-110 active:scale-95 transition-all"
+            >
+              <SkipForward className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Right Exit Mode Button */}
+          <div className="w-20 flex justify-end">
+            <button
+              onClick={() => setIsVerciOpen(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 text-xs font-bold border border-white/15 transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
+              title="Exit Constellation Mode"
+            >
+              <X className="w-3.5 h-3.5 text-spotify-green" />
+              <span>Exit</span>
+            </button>
+          </div>
         </div>
       </footer>
     </div>
