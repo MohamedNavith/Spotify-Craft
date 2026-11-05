@@ -127,6 +127,26 @@ export default function AudioEngine() {
         audio.currentTime = 0;
         setProgress(0);
         useAuthStore.getState().incrementSongCount();
+
+        // Equal-Power Trigonometric Audio Ramp (sin(t * PI / 2))
+        const targetVol = isMuted ? 0 : volume;
+        audio.volume = 0;
+        const rampStart = performance.now();
+        const rampDuration = 450;
+        const ramp = () => {
+          const elapsed = performance.now() - rampStart;
+          const ratio = Math.min(1, elapsed / rampDuration);
+          const factor = Math.sin(ratio * (Math.PI / 2));
+          if (audioRef.current) {
+            audioRef.current.volume = targetVol * factor;
+          }
+          if (ratio < 1) {
+            requestAnimationFrame(ramp);
+          } else if (audioRef.current) {
+            audioRef.current.volume = targetVol;
+          }
+        };
+        requestAnimationFrame(ramp);
       } else {
         // Same track upgrading from preview to full master 320kbps while playing: resume smoothly from current position
         if (prevTime > 1 && prevTime < (currentTrack.duration || 300)) {

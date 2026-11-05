@@ -27,7 +27,7 @@ export default function MobileMiniPlayer() {
       style={{
         bottom: 'calc(58px + max(env(safe-area-inset-bottom, 0px), 8px))',
       }}
-      className="md:hidden fixed left-2 right-2 z-30 bg-[#222222]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.85)] cursor-pointer select-none overflow-hidden transition-transform active:scale-[0.99]"
+      className="md:hidden fixed left-2 right-2 z-30 bg-[#222222]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_8px_30px_rgba(0,0,0,0.85)] cursor-pointer select-none overflow-hidden transition-transform active:scale-[0.99]"
     >
       <div className="flex items-center justify-between p-2 gap-3">
         {/* Left: Thumbnail + Titles */}

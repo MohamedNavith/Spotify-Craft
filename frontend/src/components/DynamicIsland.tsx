@@ -165,7 +165,7 @@ export default function DynamicIsland() {
     >
       {/* 1. Translucent Collapsed Dynamic Island Pill */}
       {!isExpanded ? (
-        <div className="h-10 px-3.5 bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 rounded-full flex items-center gap-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)] active:scale-98 transition-all">
+        <div className="h-10 px-3.5 bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 rounded-full flex items-center gap-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_12px_40px_rgba(0,0,0,0.8)] active:scale-98 transition-all">
           {/* Drag Handle Grip Icon */}
           <GripHorizontal className="w-3.5 h-3.5 text-white/40 shrink-0 pointer-events-none" />
 
@@ -207,7 +207,7 @@ export default function DynamicIsland() {
         </div>
       ) : (
         /* 2. Expanded Dynamic Island Floating Card */
-        <div className="w-[92vw] max-w-[360px] bg-black/92 border border-white/20 rounded-3xl p-4 shadow-[0_25px_60px_rgba(0,0,0,0.95)] backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 text-white cursor-default">
+        <div className="w-[92vw] max-w-[360px] bg-black/92 border border-white/20 rounded-3xl p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_25px_60px_rgba(0,0,0,0.95)] backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 text-white cursor-default">
           {/* Top Row: Drag Handle + Cover + Info + Collapse */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
