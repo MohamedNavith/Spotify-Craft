@@ -2,9 +2,13 @@
 
 import {
   ChevronDown,
+  Clock,
+  Flame,
+  Heart,
   Maximize2,
   Minimize2,
   Moon,
+  Music,
   Orbit,
   Pause,
   Play,
@@ -111,10 +115,30 @@ export default function VerciExperience() {
   const [glowIntensity, setGlowIntensity] = useState<number>(80);
   const [dominantColor, setDominantColor] = useState<string>('rgba(29, 185, 84, 0.45)');
   const [secondaryColor, setSecondaryColor] = useState<string>('rgba(255, 255, 255, 0.2)');
+  const [currentTimeStr, setCurrentTimeStr] = useState<string>('12:00');
+  const [currentDateStr, setCurrentDateStr] = useState<string>('Sun, Oct 25');
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeLyricRef = useRef<HTMLDivElement | null>(null);
+  const lyricsScrollContainerRef = useRef<HTMLDivElement | null>(null);
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
+
+  // Real-time clock for Lockscreen / Kinetic Screensaver mode
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTimeStr(
+        now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: false })
+      );
+      setCurrentDateStr(
+        now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
@@ -272,7 +296,7 @@ export default function VerciExperience() {
     const seed = hashLyricLine(activeLine.text, activeLine.time);
     const rng = createLineRng(seed);
 
-    // Anchors across all canvas sectors (right corner, top left, center, bottom, etc.)
+    // Anchors across distinct canvas sectors (right corner, top left, center, bottom, etc.)
     const anchorZones = [
       { x: 74, y: 28 }, // Top right
       { x: 24, y: 32 }, // Top left
@@ -296,10 +320,13 @@ export default function VerciExperience() {
 
     for (let i = 0; i < words.length; i++) {
       if (i > 0) {
-        // Step distance between 15% and 24% of canvas
-        const stepDist = 15 + rng() * 9;
-        // Organic curve jitter
-        heading += (rng() - 0.5) * 1.3;
+        // Step distance between 18% and 28% of canvas for wide, dynamic celestial leaps
+        const stepDist = 18 + rng() * 10;
+
+        // REAL ZIGZAG: Alternate sharp angle turns so words zigzag dynamically!
+        const zigzagSign = i % 2 === 1 ? 1 : -1;
+        const turnAngle = (Math.PI * 0.45) + (rng() * 0.45); // 81 deg to 162 deg turn
+        heading += zigzagSign * turnAngle;
 
         let nextX = curX + Math.cos(heading) * stepDist;
         let nextY = curY + Math.sin(heading) * stepDist;
@@ -320,7 +347,9 @@ export default function VerciExperience() {
         if (nextX < 18 || nextX > 82 || nextY < 24 || nextY > 74) {
           const toCenterX = 50 - nextX;
           const toCenterY = 50 - nextY;
-          heading = Math.atan2(toCenterY, toCenterX) + (rng() - 0.5) * 0.6;
+          heading = Math.atan2(toCenterY, toCenterX) + (zigzagSign * 0.5);
+          nextX = Math.max(14, Math.min(86, curX + Math.cos(heading) * stepDist));
+          nextY = Math.max(20, Math.min(78, curY + Math.sin(heading) * stepDist));
         }
 
         curX = nextX;
@@ -352,6 +381,49 @@ export default function VerciExperience() {
     }
     return 0;
   }, [constellationNodes, progress]);
+
+  // Auto-scroll active lyric into view for Spicetify mode
+  useEffect(() => {
+    if (verciStyle === 'spicetify' && activeLyricRef.current) {
+      activeLyricRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [activeLineIndex, verciStyle]);
+
+  // Kinetic Word Blocks for Lockscreen / Screensaver Pop Mode (From reel2.mp4)
+  const kineticBlocks = useMemo(() => {
+    if (!activeLine || !activeLine.text) return [];
+    const words = activeLine.text.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
+
+    if (words.length <= 2) {
+      return [
+        { text: words[0], type: 'italic', icon: '✦' },
+        ...(words[1] ? [{ text: words[1], type: 'badge', icon: '🧡' }] : []),
+      ];
+    }
+
+    if (words.length === 3) {
+      return [
+        { text: words[0], type: 'italic', icon: '👼' },
+        { text: words[1], type: 'huge', icon: '🔊' },
+        { text: words[2], type: 'badge', icon: '✨' },
+      ];
+    }
+
+    // 4 or more words: group into 3 rows
+    const chunk1 = words.slice(0, Math.ceil(words.length / 3)).join(' ');
+    const chunk2 = words.slice(Math.ceil(words.length / 3), Math.ceil((2 * words.length) / 3)).join(' ');
+    const chunk3 = words.slice(Math.ceil((2 * words.length) / 3)).join(' ');
+
+    return [
+      { text: chunk1, type: 'italic', icon: '✦' },
+      { text: chunk2, type: 'huge', icon: '🧡' },
+      { text: chunk3, type: 'badge', icon: '🔥' },
+    ];
+  }, [activeLine]);
 
   if (!isVerciOpen || !currentTrack) return null;
 
@@ -476,7 +548,7 @@ export default function VerciExperience() {
                   <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
                     Visual Style
                   </span>
-                  {(['constellation', 'fisheye', 'minimal'] as const).map((style) => (
+                  {(['constellation', 'spicetify', 'kinetic', 'fisheye', 'minimal'] as const).map((style) => (
                     <button
                       key={style}
                       onClick={() => {
@@ -489,7 +561,17 @@ export default function VerciExperience() {
                           : 'hover:bg-white/10 text-white'
                       }`}
                     >
-                      <span>{style === 'constellation' ? '✨ Constellation (Star Map)' : style === 'fisheye' ? '🎯 Fisheye Karaoke Focus' : '📄 Minimalist HUD'}</span>
+                      <span>
+                        {style === 'constellation'
+                          ? '✨ Constellation (Zigzag Map)'
+                          : style === 'spicetify'
+                          ? '🌸 Spicetify (Cinematic Fluid)'
+                          : style === 'kinetic'
+                          ? '⚡ Kinetic Pop (Lockscreen)'
+                          : style === 'fisheye'
+                          ? '🎯 Fisheye Karaoke Focus'
+                          : '📄 Minimalist HUD'}
+                      </span>
                       {verciStyle === style && <span className="text-xs">✓</span>}
                     </button>
                   ))}
@@ -682,6 +764,210 @@ export default function VerciExperience() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        ) : verciStyle === 'spicetify' ? (
+          /* ========================================================== */
+          /* 2. SPICETIFY MODE (Cinematic Fluid Glow & Apple Music Roll) */
+          /* ========================================================== */
+          <div className="w-full h-full max-w-6xl flex flex-col md:flex-row items-center justify-between gap-6 md:gap-14 px-4 md:px-8 py-2 overflow-hidden">
+            {/* Left Column: Floating Vinyl / Large Artwork & Metadata Card */}
+            <div className="w-full md:w-[42%] flex flex-col items-center md:items-start text-center md:text-left shrink-0">
+              {/* Album Art with Floating Specular Glow */}
+              <div className="relative group mb-5">
+                <div
+                  className="absolute -inset-4 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity pointer-events-none"
+                  style={{ backgroundColor: dominantColor }}
+                />
+                {currentTrack.artworkUrl ? (
+                  <img
+                    src={currentTrack.artworkUrl}
+                    alt={currentTrack.title}
+                    className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-80 md:h-80 rounded-2xl md:rounded-3xl object-cover shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 ring-1 ring-white/15"
+                  />
+                ) : (
+                  <div className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-80 md:h-80 rounded-2xl md:rounded-3xl bg-[#181818] border border-white/10 flex items-center justify-center text-spotify-green text-5xl font-black">
+                    W
+                  </div>
+                )}
+              </div>
+
+              {/* Title & Artist */}
+              <h2 className="text-xl md:text-3xl font-black text-white tracking-tight leading-tight mb-1 truncate max-w-full drop-shadow-md">
+                {currentTrack.title}
+              </h2>
+              <p className="text-xs md:text-base text-white/60 font-semibold mb-4 truncate max-w-full">
+                {currentTrack.artistName}
+              </p>
+
+              {/* Scrubber & Time */}
+              <div className="w-full max-w-sm flex flex-col gap-1.5">
+                <div className="relative flex items-center h-2 group cursor-pointer">
+                  <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-spotify-green transition-all"
+                      style={{ width: `${duration > 0 ? (progress / duration) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 180}
+                    value={progress}
+                    onChange={(e) => seek(parseFloat(e.target.value))}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  />
+                </div>
+                <div className="flex justify-between text-[11px] font-mono text-white/50">
+                  <span>
+                    {Math.floor(progress / 60)}:
+                    {Math.floor(progress % 60).toString().padStart(2, '0')}
+                  </span>
+                  <span>
+                    {Math.floor(duration / 60)}:
+                    {Math.floor(duration % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Synced Lyrics with Chromatic Fluid Aura */}
+            <div
+              ref={lyricsScrollContainerRef}
+              className="w-full md:w-[58%] h-[50vh] md:h-[72vh] overflow-y-auto no-scrollbar flex flex-col gap-6 py-[24vh] px-2 relative"
+            >
+              {lyrics.map((line, idx) => {
+                const isActive = idx === activeLineIndex;
+                const isPast = idx < activeLineIndex;
+
+                return (
+                  <div
+                    key={`lyric-${idx}`}
+                    ref={isActive ? activeLyricRef : null}
+                    onClick={() => seek(line.time)}
+                    className={`relative p-3 rounded-2xl cursor-pointer transition-all duration-500 ${
+                      isActive
+                        ? 'scale-105 z-10'
+                        : isPast
+                        ? 'opacity-35 hover:opacity-75 blur-[0.6px] hover:blur-none'
+                        : 'opacity-30 hover:opacity-70 blur-[0.6px] hover:blur-none'
+                    }`}
+                  >
+                    {/* Chromatic Fluid Aura Blob behind active line (From Spicetify Reel!) */}
+                    {isActive && (
+                      <div
+                        className="absolute -inset-x-6 -inset-y-3 rounded-3xl blur-2xl opacity-75 pointer-events-none -z-10 animate-pulse transition-all duration-700"
+                        style={{
+                          background: `radial-gradient(ellipse at center, ${dominantColor} 0%, rgba(168, 85, 247, 0.5) 40%, rgba(6, 182, 212, 0.35) 75%, transparent 100%)`,
+                        }}
+                      />
+                    )}
+
+                    <p
+                      className={`${fontClass} leading-tight font-black transition-colors ${
+                        isActive
+                          ? 'text-white text-2xl sm:text-3xl md:text-4xl drop-shadow-[0_0_30px_rgba(255,255,255,0.85)]'
+                          : 'text-white/60 text-lg sm:text-xl md:text-2xl font-bold'
+                      }`}
+                      style={{
+                        fontSize: isActive ? `${(textSize / 100) * 2.3}rem` : `${(textSize / 100) * 1.35}rem`,
+                      }}
+                    >
+                      {line.text}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : verciStyle === 'kinetic' ? (
+          /* ========================================================== */
+          /* 3. KINETIC POP & LOCKSCREEN MODE (From reel2.mp4)         */
+          /* ========================================================== */
+          <div className="w-full h-full max-w-4xl flex flex-col items-center justify-between py-6 px-4 select-none">
+            {/* Top Lockscreen Clock & Date Header */}
+            <div className="flex flex-col items-center text-center animate-in fade-in duration-500">
+              <span className="text-xs font-semibold text-white/50 tracking-widest uppercase">
+                {currentDateStr}
+              </span>
+              <span className="text-5xl md:text-7xl font-extralight tracking-tight text-white/95 font-mono mt-1 drop-shadow-md">
+                {currentTimeStr}
+              </span>
+            </div>
+
+            {/* Kinetic Typography & Pop Badges */}
+            <div className="flex flex-col items-center justify-center gap-3 md:gap-5 text-center my-auto w-full px-2">
+              {kineticBlocks.map((block, bIdx) => {
+                if (block.type === 'badge') {
+                  return (
+                    <div
+                      key={`kblock-${bIdx}`}
+                      className="flex items-center justify-center gap-3 animate-in zoom-in-90 duration-300"
+                    >
+                      <span
+                        className={`${fontClass} inline-block px-5 py-2 md:px-7 md:py-3 rounded-2xl bg-amber-400 text-black font-black text-2xl sm:text-4xl md:text-6xl shadow-[0_0_35px_rgba(251,191,36,0.65)] tracking-tight leading-none scale-105`}
+                        style={{ fontSize: `${(textSize / 100) * 3}rem` }}
+                      >
+                        {block.text}
+                      </span>
+                      {block.icon && (
+                        <span className="text-2xl sm:text-4xl md:text-5xl filter drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]">
+                          {block.icon}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (block.type === 'huge') {
+                  return (
+                    <div
+                      key={`kblock-${bIdx}`}
+                      className="flex items-center justify-center gap-3 animate-in fade-in duration-300"
+                    >
+                      <span
+                        className={`${fontClass} text-3xl sm:text-5xl md:text-7xl font-black text-white tracking-tight leading-none drop-shadow-[0_0_35px_rgba(255,255,255,0.7)]`}
+                        style={{ fontSize: `${(textSize / 100) * 3.4}rem` }}
+                      >
+                        {block.text}
+                      </span>
+                      {block.icon && (
+                        <span className="text-2xl sm:text-4xl filter drop-shadow-lg">
+                          {block.icon}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Default italic / serif styling
+                return (
+                  <div
+                    key={`kblock-${bIdx}`}
+                    className="flex items-center justify-center gap-2 animate-in fade-in duration-300"
+                  >
+                    <span
+                      className="font-serif italic font-bold text-2xl sm:text-3xl md:text-5xl text-amber-300/90 tracking-wide leading-none drop-shadow-md"
+                      style={{ fontSize: `${(textSize / 100) * 2.2}rem` }}
+                    >
+                      {block.text}
+                    </span>
+                    {block.icon && (
+                      <span className="text-xl sm:text-3xl">
+                        {block.icon}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Song Info Pill */}
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs text-white/70 font-semibold shadow-lg">
+              <Music className="w-3.5 h-3.5 text-spotify-green" />
+              <span>{currentTrack.title}</span>
+              <span className="text-white/40">•</span>
+              <span className="text-white/50">{currentTrack.artistName}</span>
             </div>
           </div>
         ) : verciStyle === 'fisheye' ? (

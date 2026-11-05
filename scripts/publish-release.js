@@ -25,7 +25,7 @@ async function main() {
 
   const owner = 'MohamedNavith';
   const repo = 'Spotify-Craft';
-  const tag = 'v1.6.1';
+  const tag = 'v1.6.2';
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
   const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
@@ -52,10 +52,10 @@ async function main() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'Wavelength v1.6.1 - Constellation Procedural Star Map, Pure OLED Space & Mobile Exit Controls',
-        body: `## 🌌 Wavelength v1.6.1 (Constellation Evolution)
+        name: 'Wavelength v1.6.2 - Spicetify Cinematic Fluid Lyrics, Kinetic Pop Screensaver & Zigzag Constellations',
+        body: `## 🌌 Wavelength v1.6.2 (Spicetify & Kinetic Screensaver Edition)
 
-This release implements major requested visual and interactive upgrades to the **Verci Constellation Engine**, inspired by modern open-source audio architectures like **OpenTune**, while polishing mobile controls.
+Major visual release inspired by community reels, featuring the **Spicetify Beautiful Lyrics Cinematic Mode**, the **Mac Screensaver Kinetic Pop & Badges Mode**, and the **Zigzag Constellation Star Engine**.
 
 ---
 
@@ -70,24 +70,23 @@ This release implements major requested visual and interactive upgrades to the *
 
 ---
 
-### ✨ What's New in v1.6.1
+### ✨ What's New in v1.6.2
 
-#### 1. 🌟 Procedural Randomized Constellation Star Placements
-- Words no longer spawn in the same static 9-point coordinates.
-- Each lyric line's layout is procedurally seeded by the line's text and timestamp.
-- The initial word can anchor in any quadrant (top-right, bottom-left, center, top-left, bottom-right, etc.), branching organically across the canvas along curved celestial paths with collision avoidance to prevent word overlap.
+#### 1. 🌸 Spicetify Cinematic Fluid Lyrics Mode (\`Spicefy Reel.mp4\`)
+- **Split-Screen Studio Layout**: Left side features floating Album Artwork card, track details, interactive timeline scrubber, and elapsed/remaining timestamps.
+- **Chromatic Fluid Nebula Glow**: An animated multi-colored gradient aurora blob (cyan, magenta, violet) smoothly tracks and pulses directly behind the active singing line.
+- **Apple Music-Style Blurred Text**: Inactive lines are dimmed and softly blurred (\`blur-[0.6px] opacity-35\`), smoothly scrolling into view as the song progresses.
+- **Click-to-Seek**: Tap any lyric line to jump playback directly to that second.
 
-#### 2. 📱 Guaranteed Mobile Exit & Touch Gestures
-- **Floating Safe-Area Exit Pill**: Added a high-contrast floating Exit pill at top-right with \`env(safe-area-inset-top)\` spacing to prevent interference from camera notches or camera cutouts.
-- **Bottom HUD Exit Button**: Direct thumb-reachable "Exit" button in the bottom playback control bar.
-- **Swipe-Down Dismiss**: Natural vertical swipe-down gesture anywhere on the screen cleanly dismisses Constellation mode.
+#### 2. ⚡ Kinetic Pop & Badges Screensaver Mode (\`reel2.mp4\`)
+- **Live Lockscreen Clock & Date**: Clean minimalist clock (\`12:39\` / \`Sun, Oct 25\`) at top.
+- **Dynamic Typographic Blocks**: Stacks lyrics with varied fonts (*italic serif*, **extra bold sans**, solid accent badges).
+- **Amber Highlight Badges & Emojis**: Key words pop inside solid golden amber badges (\`[ yeah, ]\`, \`[ girl ]\`) accompanied by glowing emojis and icons (\`🧡\`, \`✦\`, \`🔊\`, \`👼\`).
+- **OLED Dark Space & Lumn Rim Glow**: Pure black background framed by the ambient display rim lighting.
 
-#### 3. 🌑 Pure Pitch-Black OLED Space
-- Completely eliminated the background dotted \`+\` grid pattern (\`bg-[radial-gradient(...)]\`).
-- Pure true-black \`#000000\` background lets OLED and AMOLED screens turn pixels completely off, highlighted only by subtle nebula color blooms and Lumn ambient display perimeter rim glow.
-
-#### 4. 💎 Liquid Frosted Glass Specular Contours
-- Subtle top specular edge highlight (\`inset 0 1px 0 0 rgba(255, 255, 255, 0.18)\`) applied to floating headers and bars for depth and realism.
+#### 3. 🌟 Zigzag Celestial Constellation Fix
+- Fixed the previous straight-line drift in procedural placement.
+- Stars now alternate turns sharply ($80^\\circ$ to $160^\\circ$) across screen quadrants, creating a true celestial zigzag star map with glowing diamond markers (\`✦\`) and animated connecting constellation lines.
 `,
         draft: false,
         prerelease: false,

@@ -37,7 +37,7 @@ interface PlayerState {
   sleepTimerEndTime: number | null; // epoch timestamp ms when timer expires
   isDiscordModalOpen: boolean;
   isVerciOpen: boolean;
-  verciStyle: 'constellation' | 'fisheye' | 'minimal';
+  verciStyle: 'constellation' | 'spicetify' | 'kinetic' | 'fisheye' | 'minimal';
   isLumnGlowEnabled: boolean;
 
   // Actions
@@ -75,7 +75,7 @@ interface PlayerState {
   setSleepTimer: (minutes: number | null) => void;
   setIsDiscordModalOpen: (open: boolean) => void;
   setIsVerciOpen: (open: boolean) => void;
-  setVerciStyle: (style: 'constellation' | 'fisheye' | 'minimal') => void;
+  setVerciStyle: (style: 'constellation' | 'spicetify' | 'kinetic' | 'fisheye' | 'minimal') => void;
   toggleLumnGlow: () => void;
 }
 
