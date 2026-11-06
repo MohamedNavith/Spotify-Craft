@@ -3,6 +3,7 @@
 import {
   ChevronDown,
   Clock,
+  Film,
   Flame,
   Heart,
   Maximize2,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import TrackVideoCanvas from './TrackVideoCanvas';
 
 interface LyricLine {
   time: number;
@@ -448,21 +450,6 @@ export default function VerciExperience() {
           : 'none',
       }}
     >
-      {/* FLOATING MOBILE CLOSE BUTTON (Guaranteed notch & viewport immunity) */}
-      <button
-        onClick={() => setIsVerciOpen(false)}
-        aria-label="Exit Constellation Mode"
-        className="fixed z-[120] sm:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/85 hover:bg-black active:scale-95 text-white text-xs font-bold border border-white/20 shadow-2xl backdrop-blur-2xl transition-all"
-        style={{
-          top: 'max(env(safe-area-inset-top, 0px) + 8px, 12px)',
-          right: 'max(env(safe-area-inset-right, 0px) + 10px, 12px)',
-          boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.25), 0 8px 30px rgba(0, 0, 0, 0.85)',
-        }}
-      >
-        <X className="w-3.5 h-3.5 text-spotify-green" />
-        <span>Exit</span>
-      </button>
-
       {/* LUMN AMBIENT RIM BORDER (trylumn.xyz) */}
       {isLumnGlowEnabled && (
         <div
@@ -548,7 +535,7 @@ export default function VerciExperience() {
                   <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
                     Visual Style
                   </span>
-                  {(['constellation', 'spicetify', 'kinetic', 'fisheye', 'minimal'] as const).map((style) => (
+                  {(['constellation', 'canvas', 'spicetify', 'kinetic', 'fisheye', 'minimal'] as const).map((style) => (
                     <button
                       key={style}
                       onClick={() => {
@@ -564,8 +551,10 @@ export default function VerciExperience() {
                       <span>
                         {style === 'constellation'
                           ? '✨ Constellation (Zigzag Map)'
+                          : style === 'canvas'
+                          ? '🎬 Video Canvas & Lyrics (Reel Climax)'
                           : style === 'spicetify'
-                          ? '🌸 Spicetify (Cinematic Fluid)'
+                          ? '🌸 Spicetify Studio (Fluid Aurora)'
                           : style === 'kinetic'
                           ? '⚡ Kinetic Pop (Lockscreen)'
                           : style === 'fisheye'
@@ -662,13 +651,14 @@ export default function VerciExperience() {
             {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
           </button>
 
-          {/* Close Button */}
+          {/* Single Unified Exit Button */}
           <button
             onClick={() => setIsVerciOpen(false)}
             title="Exit Verci Mode (Esc)"
-            className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white text-xs font-bold backdrop-blur-md transition-all shadow-md shrink-0 ml-1"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5 text-spotify-green" />
+            <span>Exit</span>
           </button>
         </div>
       </header>
@@ -766,30 +756,29 @@ export default function VerciExperience() {
               })}
             </div>
           </div>
-        ) : verciStyle === 'spicetify' ? (
+        ) : verciStyle === 'spicetify' || verciStyle === 'canvas' ? (
           /* ========================================================== */
-          /* 2. SPICETIFY MODE (Cinematic Fluid Glow & Apple Music Roll) */
+          /* 2. SPICETIFY & 25s VIDEO CANVAS MODE (From Spotify gif Lyrics Reel) */
           /* ========================================================== */
           <div className="w-full h-full max-w-6xl flex flex-col md:flex-row items-center justify-between gap-6 md:gap-14 px-4 md:px-8 py-2 overflow-hidden">
-            {/* Left Column: Floating Vinyl / Large Artwork & Metadata Card */}
+            {/* Left Column: 20-30s Video Canvas Card, Metadata & Scrubber */}
             <div className="w-full md:w-[42%] flex flex-col items-center md:items-start text-center md:text-left shrink-0">
-              {/* Album Art with Floating Specular Glow */}
+              {/* 25s Video Canvas Card with Floating Specular Glow */}
               <div className="relative group mb-5">
                 <div
                   className="absolute -inset-4 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity pointer-events-none"
                   style={{ backgroundColor: dominantColor }}
                 />
-                {currentTrack.artworkUrl ? (
-                  <img
-                    src={currentTrack.artworkUrl}
-                    alt={currentTrack.title}
-                    className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-80 md:h-80 rounded-2xl md:rounded-3xl object-cover shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-white/10 ring-1 ring-white/15"
+                <div className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-80 md:h-80 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.85)] border border-white/10 ring-1 ring-white/15 bg-black">
+                  <TrackVideoCanvas
+                    title={currentTrack.title}
+                    artist={currentTrack.artistName}
+                    duration={duration}
+                    artworkUrl={currentTrack.artworkUrl}
+                    className="w-full h-full"
+                    preferredMode="canvas"
                   />
-                ) : (
-                  <div className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-80 md:h-80 rounded-2xl md:rounded-3xl bg-[#181818] border border-white/10 flex items-center justify-center text-spotify-green text-5xl font-black">
-                    W
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* Title & Artist */}
@@ -1104,17 +1093,8 @@ export default function VerciExperience() {
             </button>
           </div>
 
-          {/* Right Exit Mode Button */}
-          <div className="w-20 flex justify-end">
-            <button
-              onClick={() => setIsVerciOpen(false)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 text-xs font-bold border border-white/15 transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2)]"
-              title="Exit Constellation Mode"
-            >
-              <X className="w-3.5 h-3.5 text-spotify-green" />
-              <span>Exit</span>
-            </button>
-          </div>
+          {/* Right Spacer (Keeps transport controls centered) */}
+          <div className="w-20" />
         </div>
       </footer>
     </div>

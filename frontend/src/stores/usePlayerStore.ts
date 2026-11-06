@@ -37,8 +37,10 @@ interface PlayerState {
   sleepTimerEndTime: number | null; // epoch timestamp ms when timer expires
   isDiscordModalOpen: boolean;
   isVerciOpen: boolean;
-  verciStyle: 'constellation' | 'spicetify' | 'kinetic' | 'fisheye' | 'minimal';
+  verciStyle: 'constellation' | 'spicetify' | 'kinetic' | 'canvas' | 'fisheye' | 'minimal';
   isLumnGlowEnabled: boolean;
+  isDynamicIslandVisible: boolean;
+  isCanvasModeEnabled: boolean;
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -75,8 +77,12 @@ interface PlayerState {
   setSleepTimer: (minutes: number | null) => void;
   setIsDiscordModalOpen: (open: boolean) => void;
   setIsVerciOpen: (open: boolean) => void;
-  setVerciStyle: (style: 'constellation' | 'spicetify' | 'kinetic' | 'fisheye' | 'minimal') => void;
+  setVerciStyle: (style: 'constellation' | 'spicetify' | 'kinetic' | 'canvas' | 'fisheye' | 'minimal') => void;
   toggleLumnGlow: () => void;
+  toggleDynamicIsland: () => void;
+  setIsDynamicIslandVisible: (visible: boolean) => void;
+  toggleCanvasMode: () => void;
+  setIsCanvasModeEnabled: (enabled: boolean) => void;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -121,6 +127,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isVerciOpen: false,
   verciStyle: 'constellation',
   isLumnGlowEnabled: true,
+  isDynamicIslandVisible: typeof window !== 'undefined' ? localStorage.getItem('wavelength_island_visible') !== 'false' : true,
+  isCanvasModeEnabled: typeof window !== 'undefined' ? localStorage.getItem('wavelength_canvas_enabled') !== 'false' : true,
 
   setTrack: (track, queue) => {
     const state = get();
@@ -417,4 +425,32 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setIsVerciOpen: (open) => set({ isVerciOpen: open }),
   setVerciStyle: (style) => set({ verciStyle: style }),
   toggleLumnGlow: () => set((state) => ({ isLumnGlowEnabled: !state.isLumnGlowEnabled })),
+  toggleDynamicIsland: () =>
+    set((state) => {
+      const next = !state.isDynamicIslandVisible;
+      try {
+        localStorage.setItem('wavelength_island_visible', String(next));
+      } catch {}
+      return { isDynamicIslandVisible: next };
+    }),
+  setIsDynamicIslandVisible: (visible) => {
+    try {
+      localStorage.setItem('wavelength_island_visible', String(visible));
+    } catch {}
+    set({ isDynamicIslandVisible: visible });
+  },
+  toggleCanvasMode: () =>
+    set((state) => {
+      const next = !state.isCanvasModeEnabled;
+      try {
+        localStorage.setItem('wavelength_canvas_enabled', String(next));
+      } catch {}
+      return { isCanvasModeEnabled: next };
+    }),
+  setIsCanvasModeEnabled: (enabled) => {
+    try {
+      localStorage.setItem('wavelength_canvas_enabled', String(enabled));
+    } catch {}
+    set({ isCanvasModeEnabled: enabled });
+  },
 }));

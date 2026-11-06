@@ -25,7 +25,7 @@ async function main() {
 
   const owner = 'MohamedNavith';
   const repo = 'Spotify-Craft';
-  const tag = 'v1.6.2';
+  const tag = 'v1.6.3';
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
   const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
@@ -52,10 +52,10 @@ async function main() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'Wavelength v1.6.2 - Spicetify Cinematic Fluid Lyrics, Kinetic Pop Screensaver & Zigzag Constellations',
-        body: `## 🌌 Wavelength v1.6.2 (Spicetify & Kinetic Screensaver Edition)
+        name: 'Wavelength v1.6.3 - 25s Highlight Video Canvas, Dedicated Under-Camera Dynamic Island & Studio Polish',
+        body: `## 🎬 Wavelength v1.6.3 (Video Canvas & Dynamic Island Edition)
 
-Major visual release inspired by community reels, featuring the **Spicetify Beautiful Lyrics Cinematic Mode**, the **Mac Screensaver Kinetic Pop & Badges Mode**, and the **Zigzag Constellation Star Engine**.
+Major visual and interaction overhaul inspired by community reels (\`Spotify gif Lyrics.mp4\`), featuring the **25-Second Highlight Video Canvas Engine**, the **Dedicated Under-Camera Notch Dynamic Island**, and clean mobile/desktop edge alignment.
 
 ---
 
@@ -70,23 +70,27 @@ Major visual release inspired by community reels, featuring the **Spicetify Beau
 
 ---
 
-### ✨ What's New in v1.6.2
+### ✨ What's New in v1.6.3
 
-#### 1. 🌸 Spicetify Cinematic Fluid Lyrics Mode (\`Spicefy Reel.mp4\`)
-- **Split-Screen Studio Layout**: Left side features floating Album Artwork card, track details, interactive timeline scrubber, and elapsed/remaining timestamps.
-- **Chromatic Fluid Nebula Glow**: An animated multi-colored gradient aurora blob (cyan, magenta, violet) smoothly tracks and pulses directly behind the active singing line.
-- **Apple Music-Style Blurred Text**: Inactive lines are dimmed and softly blurred (\`blur-[0.6px] opacity-35\`), smoothly scrolling into view as the song progresses.
-- **Click-to-Seek**: Tap any lyric line to jump playback directly to that second.
+#### 1. 🎬 20-30s Highlight Music Video Canvas (\`Spotify gif Lyrics.mp4\`)
+- **Seamless Climax Loops**: Curated and procedural engine that automatically loops the best 20-30 seconds (chorus, hook, iconic drop) of official music videos and animated waveform canvases (e.g. *Die With A Smile*, *I Wanna Be Yours*, *Tum Hi Ho*, *Blinding Lights*, *Starboy*, *Kesariya*, *Hukum*, etc.).
+- **Split-Screen Studio Mode**: Left side showcases the looping 25s video canvas card with floating specular aura, timeline scrubber, and elapsed/remaining timestamps, while the right side displays full synchronized kinetic lyrics with Apple Music-style blur on inactive lines.
+- **Normal Playable Mode**: The 25s highlight video canvas is directly playable in normal playback mode — right inside the **Mobile Fullscreen Now Playing Card** and the **Desktop Now Playing Right Drawer**, with instant \`[ 🎬 Canvas / 🎵 Art ]\` toggling.
 
-#### 2. ⚡ Kinetic Pop & Badges Screensaver Mode (\`reel2.mp4\`)
-- **Live Lockscreen Clock & Date**: Clean minimalist clock (\`12:39\` / \`Sun, Oct 25\`) at top.
-- **Dynamic Typographic Blocks**: Stacks lyrics with varied fonts (*italic serif*, **extra bold sans**, solid accent badges).
-- **Amber Highlight Badges & Emojis**: Key words pop inside solid golden amber badges (\`[ yeah, ]\`, \`[ girl ]\`) accompanied by glowing emojis and icons (\`🧡\`, \`✦\`, \`🔊\`, \`👼\`).
-- **OLED Dark Space & Lumn Rim Glow**: Pure black background framed by the ambient display rim lighting.
+#### 2. 🏝️ Dedicated Under-Camera Notch Dynamic Island
+- **Camera Cutout Docking**: Positioned directly beneath the front camera punch hole / notch (\`top: max(env(safe-area-inset-top), 8px)\`, centered horizontally).
+- **Auto-Pop & Settle Animation**: Pops down smoothly from the camera notch whenever track changes or playback toggles, displaying spinning artwork, equalizer bars, and song title.
+- **Swipe-to-Dismiss & Clean Screen**: Swipe up on the island or tap the direct \`✕\` button to dismiss/hide the island anytime for a 100% clean, distraction-free screen.
+- **Instant Restore**: Sleek Dynamic Island toggle pill in the Top Bar and Settings page allows showing or hiding the island anytime with 1 tap.
+- **Cosmic Immunity**: Dynamic Island automatically hides in Verci / Fullscreen visualizer modes to prevent any visual clutter.
 
-#### 3. 🌟 Zigzag Celestial Constellation Fix
-- Fixed the previous straight-line drift in procedural placement.
-- Stars now alternate turns sharply ($80^\\circ$ to $160^\\circ$) across screen quadrants, creating a true celestial zigzag star map with glowing diamond markers (\`✦\`) and animated connecting constellation lines.
+#### 3. 🎯 Verci Exit Bug & Alignment Fix
+- **Eliminated Duplicate Buttons**: Removed the redundant floating \`sm:hidden\` exit button and bottom HUD duplicate exit button.
+- **Unified Frosted Glass Exit Pill**: Placed a single, prominent frosted glass pill button in the top header, perfectly aligned and notch-immune.
+- **No More Overlays**: Top header controls (Style Selector, Fullscreen, Exit) never overlap or hide beneath other buttons on any phone or desktop screen.
+
+#### 4. 📱 Edge-to-Edge Safe Area Immersion
+- Proper \`env(safe-area-inset-top)\` and \`env(safe-area-inset-bottom)\` padding across headers, drawer panels, and navigation bars, preventing collisions with Android camera cutouts and system gesture bars.
 `,
         draft: false,
         prerelease: false,

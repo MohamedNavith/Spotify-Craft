@@ -3,6 +3,8 @@
 import {
   ChevronDown,
   ChevronUp,
+  EyeOff,
+  Film,
   GripHorizontal,
   Heart,
   Orbit,
@@ -10,8 +12,9 @@ import {
   Play,
   SkipBack,
   SkipForward,
+  X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function DynamicIsland() {
@@ -29,43 +32,31 @@ export default function DynamicIsland() {
     queue,
     setTrack,
     setIsVerciOpen,
+    isVerciOpen,
+    isDynamicIslandVisible,
+    setIsDynamicIslandVisible,
   } = usePlayerStore();
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const elementRef = useRef<HTMLDivElement | null>(null);
-  const dragData = useRef({
-    startX: 0,
-    startY: 0,
-    elemX: 0,
-    elemY: 0,
-    moved: false,
-  });
+  const [isPopping, setIsPopping] = useState(false);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const prevTrackId = useRef<string | null>(null);
 
-  // Load saved position or set clean default
+  // Auto-pop down from the camera cutout whenever the track changes or play state toggles
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!currentTrack) return;
+    if (prevTrackId.current !== currentTrack.id) {
+      prevTrackId.current = currentTrack.id;
+      setIsPopping(true);
+      const timer = setTimeout(() => setIsPopping(false), 2400);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTrack?.id]);
 
-    try {
-      const saved = localStorage.getItem('wavelength_dynamic_island_pos');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-          const safeX = Math.min(Math.max(10, parsed.x), window.innerWidth - 180);
-          const safeY = Math.min(Math.max(10, parsed.y), window.innerHeight - 100);
-          setPosition({ x: safeX, y: safeY });
-          return;
-        }
-      }
-    } catch {}
-
-    const defX = Math.max(16, window.innerWidth - 260);
-    const defY = Math.max(76, window.innerHeight - 150);
-    setPosition({ x: defX, y: defY });
-  }, []);
-
-  if (!currentTrack) return null;
+  // If hidden by user, or in Verci/Cosmic mode, or no track is loaded -> hide completely
+  if (!isDynamicIslandVisible || isVerciOpen || !currentTrack) {
+    return null;
+  }
 
   const isLiked = likedTrackIds.has(currentTrack.id);
   const progressPercent = duration > 0 ? Math.min(100, (progress / duration) * 100) : 0;
@@ -77,177 +68,165 @@ export default function DynamicIsland() {
     return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const upcomingTracks = queue.filter((t) => t.id !== currentTrack.id).slice(0, 4);
-
-  // Pointer drag events for unrestricted free movement anywhere on screen
-  const handlePointerDown = (e: React.PointerEvent) => {
-    // Crucial: Don't drag if interacting with buttons, sliders or links!
-    const target = e.target as HTMLElement;
-    if (target.closest('button, input, a, [role="button"], .no-drag')) {
-      return;
-    }
-
-    const currentX = position ? position.x : 20;
-    const currentY = position ? position.y : 80;
-
-    dragData.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      elemX: currentX,
-      elemY: currentY,
-      moved: false,
-    };
-
-    setIsDragging(true);
-    try {
-      elementRef.current?.setPointerCapture(e.pointerId);
-    } catch {}
+  // Swipe up to dismiss/hide into camera notch
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY);
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-
-    const deltaX = e.clientX - dragData.current.startX;
-    const deltaY = e.clientY - dragData.current.startY;
-
-    if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-      dragData.current.moved = true;
-    }
-
-    const elemWidth = elementRef.current?.offsetWidth || 220;
-    const elemHeight = elementRef.current?.offsetHeight || 44;
-
-    const newX = Math.min(Math.max(8, dragData.current.elemX + deltaX), window.innerWidth - elemWidth - 8);
-    const newY = Math.min(Math.max(8, dragData.current.elemY + deltaY), window.innerHeight - elemHeight - 76);
-
-    setPosition({ x: newX, y: newY });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    setIsDragging(false);
-
-    try {
-      elementRef.current?.releasePointerCapture(e.pointerId);
-    } catch {}
-
-    if (dragData.current.moved && position) {
-      try {
-        localStorage.setItem('wavelength_dynamic_island_pos', JSON.stringify(position));
-      } catch {}
-    } else {
-      // Only toggle expand if clicking on non-interactive area of collapsed pill
-      const target = e.target as HTMLElement;
-      if (!target.closest('button, input, a, [role="button"]')) {
-        setIsExpanded((prev) => !prev);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY !== null) {
+      const diffY = e.changedTouches[0].clientY - touchStartY;
+      // Upward flick -> dismiss Dynamic Island to keep screen clean
+      if (diffY < -35) {
+        setIsDynamicIslandVisible(false);
       }
     }
+    setTouchStartY(null);
   };
 
   return (
     <div
-      ref={elementRef}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{
-        position: 'fixed',
-        left: position ? `${position.x}px` : 'auto',
-        top: position ? `${position.y}px` : 'auto',
-        right: position ? 'auto' : '24px',
-        bottom: position ? 'auto' : '96px',
-        touchAction: 'none',
+        top: 'max(env(safe-area-inset-top, 0px), 8px)',
       }}
-      className={`z-50 select-none transition-shadow ${
-        isDragging ? 'cursor-grabbing scale-102 shadow-2xl' : 'cursor-grab'
+      className={`fixed left-1/2 -translate-x-1/2 z-[100] select-none transition-all duration-300 ease-out ${
+        isPopping ? 'scale-[1.03] shadow-[0_16px_50px_rgba(0,0,0,0.95)]' : 'scale-100 shadow-[0_10px_35px_rgba(0,0,0,0.85)]'
       }`}
-      title="Drag to move • Tap pill to expand"
     >
-      {/* 1. Translucent Collapsed Dynamic Island Pill */}
+      {/* 1. COLLAPSED DEDICATED CAMERA NOTCH PILL */}
       {!isExpanded ? (
-        <div className="h-10 px-3.5 bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 rounded-full flex items-center gap-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_12px_40px_rgba(0,0,0,0.8)] active:scale-98 transition-all">
-          {/* Drag Handle Grip Icon */}
-          <GripHorizontal className="w-3.5 h-3.5 text-white/40 shrink-0 pointer-events-none" />
-
-          {/* Mini Album Cover */}
-          <div className="w-6 h-6 rounded-full overflow-hidden bg-black shrink-0 border border-white/20 shadow-sm pointer-events-none">
+        <div
+          onClick={() => setIsExpanded(true)}
+          className="h-9 px-3 bg-black/90 hover:bg-black/95 backdrop-blur-2xl border border-white/20 hover:border-white/35 rounded-full flex items-center gap-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_12px_40px_rgba(0,0,0,0.85)] active:scale-[0.98] transition-all cursor-pointer group"
+          title="Tap to expand Dynamic Island • Swipe up or tap ✕ to hide"
+        >
+          {/* Mini Album Cover / Spinning Vinyl */}
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-black shrink-0 border border-white/20 shadow-sm pointer-events-none">
             {currentTrack.artworkUrl ? (
-              <img src={currentTrack.artworkUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
+              <img
+                src={currentTrack.artworkUrl}
+                alt={currentTrack.title}
+                className={`w-full h-full object-cover ${isPlaying ? 'animate-spin-slow' : ''}`}
+              />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-spotify-green text-black font-black text-[8px]">W</div>
+              <div className="w-full h-full flex items-center justify-center bg-spotify-green text-black font-black text-[7px]">
+                W
+              </div>
             )}
           </div>
 
-          {/* Animated Wave Indicator if playing */}
+          {/* Equalizer Audio Frequency Bars */}
           <div className="flex items-center gap-0.5 h-3 pointer-events-none">
-            <span className={`w-0.5 bg-spotify-green rounded-full ${isPlaying ? 'h-3 animate-pulse' : 'h-1.5'}`} />
-            <span className={`w-0.5 bg-spotify-green rounded-full ${isPlaying ? 'h-2 animate-bounce' : 'h-1'}`} />
-            <span className={`w-0.5 bg-spotify-green rounded-full ${isPlaying ? 'h-3.5 animate-pulse' : 'h-2'}`} />
+            <span
+              className={`w-0.5 bg-spotify-green rounded-full transition-all ${
+                isPlaying ? 'h-3 animate-pulse' : 'h-1.5 opacity-50'
+              }`}
+            />
+            <span
+              className={`w-0.5 bg-spotify-green rounded-full transition-all ${
+                isPlaying ? 'h-2 animate-bounce' : 'h-1 opacity-50'
+              }`}
+            />
+            <span
+              className={`w-0.5 bg-spotify-green rounded-full transition-all ${
+                isPlaying ? 'h-3.5 animate-pulse' : 'h-2 opacity-50'
+              }`}
+            />
           </div>
 
           {/* Track Title */}
-          <span className="text-xs font-semibold text-white/90 max-w-[120px] md:max-w-[150px] truncate pointer-events-none">
+          <span className="text-[11px] font-bold text-white/95 max-w-[110px] sm:max-w-[160px] truncate pointer-events-none tracking-tight">
             {currentTrack.title}
           </span>
 
-          {/* Quick Play/Pause Button */}
+          {/* Play/Pause Button */}
           <button
-            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               togglePlay();
             }}
             title={isPlaying ? 'Pause' : 'Play'}
-            className="w-6 h-6 rounded-full bg-white hover:bg-spotify-green text-black flex items-center justify-center shrink-0 shadow-md active:scale-90 transition-all cursor-pointer"
+            className="w-5 h-5 rounded-full bg-white hover:bg-spotify-green text-black flex items-center justify-center shrink-0 shadow-md active:scale-90 transition-all cursor-pointer"
           >
-            {isPlaying ? <Pause className="w-3 h-3 fill-black" /> : <Play className="w-3 h-3 fill-black ml-0.5" />}
+            {isPlaying ? (
+              <Pause className="w-2.5 h-2.5 fill-black" />
+            ) : (
+              <Play className="w-2.5 h-2.5 fill-black ml-0.5" />
+            )}
           </button>
 
-          <ChevronDown className="w-3.5 h-3.5 text-white/50 pointer-events-none" />
+          {/* Direct Hide / Clean Screen Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDynamicIslandVisible(false);
+            }}
+            title="Hide Dynamic Island (Clean Screen)"
+            className="p-1 rounded-full text-white/40 hover:text-white hover:bg-white/10 active:scale-80 transition-all"
+          >
+            <X className="w-3 h-3" />
+          </button>
         </div>
       ) : (
-        /* 2. Expanded Dynamic Island Floating Card */
-        <div className="w-[92vw] max-w-[360px] bg-black/92 border border-white/20 rounded-3xl p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_25px_60px_rgba(0,0,0,0.95)] backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 text-white cursor-default">
-          {/* Top Row: Drag Handle + Cover + Info + Collapse */}
+        /* 2. EXPANDED CAMERA DYNAMIC ISLAND CARD */
+        <div className="w-[94vw] max-w-[360px] bg-black/95 border border-white/20 rounded-3xl p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_25px_60px_rgba(0,0,0,0.95)] backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 text-white cursor-default">
+          {/* Top Row: Cover + Info + Controls */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div title="Drag to reposition" className="shrink-0 cursor-grab">
-                <GripHorizontal className="w-4 h-4 text-white/30" />
-              </div>
-
-              <div className="w-12 h-12 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 shadow-lg">
+              <div className="w-12 h-12 rounded-xl overflow-hidden bg-black shrink-0 border border-white/15 shadow-lg">
                 {currentTrack.artworkUrl ? (
-                  <img src={currentTrack.artworkUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
+                  <img
+                    src={currentTrack.artworkUrl}
+                    alt={currentTrack.title}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-spotify-green text-black font-black text-sm">W</div>
+                  <div className="w-full h-full flex items-center justify-center bg-spotify-green text-black font-black text-sm">
+                    W
+                  </div>
                 )}
               </div>
 
               <div className="flex flex-col min-w-0 pr-2">
-                <span className="text-sm font-bold text-white truncate">{currentTrack.title}</span>
-                <span className="text-xs text-white/60 truncate">{currentTrack.artistName}</span>
+                <span className="text-sm font-extrabold text-white truncate tracking-tight">
+                  {currentTrack.title}
+                </span>
+                <span className="text-xs text-white/60 truncate font-medium">
+                  {currentTrack.artistName}
+                </span>
               </div>
             </div>
 
-            {/* Collapse Button */}
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(false);
-              }}
-              title="Minimize to Pill"
-              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors shrink-0 cursor-pointer"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
+            {/* Collapse & Hide Buttons */}
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => setIsExpanded(false)}
+                title="Collapse to Notch Pill"
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setIsDynamicIslandVisible(false)}
+                title="Hide Island completely"
+                className="p-1.5 rounded-full bg-white/10 hover:bg-red-500/30 text-white/80 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Timeline Scrubber */}
           <div className="flex flex-col gap-1 mb-3">
             <div className="relative w-full flex items-center h-4 cursor-pointer">
               <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-spotify-green transition-all" style={{ width: `${progressPercent}%` }} />
+                <div
+                  className="h-full bg-spotify-green transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
               </div>
               <input
                 type="range"
@@ -255,108 +234,75 @@ export default function DynamicIsland() {
                 max={duration > 0 ? duration : 180}
                 step={0.1}
                 value={progress}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
                 onChange={(e) => seek(parseFloat(e.target.value))}
                 className="absolute inset-0 w-full opacity-0 cursor-pointer"
               />
             </div>
-            <div className="flex items-center justify-between text-[10px] text-white/60 font-mono">
+
+            <div className="flex items-center justify-between text-[10px] text-white/50 font-mono">
               <span>{formatTime(progress)}</span>
               <span>{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Controls Bar: Prev, Play/Pause, Next, Like */}
-          <div className="flex items-center justify-between px-3 mb-3">
+          {/* Playback Controls Row */}
+          <div className="flex items-center justify-between pt-1">
+            {/* Like */}
             <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                prevTrack();
-              }}
+              onClick={() => toggleLike(currentTrack.id)}
+              className="p-2 text-white/70 hover:text-white transition-colors active:scale-90"
+              title={isLiked ? 'Unlike' : 'Like'}
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  isLiked ? 'text-spotify-green fill-spotify-green' : ''
+                }`}
+              />
+            </button>
+
+            {/* Prev */}
+            <button
+              onClick={() => prevTrack()}
+              className="p-2 text-white/80 hover:text-white transition-colors active:scale-90"
               title="Previous Track"
-              className="text-white hover:text-spotify-green active:scale-75 p-2 transition-transform cursor-pointer"
             >
-              <SkipBack className="w-6 h-6 fill-current" />
+              <SkipBack className="w-5 h-5 fill-current" />
             </button>
 
+            {/* Play/Pause */}
             <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlay();
-              }}
+              onClick={() => togglePlay()}
+              className="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg active:scale-90 transition-transform"
               title={isPlaying ? 'Pause' : 'Play'}
-              className="w-12 h-12 rounded-full bg-white hover:bg-spotify-green text-black flex items-center justify-center shadow-lg active:scale-90 transition-transform cursor-pointer"
             >
-              {isPlaying ? <Pause className="w-5 h-5 fill-black" /> : <Play className="w-5 h-5 fill-black ml-0.5" />}
+              {isPlaying ? (
+                <Pause className="w-5 h-5 fill-black" />
+              ) : (
+                <Play className="w-5 h-5 fill-black ml-0.5" />
+              )}
             </button>
 
+            {/* Next */}
             <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                nextTrack();
-              }}
+              onClick={() => nextTrack()}
+              className="p-2 text-white/80 hover:text-white transition-colors active:scale-90"
               title="Next Track"
-              className="text-white hover:text-spotify-green active:scale-75 p-2 transition-transform cursor-pointer"
             >
-              <SkipForward className="w-6 h-6 fill-current" />
+              <SkipForward className="w-5 h-5 fill-current" />
             </button>
 
+            {/* Launch Verci & Lumn Canvas Mode */}
             <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleLike(currentTrack.id);
-              }}
-              title={isLiked ? 'Remove from Liked' : 'Add to Liked'}
-              className={`p-2 active:scale-75 transition-transform cursor-pointer ${
-                isLiked ? 'text-spotify-green' : 'text-white/70 hover:text-white'
-              }`}
-            >
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-spotify-green' : ''}`} />
-            </button>
-
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
+                setIsExpanded(false);
                 setIsVerciOpen(true);
               }}
-              title="Open Verci & Lumn Cosmic Mode"
-              className="p-2 text-amber-400 hover:text-amber-300 active:scale-75 transition-transform cursor-pointer"
+              className="p-2 text-amber-400 hover:text-amber-300 transition-colors active:scale-90"
+              title="Launch Verci & Canvas Mode"
             >
               <Orbit className="w-5 h-5 animate-spin-slow" />
             </button>
           </div>
-
-          {/* Upcoming Tracks Carousel */}
-          {upcomingTracks.length > 0 && (
-            <div className="pt-2 border-t border-white/10 flex items-center gap-2 overflow-x-auto no-scrollbar">
-              {upcomingTracks.map((trk) => (
-                <div
-                  key={trk.id}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setTrack(trk);
-                  }}
-                  className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 shrink-0 border border-white/10 relative group cursor-pointer active:scale-95 transition-transform shadow"
-                >
-                  {trk.artworkUrl ? (
-                    <img src={trk.artworkUrl} alt={trk.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[10px] text-white/50">W</div>
-                  )}
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-transparent flex items-end p-1">
-                    <span className="text-[9px] font-bold text-white truncate drop-shadow">{trk.title}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>

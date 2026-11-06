@@ -7,6 +7,7 @@
 export const CURATED_OFFICIAL_VIDEOS: Record<string, string> = {
   // Global Chartbusters
   'die with a smile': 'kPa7bsKwL-c',
+  'i wanna be yours': 'nyuo9-OjNNg',
   'birds of a feather': 'V9PVRfjEBTI',
   'taste': 'T94PHkuydcw',
   'espresso': 'eVli-tstM5E',
@@ -202,6 +203,219 @@ export function resolveVideoId(title: string, artist: string): string | null {
     if (phrasePattern.test(normTitle)) {
       return id;
     }
+  }
+
+  return null;
+}
+
+export interface VideoCanvasConfig {
+  videoId: string;
+  clipStart: number;
+  clipEnd: number;
+  highlightLabel?: string;
+  isCurated?: boolean;
+}
+
+export const CURATED_CANVAS_CLIPS: Record<string, VideoCanvasConfig> = {
+  'die with a smile': {
+    videoId: 'kPa7bsKwL-c',
+    clipStart: 70,
+    clipEnd: 98,
+    highlightLabel: 'Chorus • "If the world was ending"',
+    isCurated: true,
+  },
+  'i wanna be yours': {
+    videoId: 'nyuo9-OjNNg',
+    clipStart: 26,
+    clipEnd: 56,
+    highlightLabel: 'Iconic Climax • "I wanna be your vacuum cleaner"',
+    isCurated: true,
+  },
+  'tum hi ho': {
+    videoId: 'Umqb9KENgmk',
+    clipStart: 62,
+    clipEnd: 92,
+    highlightLabel: 'Chorus • "Kyunki tum hi ho"',
+    isCurated: true,
+  },
+  'blinding lights': {
+    videoId: '4NRXx6U8ABQ',
+    clipStart: 50,
+    clipEnd: 78,
+    highlightLabel: 'Chorus • "Blinded by the lights"',
+    isCurated: true,
+  },
+  'starboy': {
+    videoId: '34Na4j8AVgA',
+    clipStart: 58,
+    clipEnd: 86,
+    highlightLabel: 'Chorus • "Look what you\'ve done"',
+    isCurated: true,
+  },
+  'birds of a feather': {
+    videoId: 'V9PVRfjEBTI',
+    clipStart: 42,
+    clipEnd: 70,
+    highlightLabel: 'Chorus • "I want you to stay"',
+    isCurated: true,
+  },
+  'espresso': {
+    videoId: 'eVli-tstM5E',
+    clipStart: 38,
+    clipEnd: 66,
+    highlightLabel: 'Chorus • "That\'s that me espresso"',
+    isCurated: true,
+  },
+  'taste': {
+    videoId: 'T94PHkuydcw',
+    clipStart: 48,
+    clipEnd: 76,
+    highlightLabel: 'Chorus • "I leave quite an impression"',
+    isCurated: true,
+  },
+  'cruel summer': {
+    videoId: 'ic8j13piAhQ',
+    clipStart: 85,
+    clipEnd: 115,
+    highlightLabel: 'Bridge Climax • "I\'m drunk in the back of the car"',
+    isCurated: true,
+  },
+  'kesariya': {
+    videoId: 'BddP6PYo2gs',
+    clipStart: 60,
+    clipEnd: 90,
+    highlightLabel: 'Chorus • "Kesariya tera ishq hai piya"',
+    isCurated: true,
+  },
+  'hukum': {
+    videoId: '1F3HM635S0k',
+    clipStart: 60,
+    clipEnd: 88,
+    highlightLabel: 'Hook • "Alappara kelapparom"',
+    isCurated: true,
+  },
+  'naa ready': {
+    videoId: 'szvt1vD0Uug',
+    clipStart: 55,
+    clipEnd: 83,
+    highlightLabel: 'Chorus • "Naa Ready thaan varava"',
+    isCurated: true,
+  },
+  'badass': {
+    videoId: 'sU3vR6-Gf10',
+    clipStart: 40,
+    clipEnd: 68,
+    highlightLabel: 'Drop • "Badass Mr Leo Das"',
+    isCurated: true,
+  },
+  'arabic kuthu': {
+    videoId: 'KUN5Uf9mObQ',
+    clipStart: 65,
+    clipEnd: 95,
+    highlightLabel: 'Chorus • "Halamithi habibo"',
+    isCurated: true,
+  },
+  'chaleya': {
+    videoId: 'VAdGW7QDJUI',
+    clipStart: 52,
+    clipEnd: 80,
+    highlightLabel: 'Chorus • "Ishq jaisa kuch"',
+    isCurated: true,
+  },
+  'as it was': {
+    videoId: 'H5v3kku4y6Q',
+    clipStart: 45,
+    clipEnd: 72,
+    highlightLabel: 'Chorus • "Not the same as it was"',
+    isCurated: true,
+  },
+  'levitating': {
+    videoId: 'TUVcZfQe-Kw',
+    clipStart: 38,
+    clipEnd: 66,
+    highlightLabel: 'Chorus • "I got you, moonlight"',
+    isCurated: true,
+  },
+  'sunflower': {
+    videoId: 'ApXoWvfEYVU',
+    clipStart: 35,
+    clipEnd: 65,
+    highlightLabel: 'Chorus • "You\'re a sunflower"',
+    isCurated: true,
+  },
+  'believer': {
+    videoId: '7wtfhZwyrcc',
+    clipStart: 42,
+    clipEnd: 72,
+    highlightLabel: 'Chorus • "Pain! You make me a believer"',
+    isCurated: true,
+  },
+  'lover': {
+    videoId: '-BjZmE2gtdo',
+    clipStart: 45,
+    clipEnd: 75,
+    highlightLabel: 'Chorus • "Can I go where you go?"',
+    isCurated: true,
+  },
+  'perfect': {
+    videoId: '2Vv-BfVoq4g',
+    clipStart: 60,
+    clipEnd: 90,
+    highlightLabel: 'Chorus • "Darling, you look perfect tonight"',
+    isCurated: true,
+  },
+  'shape of you': {
+    videoId: 'JGwWNGJdvx8',
+    clipStart: 40,
+    clipEnd: 68,
+    highlightLabel: 'Chorus • "I\'m in love with the shape of you"',
+    isCurated: true,
+  },
+  'something just like this': {
+    videoId: 'FM7MFYoylVs',
+    clipStart: 65,
+    clipEnd: 95,
+    highlightLabel: 'Drop • "Something just like this"',
+    isCurated: true,
+  },
+  'yellow': {
+    videoId: 'yKNxeF4KMsY',
+    clipStart: 45,
+    clipEnd: 75,
+    highlightLabel: 'Chorus • "Look at the stars"',
+    isCurated: true,
+  },
+};
+
+export function resolveVideoCanvas(
+  title: string,
+  artist: string,
+  songDuration = 180
+): VideoCanvasConfig | null {
+  if (!title) return null;
+  const normTitle = title.toLowerCase().replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim();
+
+  // 1. Direct curated match
+  for (const [key, cfg] of Object.entries(CURATED_CANVAS_CLIPS)) {
+    if (normTitle === key || normTitle.includes(key) || key.includes(normTitle)) {
+      return cfg;
+    }
+  }
+
+  // 2. Fall back to resolved official video ID with procedural climax calculation
+  const videoId = resolveVideoId(title, artist);
+  if (videoId) {
+    const safeDuration = songDuration > 30 ? songDuration : 180;
+    // The most iconic climax / hook of a song is consistently at ~28% duration
+    const clipStart = Math.min(65, Math.max(28, Math.floor(safeDuration * 0.28)));
+    const clipEnd = clipStart + 26; // 26 seconds loop
+    return {
+      videoId,
+      clipStart,
+      clipEnd,
+      highlightLabel: 'Official 26s Climax Hook',
+      isCurated: false,
+    };
   }
 
   return null;

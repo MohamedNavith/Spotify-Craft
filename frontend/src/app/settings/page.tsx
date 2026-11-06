@@ -74,7 +74,14 @@ const DEFAULT_POPULAR_ARTISTS: PopularArtist[] = [
 ];
 
 export default function SettingsPage() {
-  const { playbackMode, togglePlaybackMode } = usePlayerStore();
+  const {
+    playbackMode,
+    togglePlaybackMode,
+    isDynamicIslandVisible,
+    toggleDynamicIsland,
+    isCanvasModeEnabled,
+    toggleCanvasMode,
+  } = usePlayerStore();
   const [favoriteArtists, setFavoriteArtists] = useState<string[]>([]);
   const [customArtistInput, setCustomArtistInput] = useState('');
   const [audioQuality, setAudioQuality] = useState<'320' | '256' | '128'>('320');
@@ -284,6 +291,64 @@ export default function SettingsPage() {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2.5: Display & Edge Customization */}
+        <section className="flex flex-col gap-4 border-t border-white/10 pt-8">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-white">
+              Display &amp; Dynamic Island
+            </h2>
+            <p className="text-xs text-spotify-subtext">
+              Configure under-camera Dynamic Island and 25-second video canvas playback
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Dynamic Island Toggle */}
+            <div className="p-4 rounded-xl bg-spotify-card border border-white/5 flex items-center justify-between">
+              <div className="flex flex-col pr-4">
+                <span className="text-sm font-bold text-white">Camera Dynamic Island</span>
+                <span className="text-xs text-spotify-subtext mt-0.5">
+                  Floating under-camera pill that pops down on track change. Turn off to keep the screen 100% clean.
+                </span>
+              </div>
+              <button
+                onClick={() => toggleDynamicIsland()}
+                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                  isDynamicIslandVisible ? 'bg-spotify-green' : 'bg-white/20'
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 rounded-full bg-black shadow-md absolute top-0.5 transition-transform ${
+                    isDynamicIslandVisible ? 'left-6.5' : 'left-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* 25s Highlight Canvas Video Toggle */}
+            <div className="p-4 rounded-xl bg-spotify-card border border-white/5 flex items-center justify-between">
+              <div className="flex flex-col pr-4">
+                <span className="text-sm font-bold text-white">25s Video Canvas</span>
+                <span className="text-xs text-spotify-subtext mt-0.5">
+                  Play the most iconic 20-30s music video climax on loop in Now Playing views.
+                </span>
+              </div>
+              <button
+                onClick={() => toggleCanvasMode()}
+                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                  isCanvasModeEnabled ? 'bg-spotify-green' : 'bg-white/20'
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 rounded-full bg-black shadow-md absolute top-0.5 transition-transform ${
+                    isCanvasModeEnabled ? 'left-6.5' : 'left-0.5'
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </section>

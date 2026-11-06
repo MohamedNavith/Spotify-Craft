@@ -4,6 +4,7 @@ import {
   ArrowDownToLine,
   Check,
   Download,
+  Film,
   Heart,
   ListMusic,
   Maximize2,
@@ -74,6 +75,8 @@ export default function PlayerBar() {
     setIsSpotifyImportOpen,
     isVerciOpen,
     setIsVerciOpen,
+    isCanvasModeEnabled,
+    toggleCanvasMode,
   } = usePlayerStore();
 
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
@@ -394,6 +397,20 @@ export default function PlayerBar() {
 
         {/* Right (Col 10-12): Video, Lyrics, Now Playing View, Volume */}
         <div className="col-span-3 flex items-center justify-end gap-2.5 text-spotify-subtext">
+          {/* 25s Highlight Canvas Video Toggle */}
+          <button
+            onClick={() => toggleCanvasMode()}
+            title={isCanvasModeEnabled ? 'Canvas Mode Active (Playing 25s Highlight Video)' : 'Enable 25s Video Canvas'}
+            className={`p-1.5 transition-colors relative ${
+              isCanvasModeEnabled ? 'text-spotify-green' : 'hover:text-white'
+            }`}
+          >
+            <Film className="w-4 h-4" />
+            {isCanvasModeEnabled && (
+              <span className="w-1 h-1 bg-spotify-green rounded-full absolute bottom-0 left-1/2 -translate-x-1/2 shadow-[0_0_8px_#1DB954]" />
+            )}
+          </button>
+
           {/* Now Playing View Toggle */}
           <button
             onClick={() => toggleNowPlayingView()}

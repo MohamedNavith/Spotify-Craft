@@ -2,17 +2,21 @@
 
 import { Check, Heart, MoreHorizontal, Play, User, X } from 'lucide-react';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import TrackVideoCanvas from './TrackVideoCanvas';
 
 export default function NowPlayingPanel() {
   const {
     currentTrack,
     isPlaying,
+    duration,
     queue,
     queueIndex,
     likedTrackIds,
     toggleLike,
     isNowPlayingViewOpen,
     setIsNowPlayingViewOpen,
+    isCanvasModeEnabled,
+    toggleCanvasMode,
     setTrack,
   } = usePlayerStore();
 
@@ -42,19 +46,19 @@ export default function NowPlayingPanel() {
 
       {currentTrack ? (
         <>
-          {/* Large Album Artwork */}
-          <div className="aspect-square w-full rounded-lg overflow-hidden bg-spotify-card shadow-2xl relative group">
-            {currentTrack.artworkUrl ? (
-              <img
-                src={currentTrack.artworkUrl}
-                alt={currentTrack.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center font-black text-4xl text-spotify-subtext">
-                W
-              </div>
-            )}
+          {/* Large Album Artwork / 25s Highlight Canvas Video */}
+          <div className="aspect-square w-full rounded-2xl overflow-hidden bg-spotify-card shadow-2xl relative group border border-white/10">
+            <TrackVideoCanvas
+              title={currentTrack.title}
+              artist={currentTrack.artistName}
+              duration={duration}
+              artworkUrl={currentTrack.artworkUrl}
+              className="w-full h-full"
+              preferredMode={isCanvasModeEnabled ? 'canvas' : 'art'}
+              onToggleCanvas={(isCanvas) => {
+                if (isCanvas !== isCanvasModeEnabled) toggleCanvasMode();
+              }}
+            />
           </div>
 
           {/* Title & Artist & Action */}

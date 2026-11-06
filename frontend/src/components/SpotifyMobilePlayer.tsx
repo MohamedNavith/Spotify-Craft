@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   Download,
+  Film,
   Heart,
   ListMusic,
   MoreVertical,
@@ -25,6 +26,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { isTrackOffline, saveTrackOffline } from '../lib/offlineStorage';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import TrackVideoCanvas from './TrackVideoCanvas';
 
 interface SpotifyMobilePlayerProps {
   onOpenLyrics?: () => void;
@@ -60,6 +62,8 @@ export default function SpotifyMobilePlayer({
     isExpandedNowPlaying,
     setIsExpandedNowPlaying,
     setIsVerciOpen,
+    isCanvasModeEnabled,
+    toggleCanvasMode,
     queue,
     queueIndex,
   } = usePlayerStore();
@@ -253,7 +257,12 @@ export default function SpotifyMobilePlayer({
           </div>
 
           {/* Top Bar (ChevronDown, Album Title, 3-dots) */}
-          <div className="relative z-10 flex items-center justify-between px-5 pt-4 shrink-0">
+          <div
+            style={{
+              paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)',
+            }}
+            className="relative z-10 flex items-center justify-between px-5 pb-2 shrink-0"
+          >
             <button
               onClick={() => {
                 setIsExpandedNowPlaying(false);
@@ -304,18 +313,24 @@ export default function SpotifyMobilePlayer({
                 </div>
               )}
 
-              {/* Active Current Track Artwork Card with Realtime Drag Transform */}
+              {/* Active Current Track Artwork / 25s Climax Video Card with Realtime Drag Transform */}
               <div
-                className="w-[280px] aspect-square rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.9)] bg-black/60 border border-white/10 transition-transform duration-75"
+                className="w-[280px] aspect-square rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.9)] bg-black/60 border border-white/10 transition-transform duration-75 relative group"
                 style={{
                   transform: `translateX(${dragX}px) rotate(${dragX * 0.03}deg)`,
                 }}
               >
-                {currentTrack.artworkUrl ? (
-                  <img src={currentTrack.artworkUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-spotify-green text-black font-black text-5xl">W</div>
-                )}
+                <TrackVideoCanvas
+                  title={currentTrack.title}
+                  artist={currentTrack.artistName}
+                  duration={duration}
+                  artworkUrl={currentTrack.artworkUrl}
+                  className="w-full h-full"
+                  preferredMode={isCanvasModeEnabled ? 'canvas' : 'art'}
+                  onToggleCanvas={(isCanvas) => {
+                    if (isCanvas !== isCanvasModeEnabled) toggleCanvasMode();
+                  }}
+                />
               </div>
 
               {/* Next Track Card Peek (Right) */}
@@ -343,7 +358,12 @@ export default function SpotifyMobilePlayer({
           </div>
 
           {/* Bottom Controls Area */}
-          <div className="relative z-10 px-6 pb-4 flex flex-col shrink-0">
+          <div
+            style={{
+              paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 24px)',
+            }}
+            className="relative z-10 px-6 pt-2 flex flex-col shrink-0"
+          >
             {/* Track Info & Plus (+) button */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex flex-col min-w-0 pr-4">
