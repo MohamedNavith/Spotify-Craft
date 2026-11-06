@@ -16,6 +16,20 @@ function getGitHubToken() {
   return process.env.GITHUB_TOKEN || '';
 }
 
+async function fetchWithRetry(url, options = {}, retries = 4, delay = 1500) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      return res;
+    } catch (err) {
+      console.warn(`Fetch attempt ${i + 1} failed: ${err.message}. Retrying in ${delay}ms...`);
+      if (i === retries - 1) throw err;
+      await new Promise((r) => setTimeout(r, delay));
+      delay *= 1.5;
+    }
+  }
+}
+
 async function main() {
   const token = getGitHubToken();
   if (!token) {
@@ -28,7 +42,7 @@ async function main() {
   const tag = 'v1.6.3';
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
-  const listRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
+  const listRes = await fetchWithRetry(`https://api.github.com/repos/${owner}/${repo}/releases`, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
@@ -41,7 +55,7 @@ async function main() {
 
   if (!release) {
     console.log(`Creating release ${tag}...`);
-    const createRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases`, {
+    const createRes = await fetchWithRetry(`https://api.github.com/repos/${owner}/${repo}/releases`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -142,7 +156,7 @@ Major visual and interaction overhaul inspired by community reels (\`Spotify gif
     const existing = existingAssets.find((a) => a.name === file.name);
     if (existing) {
       console.log(`Deleting existing asset ${file.name} (id: ${existing.id})...`);
-      await fetch(
+      await fetchWithRetry(
         `https://api.github.com/repos/${owner}/${repo}/releases/assets/${existing.id}`,
         {
           method: 'DELETE',
