@@ -16,8 +16,6 @@ export async function handleMessage(message: Message) {
   const guildId = message.guild.id;
   const settings = db.getGuildSettings(guildId);
 
-  console.log(`[Text Chat - ${message.guild.name}] ${message.author.tag}: "${message.content}"`);
-
   // 1. Dedicated Song Request Channel Handler (Hydra/Rythm Style)
   if (settings.requestChannelId && message.channel.id === settings.requestChannelId) {
     const query = message.content.trim();
