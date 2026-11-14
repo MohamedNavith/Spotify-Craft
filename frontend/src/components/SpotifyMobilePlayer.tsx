@@ -106,27 +106,45 @@ export default function SpotifyMobilePlayer({
     }
   };
 
-  // Touch handlers with real-time horizontal drag tracking for Spotify-style swipe transitions
-  const handleTouchStart = (e: React.TouchEvent) => {
+  // Mini Player Touch Handlers (Smooth swipe to next / prev track)
+  const handleMiniTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleMiniTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX;
+    const diffY = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
+      if (diffX < 0) nextTrack();
+      else prevTrack();
+      triggerHaptic(15);
+    }
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
+  // Full-Screen Artwork Deck Touch Handlers (Artwork horizontal swipe & pull-down collapse)
+  const handleDeckTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
     setDragX(0);
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleDeckTouchMove = (e: React.TouchEvent) => {
     if (touchStartX === null || touchStartY === null) return;
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
     const diffX = currentX - touchStartX;
     const diffY = currentY - touchStartY;
 
-    // Only apply horizontal drag if horizontal motion is dominant
-    if (isExpandedNowPlaying && Math.abs(diffX) > Math.abs(diffY)) {
+    if (Math.abs(diffX) > Math.abs(diffY)) {
       setDragX(diffX);
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleDeckTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX === null || touchStartY === null) {
       setDragX(0);
       return;
@@ -134,33 +152,37 @@ export default function SpotifyMobilePlayer({
     const diffX = e.changedTouches[0].clientX - touchStartX;
     const diffY = e.changedTouches[0].clientY - touchStartY;
 
-    if (isExpandedNowPlaying) {
-      // 1. Swipe down -> minimize full player
-      if (diffY > 90 && Math.abs(diffX) < 80) {
-        setIsExpandedNowPlaying(false);
-        triggerHaptic(15);
-      }
-      // 2. Swipe left (push from right to left) -> next track
-      else if (diffX < -60) {
-        nextTrack();
-        triggerHaptic(20);
-      }
-      // 3. Swipe right (push from left to right) -> previous track
-      else if (diffX > 60) {
-        prevTrack();
-        triggerHaptic(20);
-      }
-    } else {
-      // Mini player swipe
-      if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
-        if (diffX < 0) nextTrack();
-        else prevTrack();
-        triggerHaptic(15);
-      }
+    // Pull down to minimize full player
+    if (diffY > 70 && diffY > Math.abs(diffX)) {
+      setIsExpandedNowPlaying(false);
+      triggerHaptic(15);
+    }
+    // Horizontal swipe -> next or previous track
+    else if (diffX < -50) {
+      nextTrack();
+      triggerHaptic(20);
+    } else if (diffX > 50) {
+      prevTrack();
+      triggerHaptic(20);
     }
 
     setDragX(0);
     setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
+  // Top Bar Touch Handlers (Drag down from top bar to collapse)
+  const handleTopBarTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTopBarTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    const diffY = e.changedTouches[0].clientY - touchStartY;
+    if (diffY > 40) {
+      setIsExpandedNowPlaying(false);
+      triggerHaptic(12);
+    }
     setTouchStartY(null);
   };
 
@@ -169,9 +191,8 @@ export default function SpotifyMobilePlayer({
       {/* 1. Mobile Floating Mini Player (Sticky above bottom tabs) */}
       {!isExpandedNowPlaying && (
         <div
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          onTouchStart={handleMiniTouchStart}
+          onTouchEnd={handleMiniTouchEnd}
           onClick={() => {
             setIsExpandedNowPlaying(true);
             triggerHaptic(12);
@@ -179,7 +200,7 @@ export default function SpotifyMobilePlayer({
           style={{
             bottom: 'calc(58px + max(env(safe-area-inset-bottom, 0px), 8px))',
           }}
-          className="md:hidden fixed left-2 right-2 z-40 bg-[#181818]/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.85)] transition-all duration-150 active:scale-[0.98] select-none cursor-pointer overflow-hidden"
+          className="md:hidden fixed left-2 right-2 z-40 bg-[#181818]/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.85)] transition-all duration-150 active:scale-[0.98] select-none cursor-pointer overflow-hidden touch-manipulation"
         >
           {/* Left: Thumbnail & Info */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -242,10 +263,7 @@ export default function SpotifyMobilePlayer({
       {/* 2. Full-Screen Now Playing View (Matching Screenshot #1 & #3) */}
       {isExpandedNowPlaying && (
         <div
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          className="md:hidden fixed inset-0 z-50 bg-[#121212] flex flex-col justify-between text-white select-none animate-in slide-in-from-bottom duration-300 overflow-hidden"
+          className="md:hidden fixed inset-0 z-50 bg-[#121212] flex flex-col justify-between text-white select-none animate-in slide-in-from-bottom duration-300 overflow-hidden touch-manipulation"
         >
           {/* Immersive Video/Canvas Dimmed Background */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -259,12 +277,14 @@ export default function SpotifyMobilePlayer({
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/90" />
           </div>
 
-          {/* Top Bar (ChevronDown, Album Title, 3-dots) */}
+          {/* Top Bar (ChevronDown, Album Title, 3-dots) with pull-down gesture */}
           <div
+            onTouchStart={handleTopBarTouchStart}
+            onTouchEnd={handleTopBarTouchEnd}
             style={{
               paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)',
             }}
-            className="relative z-10 flex items-center justify-between px-5 pb-2 shrink-0"
+            className="relative z-10 flex items-center justify-between px-5 pb-2 shrink-0 touch-none"
           >
             <button
               onClick={() => {
@@ -294,9 +314,14 @@ export default function SpotifyMobilePlayer({
           </div>
 
           {/* Center Area: Swipeable Card Container with Adjacent Peeking (Screenshot #3) */}
-          <div className="relative z-10 my-auto flex flex-col items-center justify-center w-full overflow-hidden py-4">
+          <div
+            onTouchStart={handleDeckTouchStart}
+            onTouchMove={handleDeckTouchMove}
+            onTouchEnd={handleDeckTouchEnd}
+            className="relative z-10 my-auto flex flex-col items-center justify-center w-full overflow-hidden py-4 touch-none cursor-grab active:cursor-grabbing"
+          >
             {/* Center Lyrics Line Overlay (Screenshot #1) */}
-            <div className="mb-4 px-6 text-center">
+            <div className="mb-4 px-6 text-center pointer-events-none">
               <p className="text-lg md:text-xl font-black text-white/95 tracking-tight drop-shadow-lg animate-in fade-in">
                 {currentTrack.title === 'Tum Hi Ho'
                   ? 'Hum tere bin ab reh nahin sakte'
@@ -360,8 +385,10 @@ export default function SpotifyMobilePlayer({
             )}
           </div>
 
-          {/* Bottom Controls Area */}
+          {/* Bottom Controls Area (Isolated touch to prevent deck swipe conflict) */}
           <div
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
             style={{
               paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 24px)',
             }}

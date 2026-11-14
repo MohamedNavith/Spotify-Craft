@@ -80,11 +80,14 @@ export default function PlayerBar() {
     audioStreamDetails,
     streamingQuality,
     setIsQualityModalOpen,
+    isLyricsOpen,
+    setIsLyricsOpen,
+    isQueueOpen,
+    setIsQueueOpen,
+    isEqualizerOpen,
+    setIsEqualizerOpen,
   } = usePlayerStore();
 
-  const [isLyricsOpen, setIsLyricsOpen] = useState(false);
-  const [isQueueOpen, setIsQueueOpen] = useState(false);
-  const [isEqualizerOpen, setIsEqualizerOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   // Global Keyboard Shortcuts

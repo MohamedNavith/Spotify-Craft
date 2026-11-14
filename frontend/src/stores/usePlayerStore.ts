@@ -48,6 +48,9 @@ interface PlayerState {
   streamingQuality: StreamingQuality;
   audioStreamDetails: AudioStreamDetails | null;
   isQualityModalOpen: boolean;
+  isLyricsOpen: boolean;
+  isQueueOpen: boolean;
+  isEqualizerOpen: boolean;
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -92,7 +95,10 @@ interface PlayerState {
   setIsCanvasModeEnabled: (enabled: boolean) => void;
   setStreamingQuality: (quality: StreamingQuality) => void;
   setAudioStreamDetails: (details: AudioStreamDetails | null) => void;
-  setIsQualityModalOpen: (open: boolean) => void;
+  setIsQualityModalOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  setIsLyricsOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  setIsQueueOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  setIsEqualizerOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -142,6 +148,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   streamingQuality: typeof window !== 'undefined' ? (localStorage.getItem('wavelength_streaming_quality') as StreamingQuality) || 'high-quality' : 'high-quality',
   audioStreamDetails: null,
   isQualityModalOpen: false,
+  isLyricsOpen: false,
+  isQueueOpen: false,
+  isEqualizerOpen: false,
+  setIsQualityModalOpen: (open) =>
+    set((state) => ({
+      isQualityModalOpen: typeof open === 'function' ? open(state.isQualityModalOpen) : open,
+    })),
+  setIsLyricsOpen: (open) =>
+    set((state) => ({
+      isLyricsOpen: typeof open === 'function' ? open(state.isLyricsOpen) : open,
+    })),
+  setIsQueueOpen: (open) =>
+    set((state) => ({
+      isQueueOpen: typeof open === 'function' ? open(state.isQueueOpen) : open,
+    })),
+  setIsEqualizerOpen: (open) =>
+    set((state) => ({
+      isEqualizerOpen: typeof open === 'function' ? open(state.isEqualizerOpen) : open,
+    })),
 
   setTrack: (track, queue) => {
     const state = get();
@@ -631,7 +656,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     } catch {}
     set({ isCanvasModeEnabled: enabled });
   },
-  setIsQualityModalOpen: (open) => set({ isQualityModalOpen: open }),
   setAudioStreamDetails: (details) => set({ audioStreamDetails: details }),
   setStreamingQuality: (quality) => {
     try {

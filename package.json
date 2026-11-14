@@ -16,5 +16,8 @@
     "build:bot": "npm --prefix discord-bot run build",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down"
+  },
+  "dependencies": {
+    "playwright-core": "^1.65.1"
   }
 }
