@@ -3,7 +3,17 @@
 import { ArrowDownToLine, Check, Download, RefreshCw, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export const CURRENT_APP_VERSION = 'v1.5.0';
+export const CURRENT_APP_VERSION = 'v2.0.0';
+
+export function isNewerVersion(remote: string, current: string): boolean {
+  if (!remote || !current) return false;
+  const parse = (v: string) => v.replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0);
+  const [rMajor = 0, rMinor = 0, rPatch = 0] = parse(remote);
+  const [cMajor = 0, cMinor = 0, cPatch = 0] = parse(current);
+  if (rMajor !== cMajor) return rMajor > cMajor;
+  if (rMinor !== cMinor) return rMinor > cMinor;
+  return rPatch > cPatch;
+}
 
 interface ReleaseAsset {
   name: string;
@@ -53,7 +63,7 @@ export default function AppUpdateChecker() {
         if (!res.ok) return;
         const data: LatestReleaseInfo = await res.json();
 
-        if (data.tag_name && data.tag_name !== CURRENT_APP_VERSION) {
+        if (data.tag_name && isNewerVersion(data.tag_name, CURRENT_APP_VERSION)) {
           setUpdateInfo(data);
           setIsOpen(true);
         }

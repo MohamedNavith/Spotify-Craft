@@ -39,7 +39,7 @@ async function main() {
 
   const owner = 'MohamedNavith';
   const repo = 'Spotify-Craft';
-  const tag = 'v1.6.3';
+  const tag = 'v2.0.0';
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
   const listRes = await fetchWithRetry(`https://api.github.com/repos/${owner}/${repo}/releases`, {
@@ -66,45 +66,50 @@ async function main() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'Wavelength v1.6.3 - 25s Highlight Video Canvas, Dedicated Under-Camera Dynamic Island & Studio Polish',
-        body: `## 🎬 Wavelength v1.6.3 (Video Canvas & Dynamic Island Edition)
+        name: 'Wavelength v2.0.0 - Hi-Res Lossless Audio Engine, Fluid Mobile Gestures & Studio Architecture',
+        body: `## 🚀 Wavelength v2.0.0 (The Lossless & Gesture Architecture Edition)
 
-Major visual and interaction overhaul inspired by community reels (\`Spotify gif Lyrics.mp4\`), featuring the **25-Second Highlight Video Canvas Engine**, the **Dedicated Under-Camera Notch Dynamic Island**, and clean mobile/desktop edge alignment.
-
----
-
-### 📦 Downloads & Platforms
-| Platform | Asset | Description |
-| :--- | :--- | :--- |
-| 📱 **Android Mobile** | [\`wavelength-mobile.apk\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) | Native Spotify Mobile experience: Bottom navigation bar, floating mini-player, full-screen swipe sheet, offline-first local bundling & safe area insets |
-| 💻 **Windows PC Standalone** | [\`wavelength-desktop.exe\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-desktop.exe) | Single portable executable with media keys, ad-blocking, and Lumn border glow |
-| 💻 **Windows PC Portable Zip** | [\`wavelength-windows-x64.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-windows-x64.zip) | Portable folder distribution for Windows x64 |
-| 🤖 **Discord Music Bot** | [\`wavelength-bot-wispbyte.zip\`](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-bot-wispbyte.zip) | Wispbyte/Pterodactyl container-ready bot package (Node 22, DAVE encryption, 320kbps streams) |
-| 🌐 **Live Web Player** | [https://mohamednavith.github.io/Spotify-Craft/](https://mohamednavith.github.io/Spotify-Craft/) | Hosted remotely on GitHub Pages with instant PWA capabilities |
+A landmark milestone release introducing **Apple Music-grade 24-bit/192kHz Hi-Res Lossless Audio**, complete **Mobile UX & Gesture Architecture Overhaul**, **Capacitor 6 Hierarchical Hardware Back Navigation**, and **Playwright Automated UI Testing Suite**.
 
 ---
 
-### ✨ What's New in v1.6.3
+### 📦 Direct Downloads & Platforms
+| Platform | Package | Description | Download Link |
+| :--- | :--- | :--- | :--- |
+| 📱 **Android Mobile** | \`wavelength-mobile.apk\` | Native Spotify Mobile experience: Bottom navigation bar, gesture-driven deck swipe, lock screen controls, zero ads | [⬇️ **Download APK**](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-mobile.apk) |
+| 💻 **Windows PC Standalone** | \`wavelength-desktop.exe\` | Single portable executable with media keys, ad-blocking, and Lumn border glow | [⬇️ **Download Windows EXE**](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-desktop.exe) |
+| 💻 **Windows PC Portable Zip** | \`wavelength-windows-x64.zip\` | Unpack-and-run full distribution for Windows x64 | [⬇️ **Download Portable ZIP**](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-windows-x64.zip) |
+| 🤖 **Discord Music Bot** | \`wavelength-bot-wispbyte.zip\` | Container-ready bot package (Node 22, DAVE encryption, 320kbps streams) | [⬇️ **Download Bot ZIP**](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-bot-wispbyte.zip) |
+| 🌐 **Live Web Player** | Web App | Instant PWA hosted on GitHub Pages | [▶️ **Launch Web Player**](https://mohamednavith.github.io/Spotify-Craft/) |
 
-#### 1. 🎬 20-30s Highlight Music Video Canvas (\`Spotify gif Lyrics.mp4\`)
-- **Seamless Climax Loops**: Curated and procedural engine that automatically loops the best 20-30 seconds (chorus, hook, iconic drop) of official music videos and animated waveform canvases (e.g. *Die With A Smile*, *I Wanna Be Yours*, *Tum Hi Ho*, *Blinding Lights*, *Starboy*, *Kesariya*, *Hukum*, etc.).
-- **Split-Screen Studio Mode**: Left side showcases the looping 25s video canvas card with floating specular aura, timeline scrubber, and elapsed/remaining timestamps, while the right side displays full synchronized kinetic lyrics with Apple Music-style blur on inactive lines.
-- **Normal Playable Mode**: The 25s highlight video canvas is directly playable in normal playback mode — right inside the **Mobile Fullscreen Now Playing Card** and the **Desktop Now Playing Right Drawer**, with instant \`[ 🎬 Canvas / 🎵 Art ]\` toggling.
+---
 
-#### 2. 🏝️ Dedicated Under-Camera Notch Dynamic Island
-- **Camera Cutout Docking**: Positioned directly beneath the front camera punch hole / notch (\`top: max(env(safe-area-inset-top), 8px)\`, centered horizontally).
-- **Auto-Pop & Settle Animation**: Pops down smoothly from the camera notch whenever track changes or playback toggles, displaying spinning artwork, equalizer bars, and song title.
-- **Swipe-to-Dismiss & Clean Screen**: Swipe up on the island or tap the direct \`✕\` button to dismiss/hide the island anytime for a 100% clean, distraction-free screen.
-- **Instant Restore**: Sleek Dynamic Island toggle pill in the Top Bar and Settings page allows showing or hiding the island anytime with 1 tap.
-- **Cosmic Immunity**: Dynamic Island automatically hides in Verci / Fullscreen visualizer modes to prevent any visual clutter.
+### ✨ What's New in v2.0.0
 
-#### 3. 🎯 Verci Exit Bug & Alignment Fix
-- **Eliminated Duplicate Buttons**: Removed the redundant floating \`sm:hidden\` exit button and bottom HUD duplicate exit button.
-- **Unified Frosted Glass Exit Pill**: Placed a single, prominent frosted glass pill button in the top header, perfectly aligned and notch-immune.
-- **No More Overlays**: Top header controls (Style Selector, Fullscreen, Exit) never overlap or hide beneath other buttons on any phone or desktop screen.
+#### 1. 🎼 24-bit/192kHz ALAC/FLAC Hi-Res Lossless Audio Architecture
+- **Multi-Tier Quality Engine**: High Efficiency (64kbps HE-AAC), High Quality (256-320kbps AAC/MP3 default), Lossless (ALAC up to 24-bit/48kHz), and Hi-Res Lossless (ALAC/FLAC up to 24-bit/192kHz at ~9,216 kbps bandwidth).
+- **Apple Music-Styled Streaming Quality Sheet**: Data consumption calculator (1.5 MB up to 145 MB per song) with clear warnings before enabling on cellular connections.
+- **Honest Stream Inspection**: Real-time provenance inspection badge (\`HIGH QUALITY (LOSSLESS UNAVAILABLE)\`) ensuring 100% transparency without fake upsampling.
+- **Audiophile Hardware Compatibility**: Hardware guide for external USB-C DAC dongles on phones like Samsung Galaxy S25 Ultra and Oppo Reno 8T to bypass Android mixer resampling.
 
-#### 4. 📱 Edge-to-Edge Safe Area Immersion
-- Proper \`env(safe-area-inset-top)\` and \`env(safe-area-inset-bottom)\` padding across headers, drawer panels, and navigation bars, preventing collisions with Android camera cutouts and system gesture bars.
+#### 2. 📱 Fluid Mobile Touch & Gesture Overhaul
+- **Isolated Artwork Deck Swiping**: Horizontal track skipping is scoped exclusively to the central album artwork deck, preventing collisions with progress scrubber seeking or volume adjustments.
+- **Pull-Down Sheet Collapse**: Natural downward drag gesture from the top bar smoothly collapses full-screen player back to floating mini player.
+- **Zero Touch Latency**: Integrated \`touch-manipulation\` and \`touch-none\` CSS utilities eliminating the standard 300ms mobile touch delay.
+
+#### 3. 🔙 Hierarchical Android Back Navigation
+- Powered by native \`@capacitor/app\` integration.
+- Dismisses open modal sheets first (Now Playing, Lyrics, Quality Modal, Queue, Equalizer, Sleep Timer, Share Sheet).
+- Navigates back through viewed pages/tabs with \`router.back()\`.
+- Double-tap back within 2,000ms on root Home with a Spotify-styled pill toast to safely exit the app.
+
+#### 4. 📜 Instant Master Playback & Synchronized Lyrics Fix
+- Cached master stream resolver eliminates the 2-second 30-second preview clip delay — full tracks start instantly from 0:00.
+- Synchronized karaoke lyrics with vertical centering padding (\`py-[38vh]\`), -0.2s vocal anticipation, user scroll detection, and floating "Sync lyrics ↺" pill.
+
+#### 5. 🎭 Automated Playwright Retina UI Suite
+- Complete automated visual regression suite running headless Chrome.
+- 9 verified high-resolution screenshots capturing every desktop and mobile workflow embedded directly in project documentation.
 `,
         draft: false,
         prerelease: false,

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Disc3, Flame, Headphones, Heart, Mic2, Music
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { CURRENT_APP_VERSION } from '../components/AppUpdateChecker';
 import TrackCard from '../components/TrackCard';
 import { CURATED_OFFICIAL_HITS, searchOfficialMusic } from '../lib/officialMusic';
 import { generateDailyMixes } from '../lib/recommendations';
@@ -762,6 +763,37 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+        {/* Start Page Footer: Ecosystem Links & Current/Latest Release Version */}
+        <footer className="mt-16 pt-8 pb-12 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-spotify-subtext">
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-white tracking-tight text-sm">Wavelength Ecosystem</span>
+              <span className="px-2 py-0.5 rounded-full bg-spotify-green/20 text-spotify-green border border-spotify-green/30 font-mono font-bold text-[10px]">
+                {CURRENT_APP_VERSION} (Latest Release)
+              </span>
+            </div>
+            <p className="text-[11px] text-spotify-subtext text-center md:text-left">
+              ALAC/FLAC 24-bit/192kHz Hi-Res Lossless Audio &bull; Fluid Touch Gestures &bull; Synced Lyrics
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold">
+            <Link href="/settings" className="hover:text-white transition-colors">Settings</Link>
+            <a href="https://github.com/MohamedNavith/Spotify-Craft/releases/latest" target="_blank" rel="noopener noreferrer" className="hover:text-spotify-green transition-colors flex items-center gap-1">
+              <span>Android APK</span>
+            </a>
+            <a href="https://github.com/MohamedNavith/Spotify-Craft/releases/latest" target="_blank" rel="noopener noreferrer" className="hover:text-spotify-green transition-colors">
+              Windows PC (.exe)
+            </a>
+            <a href="https://discord.com/oauth2/authorize?client_id=1563521762656780299&permissions=8&scope=bot%20applications.commands" target="_blank" rel="noopener noreferrer" className="hover:text-[#5865F2] transition-colors">
+              Discord Bot
+            </a>
+            <a href="https://github.com/MohamedNavith/Spotify-Craft" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+              GitHub Repository
+            </a>
+          </div>
+        </footer>
       </div>
     </div>
   );

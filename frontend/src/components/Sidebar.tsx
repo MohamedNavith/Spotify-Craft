@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { CURRENT_APP_VERSION, isNewerVersion } from './AppUpdateChecker';
 import { useEffect, useState } from 'react';
 import { getOfflineTracks } from '../lib/offlineStorage';
 import { deleteUserPlaylist, getUserPlaylists, UserPlaylist } from '../lib/userPlaylists';
@@ -459,21 +460,21 @@ export default function Sidebar() {
 
           {/* Footer: Version & Check For Updates */}
           <div className="p-3 border-t border-white/5 bg-black/40 flex items-center justify-between text-[11px] text-spotify-subtext">
-            <span className="font-mono">v1.5.0</span>
+            <span className="font-mono font-bold text-white/90">{CURRENT_APP_VERSION}</span>
             <button
               onClick={async () => {
                 try {
                   const res = await fetch('https://api.github.com/repos/MohamedNavith/Spotify-Craft/releases/latest');
                   if (res.ok) {
                     const data = await res.json();
-                    if (data.tag_name && data.tag_name !== 'v1.5.0') {
+                    if (data.tag_name && isNewerVersion(data.tag_name, CURRENT_APP_VERSION)) {
                       window.open(data.html_url, '_blank');
                     } else {
-                      alert('You are on the latest version of Wavelength (v1.5.0)!');
+                      alert(`You are on the latest version of Wavelength (${CURRENT_APP_VERSION})!`);
                     }
                   }
                 } catch {
-                  alert('You are on the latest version of Wavelength (v1.5.0)!');
+                  alert(`You are on the latest version of Wavelength (${CURRENT_APP_VERSION})!`);
                 }
               }}
               className="hover:text-spotify-green hover:underline font-semibold transition-colors"

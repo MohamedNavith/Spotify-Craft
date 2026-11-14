@@ -1,6 +1,6 @@
 {
   "name": "wavelength-frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Wavelength Music Player - Spotify Web Reference Experience",
   "private": true,
   "scripts": {

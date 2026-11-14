@@ -1,6 +1,6 @@
 {
   "name": "wavelength-monorepo",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Wavelength Spotify-Grade Music Streaming Ecosystem",
   "private": true,
   "scripts": {

@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Check, Disc3, Download, Heart, Info, Music, Plus, RefreshCw, Settings, Sparkles, Trash2, UserCheck, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { CURRENT_APP_VERSION, isNewerVersion } from '../../components/AppUpdateChecker';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 import { StreamingQuality } from '../../types';
 
@@ -92,6 +93,18 @@ export default function SettingsPage() {
   const [autoplay, setAutoplay] = useState(true);
   const [pendingQuality, setPendingQuality] = useState<StreamingQuality | null>(null);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
+  const [latestReleaseTag, setLatestReleaseTag] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('https://api.github.com/repos/MohamedNavith/Spotify-Craft/releases/latest')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.tag_name) {
+          setLatestReleaseTag(data.tag_name);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     try {
@@ -540,11 +553,22 @@ export default function SettingsPage() {
               <span className="text-[10px] uppercase font-bold tracking-widest text-spotify-green">
                 Installed Application Version
               </span>
-              <h3 className="text-2xl font-black text-white font-mono mt-0.5">
-                v1.3.0 (Latest Release)
-              </h3>
+              <div className="flex items-center gap-3 mt-1">
+                <h3 className="text-2xl font-black text-white font-mono">
+                  {CURRENT_APP_VERSION}
+                </h3>
+                {latestReleaseTag && isNewerVersion(latestReleaseTag, CURRENT_APP_VERSION) ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase">
+                    Update Available ({latestReleaseTag})
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full bg-spotify-green/20 text-spotify-green border border-spotify-green/30 text-[10px] font-black uppercase">
+                    Latest Version
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-spotify-subtext mt-1">
-                Full song streaming engine &bull; Lock screen notifications &bull; Spotify Mobile APK UI
+                24-bit/192kHz Hi-Res Lossless Audio &bull; Gesture Navigation &bull; Dynamic Island &bull; Synced Karaoke Lyrics
               </p>
             </div>
 

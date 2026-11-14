@@ -4,8 +4,8 @@
 
 [![Live Web Player](https://img.shields.io/badge/Web_Player-Live_on_GitHub_Pages-1ed760.svg)](https://mohamednavith.github.io/Spotify-Craft/)
 [![Discord Bot](https://img.shields.io/badge/Discord_Bot-Add_to_Server-5865F2.svg)](https://discord.com/oauth2/authorize?client_id=1563521762656780299&permissions=8&scope=bot%20applications.commands)
-[![Android APK](https://img.shields.io/badge/Android_APK-v1.5.1_Direct_Download-3DDC84.svg)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-mobile.apk)
-[![Windows PC](https://img.shields.io/badge/Windows_App-v1.5.1_Direct_Download-0078D6.svg)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-desktop.exe)
+[![Android APK](https://img.shields.io/badge/Android_APK-v2.0.0_Direct_Download-3DDC84.svg)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v2.0.0/wavelength-mobile.apk)
+[![Windows PC](https://img.shields.io/badge/Windows_App-v2.0.0_Direct_Download-0078D6.svg)](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v2.0.0/wavelength-desktop.exe)
 
 ---
 
@@ -15,9 +15,9 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **🌐 Web Player** | Browser App | Instant | Full Spotify-grade web experience, live everywhere with zero setup. | [▶️ **Launch Web Player**](https://mohamednavith.github.io/Spotify-Craft/) |
 | **🤖 Discord Bot** | Bot Service | 24/7 Cloud | 320kbps master audio, DSP filters (8D, Bass, Nightcore), universal links. | [➕ **Add Bot to Discord**](https://discord.com/oauth2/authorize?client_id=1563521762656780299&permissions=8&scope=bot%20applications.commands) |
-| **📱 Android APK** | Mobile App | ~4.4 MB | Dynamic Island, gesture swipe, lock-screen controls, 100% ad-free audio. | [⬇️ **Download APK**](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-mobile.apk) |
-| **💻 Windows PC (Installer)** | Desktop App | ~180 MB | Standalone desktop application with global hardware media key shortcuts. | [⬇️ **Download Windows EXE**](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-desktop.exe) |
-| **💻 Windows PC (Portable)** | Desktop App | ~350 MB | Portable zip package — unpack and run immediately without installation. | [⬇️ **Download Portable ZIP**](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v1.5.1/wavelength-windows-x64.zip) |
+| **📱 Android APK** | Mobile App | ~4.4 MB | Dynamic Island, gesture swipe, lock-screen controls, 100% ad-free audio. | [⬇️ **Download APK**](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v2.0.0/wavelength-mobile.apk) |
+| **💻 Windows PC (Installer)** | Desktop App | ~180 MB | Standalone desktop application with global hardware media key shortcuts. | [⬇️ **Download Windows EXE**](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v2.0.0/wavelength-desktop.exe) |
+| **💻 Windows PC (Portable)** | Desktop App | ~350 MB | Portable zip package — unpack and run immediately without installation. | [⬇️ **Download Portable ZIP**](https://github.com/MohamedNavith/Spotify-Craft/releases/download/v2.0.0/wavelength-windows-x64.zip) |
 
 ---
 
