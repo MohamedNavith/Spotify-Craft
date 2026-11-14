@@ -77,6 +77,9 @@ export default function PlayerBar() {
     setIsVerciOpen,
     isCanvasModeEnabled,
     toggleCanvasMode,
+    audioStreamDetails,
+    streamingQuality,
+    setIsQualityModalOpen,
   } = usePlayerStore();
 
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
@@ -205,12 +208,33 @@ export default function PlayerBar() {
               </div>
 
               <div className="flex flex-col min-w-0">
-                <span
-                  onClick={() => toggleNowPlayingView()}
-                  className="text-white text-sm font-bold truncate hover:underline cursor-pointer"
-                >
-                  {currentTrack.title}
-                </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    onClick={() => toggleNowPlayingView()}
+                    className="text-white text-sm font-bold truncate hover:underline cursor-pointer"
+                  >
+                    {currentTrack.title}
+                  </span>
+                  <button
+                    onClick={() => setIsQualityModalOpen(true)}
+                    title={`Audio Quality: ${audioStreamDetails?.tierLabel || 'High Quality'} (${audioStreamDetails?.codec || 'AAC'} • ${audioStreamDetails?.bitrate || '320kbps'})\nClick to customize audio streaming tier`}
+                    className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95 cursor-pointer border ${
+                      audioStreamDetails?.isRealLossless
+                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
+                        : streamingQuality === 'high-efficiency'
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                        : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border-white/15'
+                    }`}
+                  >
+                    {audioStreamDetails?.isRealLossless
+                      ? audioStreamDetails.tier === 'hi-res-lossless'
+                        ? 'Hi-Res Lossless'
+                        : 'Lossless'
+                      : streamingQuality === 'high-efficiency'
+                      ? 'HE-AAC'
+                      : '320k'}
+                  </button>
+                </div>
                 <span className="text-spotify-subtext text-xs truncate hover:underline cursor-pointer mt-0.5">
                   {currentTrack.artistName}
                 </span>

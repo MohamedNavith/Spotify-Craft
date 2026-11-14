@@ -1,8 +1,9 @@
 'use client';
 
-import { Check, Download, Heart, Music, Plus, RefreshCw, Settings, Sparkles, Trash2, UserCheck, X } from 'lucide-react';
+import { AlertTriangle, Check, Disc3, Download, Heart, Info, Music, Plus, RefreshCw, Settings, Sparkles, Trash2, UserCheck, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { usePlayerStore } from '../../stores/usePlayerStore';
+import { StreamingQuality } from '../../types';
 
 interface PopularArtist {
   name: string;
@@ -81,11 +82,16 @@ export default function SettingsPage() {
     toggleDynamicIsland,
     isCanvasModeEnabled,
     toggleCanvasMode,
+    streamingQuality,
+    setStreamingQuality,
+    audioStreamDetails,
+    currentTrack,
   } = usePlayerStore();
   const [favoriteArtists, setFavoriteArtists] = useState<string[]>([]);
   const [customArtistInput, setCustomArtistInput] = useState('');
-  const [audioQuality, setAudioQuality] = useState<'320' | '256' | '128'>('320');
   const [autoplay, setAutoplay] = useState(true);
+  const [pendingQuality, setPendingQuality] = useState<StreamingQuality | null>(null);
+  const [showWarningDialog, setShowWarningDialog] = useState(false);
 
   useEffect(() => {
     try {
@@ -98,9 +104,6 @@ export default function SettingsPage() {
         setFavoriteArtists(defaults);
         localStorage.setItem('wavelength_favorite_artists', JSON.stringify(defaults));
       }
-
-      const savedQuality = localStorage.getItem('wavelength_audio_quality') as any;
-      if (savedQuality) setAudioQuality(savedQuality);
     } catch {}
   }, []);
 
@@ -124,11 +127,6 @@ export default function SettingsPage() {
     localStorage.setItem('wavelength_favorite_artists', JSON.stringify(updated));
     setCustomArtistInput('');
     window.dispatchEvent(new CustomEvent('wavelength_favorites_updated'));
-  };
-
-  const handleQualityChange = (q: '320' | '256' | '128') => {
-    setAudioQuality(q);
-    localStorage.setItem('wavelength_audio_quality', q);
   };
 
   return (
@@ -235,12 +233,12 @@ export default function SettingsPage() {
         </section>
 
         {/* Section 2: Audio & Playback Preferences */}
-        <section className="flex flex-col gap-4 border-t border-white/10 pt-8">
+        <section className="flex flex-col gap-6 border-t border-white/10 pt-8">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-white">
+            <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
               Playback &amp; Audio Quality
             </h2>
-            <p className="text-xs text-spotify-subtext">
+            <p className="text-xs text-spotify-subtext mt-0.5">
               Fine-tune how music is fetched and played on your device
             </p>
           </div>
@@ -267,32 +265,205 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            {/* Audio Quality */}
+            {/* Current Active Streaming Tier Summary */}
             <div className="p-5 rounded-2xl bg-spotify-card border border-white/5 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-white">Audio Streaming Bitrate</h3>
+                <h3 className="text-sm font-bold text-white">Current Active Tier</h3>
                 <p className="text-xs text-spotify-subtext mt-0.5">
-                  Master 320kbps MP3 / Lossless AAC audio
+                  {streamingQuality === 'hi-res-lossless'
+                    ? 'Hi-Res Lossless (Up to 24-bit/192 kHz FLAC)'
+                    : streamingQuality === 'lossless'
+                    ? 'Lossless (24-bit/48 kHz FLAC)'
+                    : streamingQuality === 'high-efficiency'
+                    ? 'High Efficiency (HE-AAC 96 kbps)'
+                    : 'High Quality (AAC 320 kbps Master)'}
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                {(['320', '256', '128'] as const).map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => handleQualityChange(q)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
-                      audioQuality === q
-                        ? 'bg-white text-black font-extrabold'
-                        : 'bg-white/10 text-spotify-subtext hover:text-white'
-                    }`}
-                  >
-                    {q}k
-                  </button>
-                ))}
-              </div>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-mono font-extrabold uppercase ${
+                  streamingQuality === 'hi-res-lossless' || streamingQuality === 'lossless'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    : 'bg-white/10 text-white border border-white/20'
+                }`}
+              >
+                {streamingQuality === 'hi-res-lossless'
+                  ? 'HI-RES LOSSLESS'
+                  : streamingQuality === 'lossless'
+                  ? 'LOSSLESS'
+                  : streamingQuality === 'high-efficiency'
+                  ? 'HE-AAC'
+                  : 'HIGH QUALITY'}
+              </span>
             </div>
           </div>
+
+          {/* Apple Music Mobile Data Streaming Container */}
+          <div className="flex flex-col gap-4 max-w-xl mx-auto w-full pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-base font-bold text-white tracking-tight">
+                Mobile Data Streaming
+              </span>
+              <span className="text-[11px] font-medium text-[#8E8E93]">
+                Audio Quality Setting
+              </span>
+            </div>
+
+            {/* Apple iOS Grouped Box */}
+            <div className="bg-[#1C1C1E] rounded-2xl overflow-hidden border border-white/5 shadow-xl divide-y divide-[#2C2C2E]">
+              {[
+                { id: 'none' as const, title: 'None' },
+                { id: 'high-efficiency' as const, title: 'High Efficiency', subtitle: 'HE-AAC with low data usage' },
+                { id: 'high-quality' as const, title: 'High Quality', subtitle: 'AAC 256 kbps' },
+                { id: 'lossless' as const, title: 'Lossless', subtitle: 'ALAC up to 24-bit/48 kHz' },
+                { id: 'hi-res-lossless' as const, title: 'Hi-Res Lossless', subtitle: 'ALAC up to 24-bit/192 kHz' },
+              ].map((opt) => {
+                const isSelected = streamingQuality === opt.id;
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => {
+                      if ((opt.id === 'lossless' || opt.id === 'hi-res-lossless') && streamingQuality !== opt.id) {
+                        setPendingQuality(opt.id);
+                        setShowWarningDialog(true);
+                      } else {
+                        setStreamingQuality(opt.id);
+                      }
+                    }}
+                    className="px-4 py-3.5 flex items-center justify-between cursor-pointer hover:bg-white/[0.03] active:bg-white/[0.06] transition-colors"
+                  >
+                    <div className="flex flex-col pr-3">
+                      <span className="text-[15px] font-normal text-white tracking-tight">
+                        {opt.title}
+                      </span>
+                      {opt.subtitle && (
+                        <span className="text-[12px] text-[#8E8E93] font-normal mt-0.5">
+                          {opt.subtitle}
+                        </span>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <Check className="w-5 h-5 text-[#0A84FF] stroke-[2.5] shrink-0" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Apple Music Streaming Advisory Description */}
+            <div className="px-1 text-[13px] text-[#8E8E93] leading-relaxed space-y-3 font-normal">
+              <p>Lossless streaming will consume significantly more data.</p>
+
+              <div className="space-y-1">
+                <p>A three-minute song will be approximately:</p>
+                <ul className="space-y-0.5 pl-1 text-[#A1A1A6]">
+                  <li>– 1.5 MB with High Efficiency</li>
+                  <li>– 6 MB with High Quality at 256 kbps</li>
+                  <li>– 36 MB with Lossless at 24-bit/48 kHz</li>
+                  <li>– 145 MB with Hi-Res Lossless at 24-bit/192 kHz</li>
+                </ul>
+              </div>
+
+              <p className="text-[12px] text-[#71717A] pt-1 leading-normal">
+                Support varies and depends on song availability, network conditions, and connected speaker or headphone capability.
+              </p>
+            </div>
+
+            {/* Live Audio Stream Details Banner */}
+            {currentTrack && (
+              <div className="p-4 rounded-2xl bg-[#1C1C1E]/90 border border-white/5 flex flex-col gap-2 mt-2">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-[#8E8E93] flex items-center gap-1.5">
+                    <Disc3 className="w-3.5 h-3.5 text-[#0A84FF] animate-spin-slow" />
+                    Now Playing Verified Audio Specs
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                      audioStreamDetails?.isRealLossless
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        : 'bg-white/10 text-white/80'
+                    }`}
+                  >
+                    {audioStreamDetails?.tierLabel || 'High Quality AAC'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] pt-2 border-t border-white/5">
+                  <div>
+                    <span className="text-[#71717A] block">Format &amp; Codec</span>
+                    <span className="text-white font-mono font-medium">
+                      {audioStreamDetails?.codec || 'AAC'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[#71717A] block">Bitrate</span>
+                    <span className="text-white font-mono font-medium">
+                      {audioStreamDetails?.bitrate || '320 kbps'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[#71717A] block">Sample Rate &amp; Depth</span>
+                    <span className="text-white font-mono font-medium">
+                      {audioStreamDetails?.sampleRate || '44.1 kHz'} / {audioStreamDetails?.bitDepth || '16-bit'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[#71717A] block">Est. Data Consumption</span>
+                    <span className="text-white font-mono font-medium">
+                      ~{audioStreamDetails?.sizeEstimateMb || 6.8} MB / song
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* High Data Consumption Warning Confirmation Modal */}
+          {showWarningDialog && (
+            <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
+              <div className="bg-[#1C1C1E] border border-white/10 rounded-2xl p-6 max-w-sm w-full text-center flex flex-col items-center gap-3.5 shadow-2xl">
+                <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
+                </div>
+
+                <h4 className="text-[17px] font-bold text-white tracking-tight">
+                  Turn On {pendingQuality === 'hi-res-lossless' ? 'Hi-Res Lossless' : 'Lossless'}?
+                </h4>
+
+                <p className="text-[13px] text-[#8E8E93] leading-relaxed">
+                  Lossless audio streams consume significantly more bandwidth—up to{' '}
+                  <strong className="text-white">
+                    {pendingQuality === 'hi-res-lossless' ? '145 MB' : '36 MB'} per 3-minute song
+                  </strong>
+                  . Streaming over cellular data may quickly consume your mobile data plan.
+                </p>
+
+                <div className="flex flex-col w-full gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      if (pendingQuality) {
+                        setStreamingQuality(pendingQuality);
+                        setPendingQuality(null);
+                      }
+                      setShowWarningDialog(false);
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-[#0A84FF] hover:bg-[#0071E3] text-white font-semibold text-[14px] transition-colors cursor-pointer"
+                  >
+                    Turn On Lossless
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPendingQuality(null);
+                      setShowWarningDialog(false);
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white/90 font-medium text-[14px] transition-colors cursor-pointer"
+                  >
+                    Keep High Quality (Default)
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Section 2.5: Display & Edge Customization */}

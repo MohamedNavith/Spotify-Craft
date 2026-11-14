@@ -7,7 +7,26 @@ export type ProviderName =
   | 'youtube'
   | 'upload';
 
-export type StreamFormat = 'mp3' | 'aac' | 'hls' | 'dash' | 'embed';
+export type StreamFormat = 'mp3' | 'aac' | 'flac' | 'alac' | 'hls' | 'dash' | 'embed';
+
+export type StreamingQuality =
+  | 'none'
+  | 'high-efficiency'
+  | 'high-quality'
+  | 'lossless'
+  | 'hi-res-lossless';
+
+export interface AudioStreamDetails {
+  codec: 'FLAC' | 'AAC' | 'MP3' | 'ALAC';
+  bitrate: string;
+  sampleRate: string;
+  bitDepth: string;
+  channels: string;
+  tier: StreamingQuality;
+  tierLabel: string;
+  sizeEstimateMb: number;
+  isRealLossless: boolean;
+}
 
 export interface UnifiedTrack {
   id: string; // e.g. "jamendo:12345"

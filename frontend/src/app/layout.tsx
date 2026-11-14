@@ -12,6 +12,7 @@ import PlayerBar from '../components/PlayerBar';
 import ShareModal from '../components/ShareModal';
 import Sidebar from '../components/Sidebar';
 import SleepTimerModal from '../components/SleepTimerModal';
+import StreamingQualityModal from '../components/StreamingQualityModal';
 import TopBar from '../components/TopBar';
 import VerciExperience from '../components/VerciExperience';
 import './globals.css';
@@ -88,6 +89,9 @@ export default function RootLayout({
 
         {/* Discord Bot Integration Modal */}
         <DiscordBotModal />
+
+        {/* Apple Music Mobile Data & Streaming Quality Modal */}
+        <StreamingQualityModal />
 
         {/* Create (+) Modal Sheet */}
         <CreateSheetModal />

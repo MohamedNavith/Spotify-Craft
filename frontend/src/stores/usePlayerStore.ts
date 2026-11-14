@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
 import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
-import { UnifiedPlayback, UnifiedTrack } from '../types';
+import { AudioStreamDetails, StreamingQuality, UnifiedPlayback, UnifiedTrack } from '../types';
 
 export type RepeatMode = 'off' | 'all' | 'one';
 export type PlaybackMode = 'full' | 'preview';
@@ -41,6 +41,9 @@ interface PlayerState {
   isLumnGlowEnabled: boolean;
   isDynamicIslandVisible: boolean;
   isCanvasModeEnabled: boolean;
+  streamingQuality: StreamingQuality;
+  audioStreamDetails: AudioStreamDetails | null;
+  isQualityModalOpen: boolean;
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -83,6 +86,9 @@ interface PlayerState {
   setIsDynamicIslandVisible: (visible: boolean) => void;
   toggleCanvasMode: () => void;
   setIsCanvasModeEnabled: (enabled: boolean) => void;
+  setStreamingQuality: (quality: StreamingQuality) => void;
+  setAudioStreamDetails: (details: AudioStreamDetails | null) => void;
+  setIsQualityModalOpen: (open: boolean) => void;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -129,6 +135,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isLumnGlowEnabled: true,
   isDynamicIslandVisible: typeof window !== 'undefined' ? localStorage.getItem('wavelength_island_visible') !== 'false' : true,
   isCanvasModeEnabled: typeof window !== 'undefined' ? localStorage.getItem('wavelength_canvas_enabled') !== 'false' : true,
+  streamingQuality: typeof window !== 'undefined' ? (localStorage.getItem('wavelength_streaming_quality') as StreamingQuality) || 'high-quality' : 'high-quality',
+  audioStreamDetails: null,
+  isQualityModalOpen: false,
 
   setTrack: (track, queue) => {
     const state = get();
@@ -168,9 +177,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       });
     }
 
-    // Seamlessly upgrade to 100% full-length 320kbps master ad-free stream
+    // Seamlessly upgrade according to configured streaming quality tier
     if (track.provider !== 'upload' && !track.id.startsWith('offline-')) {
-      resolveMasterAudioStream(track.title, track.artistName).then((master) => {
+      resolveMasterAudioStream(track.title, track.artistName, state.streamingQuality).then((master) => {
         if (master && master.streamUrl) {
           const current = get().currentTrack;
           if (current && current.id === track.id) {
@@ -179,9 +188,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
                 ...current,
                 streamUrl: master.streamUrl,
                 duration: master.duration,
-                audioQuality: '320kbps (Master Studio Lossless)',
+                audioQuality: master.quality,
               },
               duration: master.duration,
+              audioStreamDetails: master.details || null,
             });
           }
         }
@@ -452,5 +462,33 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       localStorage.setItem('wavelength_canvas_enabled', String(enabled));
     } catch {}
     set({ isCanvasModeEnabled: enabled });
+  },
+  setIsQualityModalOpen: (open) => set({ isQualityModalOpen: open }),
+  setAudioStreamDetails: (details) => set({ audioStreamDetails: details }),
+  setStreamingQuality: (quality) => {
+    try {
+      localStorage.setItem('wavelength_streaming_quality', quality);
+    } catch {}
+    set({ streamingQuality: quality });
+
+    const track = get().currentTrack;
+    if (track && track.provider !== 'upload' && !track.id.startsWith('offline-')) {
+      resolveMasterAudioStream(track.title, track.artistName, quality).then((master) => {
+        if (master && master.streamUrl) {
+          const current = get().currentTrack;
+          if (current && current.id === track.id) {
+            set({
+              currentTrack: {
+                ...current,
+                streamUrl: master.streamUrl,
+                duration: master.duration,
+                audioQuality: master.quality,
+              },
+              audioStreamDetails: master.details || null,
+            });
+          }
+        }
+      });
+    }
   },
 }));

@@ -66,6 +66,9 @@ export default function SpotifyMobilePlayer({
     toggleCanvasMode,
     queue,
     queueIndex,
+    audioStreamDetails,
+    streamingQuality,
+    setIsQualityModalOpen,
   } = usePlayerStore();
 
   const [dragX, setDragX] = useState(0);
@@ -367,7 +370,28 @@ export default function SpotifyMobilePlayer({
             {/* Track Info & Plus (+) button */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex flex-col min-w-0 pr-4">
-                <h2 className="text-xl font-black text-white truncate tracking-tight">{currentTrack.title}</h2>
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="text-xl font-black text-white truncate tracking-tight">{currentTrack.title}</h2>
+                  <button
+                    onClick={() => setIsQualityModalOpen(true)}
+                    title={`Audio Quality: ${audioStreamDetails?.tierLabel || 'High Quality'} (${audioStreamDetails?.codec || 'AAC'} • ${audioStreamDetails?.bitrate || '320kbps'})\nTap to customize audio streaming tier`}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95 cursor-pointer border ${
+                      audioStreamDetails?.isRealLossless
+                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
+                        : streamingQuality === 'high-efficiency'
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                        : 'bg-white/10 text-white/70 border-white/15'
+                    }`}
+                  >
+                    {audioStreamDetails?.isRealLossless
+                      ? audioStreamDetails.tier === 'hi-res-lossless'
+                        ? 'Hi-Res Lossless'
+                        : 'Lossless'
+                      : streamingQuality === 'high-efficiency'
+                      ? 'HE-AAC'
+                      : '320k'}
+                  </button>
+                </div>
                 <p className="text-xs text-[#b3b3b3] font-medium truncate mt-0.5">{currentTrack.artistName}</p>
               </div>
 
