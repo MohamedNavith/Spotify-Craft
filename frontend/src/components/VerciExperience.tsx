@@ -386,11 +386,17 @@ export default function VerciExperience() {
 
   // Auto-scroll active lyric into view for Spicetify mode
   useEffect(() => {
-    if (verciStyle === 'spicetify' && activeLyricRef.current) {
-      activeLyricRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
+    if (verciStyle === 'spicetify') {
+      const container = lyricsScrollContainerRef.current;
+      const el = activeLyricRef.current;
+      if (container && el) {
+        const containerHeight = container.clientHeight;
+        const targetTop = el.offsetTop - containerHeight * 0.38 + el.clientHeight / 2;
+        container.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: 'smooth',
+        });
+      }
     }
   }, [activeLineIndex, verciStyle]);
 

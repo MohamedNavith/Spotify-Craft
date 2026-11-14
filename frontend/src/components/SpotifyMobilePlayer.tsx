@@ -400,9 +400,11 @@ export default function SpotifyMobilePlayer({
                   toggleLike(currentTrack.id);
                   triggerHaptic(15);
                 }}
-                className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-white active:scale-75 transition-transform shrink-0"
+                className={`w-10 h-10 rounded-full border flex items-center justify-center active:scale-75 transition-all shrink-0 ${
+                  isLiked ? 'border-spotify-green bg-spotify-green/10 text-spotify-green' : 'border-white/20 text-white'
+                }`}
               >
-                <Plus className={`w-5 h-5 ${isLiked ? 'text-spotify-green' : ''}`} />
+                {isLiked ? <Check className="w-5 h-5 text-spotify-green" /> : <Plus className="w-5 h-5" />}
               </button>
             </div>
 

@@ -218,7 +218,7 @@ export default function PlayerBar() {
                   <button
                     onClick={() => setIsQualityModalOpen(true)}
                     title={`Audio Quality: ${audioStreamDetails?.tierLabel || 'High Quality'} (${audioStreamDetails?.codec || 'AAC'} • ${audioStreamDetails?.bitrate || '320kbps'})\nClick to customize audio streaming tier`}
-                    className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95 cursor-pointer border ${
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95 cursor-pointer border ${
                       audioStreamDetails?.isRealLossless
                         ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
                         : streamingQuality === 'high-efficiency'

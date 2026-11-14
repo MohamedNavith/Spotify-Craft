@@ -32,6 +32,52 @@ function decryptMediaUrl(encryptedUrl: string, targetQuality: '320' | '160' | '9
   }
 }
 
+export function isPreviewAudioUrl(url?: string | null): boolean {
+  if (!url) return false;
+  return (
+    url.includes('audio-ssl.itunes.apple.com') ||
+    url.includes('AudioPreview') ||
+    url.includes('.plus.aac.p.m4a') ||
+    url.includes('/preview/')
+  );
+}
+
+export function getCachedMasterAudio(
+  title: string,
+  artist = '',
+  qualityParam?: StreamingQuality
+): MasterAudioResult | null {
+  const query = cleanTrackQuery(title, artist);
+  if (!query) return null;
+
+  const quality: StreamingQuality =
+    qualityParam ||
+    (typeof window !== 'undefined'
+      ? (localStorage.getItem('wavelength_streaming_quality') as StreamingQuality) || 'high-quality'
+      : 'high-quality');
+
+  const cacheKey = `${query}__${quality}`;
+
+  if (MEMORY_CACHE.has(cacheKey)) {
+    return MEMORY_CACHE.get(cacheKey)!;
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(`wl_audio_${cacheKey}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.streamUrl) {
+          MEMORY_CACHE.set(cacheKey, parsed);
+          return parsed;
+        }
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
 export function cleanTrackQuery(title: string, artist = ''): string {
   const normTitle = (title || '')
     .replace(/\(.*?\)/g, '')

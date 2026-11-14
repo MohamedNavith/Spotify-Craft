@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
-import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
+import {
+  getCachedMasterAudio,
+  isPreviewAudioUrl,
+  resolveMasterAudioStream,
+} from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { AudioStreamDetails, StreamingQuality, UnifiedPlayback, UnifiedTrack } from '../types';
 
@@ -151,11 +155,61 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       localStorage.setItem('wavelength_listening_history', JSON.stringify(updatedHist));
     } catch {}
 
-    // Check fast local resolver first
     const instantVideoId = resolveVideoId(track.title, track.artistName);
+    const isLocalOrOffline = track.provider === 'upload' || track.id.startsWith('offline-');
 
+    if (isLocalOrOffline) {
+      set({
+        currentTrack: track,
+        queue: newQueue,
+        queueIndex: index >= 0 ? index : 0,
+        history: updatedHist,
+        isPlaying: true,
+        progress: 0,
+        duration: track.duration || 180,
+        dynamicVideoId: instantVideoId,
+      });
+      return;
+    }
+
+    // 1. Check synchronous fast cache for full master stream
+    const cachedMaster = getCachedMasterAudio(track.title, track.artistName, state.streamingQuality);
+
+    if (cachedMaster && cachedMaster.streamUrl) {
+      // CACHE HIT: Full song is already known! Start playing immediately from 0:00!
+      set({
+        currentTrack: {
+          ...track,
+          streamUrl: cachedMaster.streamUrl,
+          duration: cachedMaster.duration,
+          audioQuality: cachedMaster.quality,
+        },
+        queue: newQueue,
+        queueIndex: index >= 0 ? index : 0,
+        history: updatedHist,
+        isPlaying: true,
+        progress: 0,
+        duration: cachedMaster.duration,
+        audioStreamDetails: cachedMaster.details || null,
+        dynamicVideoId: instantVideoId,
+      });
+
+      // Background pre-cache next track in queue
+      const nextIdx = (index >= 0 ? index : 0) + 1;
+      if (newQueue[nextIdx]) {
+        resolveMasterAudioStream(newQueue[nextIdx].title, newQueue[nextIdx].artistName, state.streamingQuality);
+      }
+      return;
+    }
+
+    // 2. CACHE MISS: Track is resolving.
+    // CRITICAL FIX: NEVER assign 30s preview URL to streamUrl! Set streamUrl to null so 30s clip never plays!
+    const fallbackPreview = track.streamUrl;
     set({
-      currentTrack: track,
+      currentTrack: {
+        ...track,
+        streamUrl: null, // Keeps audio engine quiet until full song is loaded
+      },
       queue: newQueue,
       queueIndex: index >= 0 ? index : 0,
       history: updatedHist,
@@ -165,7 +219,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       dynamicVideoId: instantVideoId,
     });
 
-    // Asynchronously resolve dynamic official video/audio if not instant
     if (!instantVideoId) {
       resolveVideoIdAsync(track.title, track.artistName).then((resolved) => {
         if (resolved) {
@@ -177,26 +230,38 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       });
     }
 
-    // Seamlessly upgrade according to configured streaming quality tier
-    if (track.provider !== 'upload' && !track.id.startsWith('offline-')) {
-      resolveMasterAudioStream(track.title, track.artistName, state.streamingQuality).then((master) => {
+    // Seamlessly fetch full master audio and start playing from 0:00
+    resolveMasterAudioStream(track.title, track.artistName, state.streamingQuality).then((master) => {
+      const current = get().currentTrack;
+      if (current && current.id === track.id) {
         if (master && master.streamUrl) {
-          const current = get().currentTrack;
-          if (current && current.id === track.id) {
-            set({
-              currentTrack: {
-                ...current,
-                streamUrl: master.streamUrl,
-                duration: master.duration,
-                audioQuality: master.quality,
-              },
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: master.streamUrl,
               duration: master.duration,
-              audioStreamDetails: master.details || null,
-            });
-          }
+              audioQuality: master.quality,
+            },
+            duration: master.duration,
+            audioStreamDetails: master.details || null,
+          });
+        } else if (fallbackPreview) {
+          // Last resort fallback only if full master search fails completely
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: fallbackPreview,
+            },
+          });
         }
-      });
-    }
+      }
+
+      // Pre-cache next song in queue in background
+      const nextIdx = (index >= 0 ? index : 0) + 1;
+      if (newQueue[nextIdx]) {
+        resolveMasterAudioStream(newQueue[nextIdx].title, newQueue[nextIdx].artistName, state.streamingQuality);
+      }
+    });
   },
 
   openShareModal: (track) => {
@@ -221,7 +286,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
 
   nextTrack: () => {
-    const { queue, queueIndex, repeatMode, isShuffled } = get();
+    const state = get();
+    const { queue, queueIndex, repeatMode, isShuffled } = state;
     if (queue.length === 0) return;
 
     if (repeatMode === 'one') {
@@ -245,8 +311,53 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     const nextTrack = queue[nextIndex];
     const instantVideoId = resolveVideoId(nextTrack.title, nextTrack.artistName);
+    const isLocalOrOffline = nextTrack.provider === 'upload' || nextTrack.id.startsWith('offline-');
+
+    if (isLocalOrOffline) {
+      set({
+        currentTrack: nextTrack,
+        queueIndex: nextIndex,
+        progress: 0,
+        duration: nextTrack.duration || 180,
+        isPlaying: true,
+        dynamicVideoId: instantVideoId,
+      });
+      return;
+    }
+
+    // Check fast cache
+    const cachedMaster = getCachedMasterAudio(nextTrack.title, nextTrack.artistName, state.streamingQuality);
+
+    if (cachedMaster && cachedMaster.streamUrl) {
+      set({
+        currentTrack: {
+          ...nextTrack,
+          streamUrl: cachedMaster.streamUrl,
+          duration: cachedMaster.duration,
+          audioQuality: cachedMaster.quality,
+        },
+        queueIndex: nextIndex,
+        progress: 0,
+        duration: cachedMaster.duration,
+        audioStreamDetails: cachedMaster.details || null,
+        isPlaying: true,
+        dynamicVideoId: instantVideoId,
+      });
+
+      // Pre-cache following song
+      if (queue[nextIndex + 1]) {
+        resolveMasterAudioStream(queue[nextIndex + 1].title, queue[nextIndex + 1].artistName, state.streamingQuality);
+      }
+      return;
+    }
+
+    // Cache miss: do NOT play 30s preview
+    const fallbackPreview = nextTrack.streamUrl;
     set({
-      currentTrack: nextTrack,
+      currentTrack: {
+        ...nextTrack,
+        streamUrl: null,
+      },
       queueIndex: nextIndex,
       progress: 0,
       duration: nextTrack.duration || 180,
@@ -265,28 +376,39 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       });
     }
 
-    if (nextTrack.provider !== 'upload' && !nextTrack.id.startsWith('offline-')) {
-      resolveMasterAudioStream(nextTrack.title, nextTrack.artistName).then((master) => {
+    resolveMasterAudioStream(nextTrack.title, nextTrack.artistName, state.streamingQuality).then((master) => {
+      const current = get().currentTrack;
+      if (current && current.id === nextTrack.id) {
         if (master && master.streamUrl) {
-          const current = get().currentTrack;
-          if (current && current.id === nextTrack.id) {
-            set({
-              currentTrack: {
-                ...current,
-                streamUrl: master.streamUrl,
-                duration: master.duration,
-                audioQuality: '320kbps (Master Studio Lossless)',
-              },
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: master.streamUrl,
               duration: master.duration,
-            });
-          }
+              audioQuality: master.quality,
+            },
+            duration: master.duration,
+            audioStreamDetails: master.details || null,
+          });
+        } else if (fallbackPreview) {
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: fallbackPreview,
+            },
+          });
         }
-      });
-    }
+      }
+
+      if (queue[nextIndex + 1]) {
+        resolveMasterAudioStream(queue[nextIndex + 1].title, queue[nextIndex + 1].artistName, state.streamingQuality);
+      }
+    });
   },
 
   prevTrack: () => {
-    const { queue, queueIndex, progress } = get();
+    const state = get();
+    const { queue, queueIndex, progress } = state;
     if (queue.length === 0) return;
 
     if (progress > 3) {
@@ -297,8 +419,48 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const prevIndex = queueIndex > 0 ? queueIndex - 1 : queue.length - 1;
     const prevTrack = queue[prevIndex];
     const instantVideoId = resolveVideoId(prevTrack.title, prevTrack.artistName);
+    const isLocalOrOffline = prevTrack.provider === 'upload' || prevTrack.id.startsWith('offline-');
+
+    if (isLocalOrOffline) {
+      set({
+        currentTrack: prevTrack,
+        queueIndex: prevIndex,
+        progress: 0,
+        duration: prevTrack.duration || 180,
+        isPlaying: true,
+        dynamicVideoId: instantVideoId,
+      });
+      return;
+    }
+
+    // Check fast cache
+    const cachedMaster = getCachedMasterAudio(prevTrack.title, prevTrack.artistName, state.streamingQuality);
+
+    if (cachedMaster && cachedMaster.streamUrl) {
+      set({
+        currentTrack: {
+          ...prevTrack,
+          streamUrl: cachedMaster.streamUrl,
+          duration: cachedMaster.duration,
+          audioQuality: cachedMaster.quality,
+        },
+        queueIndex: prevIndex,
+        progress: 0,
+        duration: cachedMaster.duration,
+        audioStreamDetails: cachedMaster.details || null,
+        isPlaying: true,
+        dynamicVideoId: instantVideoId,
+      });
+      return;
+    }
+
+    // Cache miss: do NOT play 30s preview
+    const fallbackPreview = prevTrack.streamUrl;
     set({
-      currentTrack: prevTrack,
+      currentTrack: {
+        ...prevTrack,
+        streamUrl: null,
+      },
       queueIndex: prevIndex,
       progress: 0,
       duration: prevTrack.duration || 180,
@@ -317,24 +479,30 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       });
     }
 
-    if (prevTrack.provider !== 'upload' && !prevTrack.id.startsWith('offline-')) {
-      resolveMasterAudioStream(prevTrack.title, prevTrack.artistName).then((master) => {
+    resolveMasterAudioStream(prevTrack.title, prevTrack.artistName, state.streamingQuality).then((master) => {
+      const current = get().currentTrack;
+      if (current && current.id === prevTrack.id) {
         if (master && master.streamUrl) {
-          const current = get().currentTrack;
-          if (current && current.id === prevTrack.id) {
-            set({
-              currentTrack: {
-                ...current,
-                streamUrl: master.streamUrl,
-                duration: master.duration,
-                audioQuality: '320kbps (Master Studio Lossless)',
-              },
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: master.streamUrl,
               duration: master.duration,
-            });
-          }
+              audioQuality: master.quality,
+            },
+            duration: master.duration,
+            audioStreamDetails: master.details || null,
+          });
+        } else if (fallbackPreview) {
+          set({
+            currentTrack: {
+              ...current,
+              streamUrl: fallbackPreview,
+            },
+          });
         }
-      });
-    }
+      }
+    });
   },
 
   seek: (seconds) => {

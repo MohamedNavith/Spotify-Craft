@@ -148,8 +148,10 @@ export default function AudioEngine() {
         };
         requestAnimationFrame(ramp);
       } else {
-        // Same track upgrading from preview to full master 320kbps while playing: resume smoothly from current position
-        if (prevTime > 1 && prevTime < (currentTrack.duration || 300)) {
+        // If same track received its full master stream: always start cleanly from 0:00
+        if (prevTime < 2) {
+          audio.currentTime = 0;
+        } else if (prevTime < (currentTrack.duration || 300)) {
           audio.currentTime = prevTime;
         }
       }
@@ -318,6 +320,7 @@ export default function AudioEngine() {
               const fresh = await resolveMasterAudioStream(
                 currentTrack.title,
                 currentTrack.artistName,
+                usePlayerStore.getState().streamingQuality,
               );
               if (fresh && fresh.streamUrl && audioRef.current) {
                 audioRef.current.src = fresh.streamUrl;
