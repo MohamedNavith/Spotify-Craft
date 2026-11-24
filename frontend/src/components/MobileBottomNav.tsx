@@ -23,7 +23,7 @@ export default function MobileBottomNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#121212]/95 backdrop-blur-2xl border-t border-white/10 select-none pb-[max(env(safe-area-inset-bottom,0px),8px)] pt-2 px-3 flex items-center justify-around shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_-8px_24px_rgba(0,0,0,0.8)]">
+    <nav aria-label="Primary" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#121212]/95 backdrop-blur-2xl border-t border-white/10 select-none pb-[max(env(safe-area-inset-bottom,0px),8px)] pt-2 px-3 flex items-center justify-around shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_-8px_24px_rgba(0,0,0,0.8)]">
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         const Icon = item.icon;
@@ -31,6 +31,7 @@ export default function MobileBottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? 'page' : undefined}
             onClick={() => triggerHaptic(10)}
             className={`flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 touch-manipulation ${
               isActive ? 'text-white font-bold' : 'text-spotify-subtext hover:text-white font-medium'

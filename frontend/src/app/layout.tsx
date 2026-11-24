@@ -27,7 +27,7 @@ const figtree = Figtree({
 export const metadata: Metadata = {
   title: 'Wavelength - Web Player: Music for everyone',
   description: 'Production-quality Spotify-style music streaming platform powered by Next.js and open licensed music APIs.',
-  manifest: '/manifest.json',
+  manifest: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/manifest.json`,
   icons: {
     icon: './icon.svg',
     shortcut: './icon.svg',
@@ -39,8 +39,6 @@ export const viewport: Viewport = {
   themeColor: '#121212',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
 };
 

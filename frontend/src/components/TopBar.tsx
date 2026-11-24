@@ -154,6 +154,7 @@ export default function TopBar({
                 router.push(`/search?q=${encodeURIComponent(query.trim())}`);
               }
             }}
+            aria-label="Search music"
             placeholder="What do you want to play?"
             className="w-full bg-transparent text-white text-sm px-2 outline-none placeholder:text-spotify-subtext font-medium"
           />
@@ -161,6 +162,7 @@ export default function TopBar({
           {/* Clear Button */}
           {query && (
             <button
+              aria-label="Clear search"
               onClick={() => {
                 setQuery('');
                 onSearchChange?.('');

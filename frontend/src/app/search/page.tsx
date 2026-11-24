@@ -1,7 +1,8 @@
 'use client';
 
 import { Clock3, Heart, Pause, Play, Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import TrackCard from '../../components/TrackCard';
 import { searchTracks } from '../../lib/api';
 import { usePlayerStore } from '../../stores/usePlayerStore';
@@ -89,6 +90,12 @@ const BROWSE_CATEGORIES = [
 ];
 
 export default function SearchPage() {
+  return <Suspense><SearchContent /></Suspense>;
+}
+
+function SearchContent() {
+  const urlQuery = useSearchParams().get('q') || '';
+  const [failed, setFailed] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UnifiedSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,34 +103,32 @@ export default function SearchPage() {
   const { currentTrack, isPlaying, setTrack, togglePlay, likedTrackIds, toggleLike } =
     usePlayerStore();
 
-  // Read URL query parameter on load
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const q = urlParams.get('q');
-      if (q) setQuery(q);
-    }
-  }, []);
+    setQuery(urlQuery);
+  }, [urlQuery]);
 
   useEffect(() => {
-    if (!query.trim()) {
-      setResults(null);
-      return;
-    }
+    let active = true;
+    setResults(null);
+    setFailed(false);
+    setIsLoading(Boolean(query.trim()));
+    if (!query.trim()) return;
 
     const timer = setTimeout(async () => {
-      setIsLoading(true);
       try {
         const res = await searchTracks(query.trim(), 20);
-        setResults(res);
-      } catch (err) {
-        console.error('Search error:', err);
+        if (active) setResults(res);
+      } catch {
+        if (active) setFailed(true);
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   const topTrack = results?.tracks?.[0];
@@ -138,11 +143,13 @@ export default function SearchPage() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search the catalog"
           placeholder="What do you want to play?"
           className="w-full h-12 bg-[#242424] hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-white text-sm pl-11 pr-10 rounded-full outline-none border border-transparent focus:border-white/40 transition-all shadow-inner placeholder:text-spotify-subtext"
         />
         {query && (
           <button
+            aria-label="Clear catalog search"
             onClick={() => setQuery('')}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-spotify-subtext hover:text-white"
           >
@@ -152,16 +159,19 @@ export default function SearchPage() {
       </div>
 
       <div className="flex flex-col gap-6">
+        {isLoading && <p role="status">Searching the catalog…</p>}
+        {failed && <p role="alert">Search is unavailable. Please try again.</p>}
         {/* If no query, show Spotify Browse Categories */}
         {!query.trim() && (
           <section className="flex flex-col gap-4">
             <h2 className="text-2xl font-bold text-white">Browse all</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {BROWSE_CATEGORIES.map((cat) => (
-                <div
+                <button
+                  type="button"
                   key={cat.name}
                   onClick={() => setQuery(cat.query)}
-                  className={`group h-44 rounded-xl p-4 bg-gradient-to-br ${cat.color} cursor-pointer hover:scale-[1.02] transition-all duration-300 shadow-md hover:shadow-xl relative overflow-hidden flex flex-col justify-between`}
+                  className={`group text-left focus-visible:outline-white h-44 rounded-xl p-4 bg-gradient-to-br ${cat.color} cursor-pointer hover:scale-[1.02] transition-all duration-300 shadow-md hover:shadow-xl relative overflow-hidden flex flex-col justify-between`}
                 >
                   <span className="text-white font-extrabold text-lg leading-tight tracking-tight z-10 drop-shadow">
                     {cat.name}
@@ -171,24 +181,14 @@ export default function SearchPage() {
                   <div className="absolute -bottom-2 -right-3 w-24 h-24 rounded-lg shadow-2xl overflow-hidden rotate-[25deg] group-hover:rotate-[15deg] group-hover:scale-110 transition-all duration-300">
                     <img
                       src={cat.cover}
-                      alt={cat.name}
+                      onError={event => { event.currentTarget.hidden = true; }}
+                      alt=""
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover"
                     />
                   </div>
 
-                  {/* Hover Floating Play Button */}
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      setQuery(cat.query);
-                    }}
-                    title={`Play ${cat.name}`}
-                    className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-20 hover:scale-105 active:scale-95"
-                  >
-                    <Play className="w-5 h-5 fill-black ml-0.5" />
-                  </button>
-                </div>
+                </button>
               ))}
             </div>
           </section>
