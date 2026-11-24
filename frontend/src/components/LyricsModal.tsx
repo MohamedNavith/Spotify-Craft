@@ -269,12 +269,76 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
     scrollToLine(idx, true);
   };
 
+  const [dragY, setDragY] = useState(0);
+  const [isDraggingY, setIsDraggingY] = useState(false);
+  const touchStartYRef = useRef<number | null>(null);
+
+  const handleHeaderTouchStart = (e: React.TouchEvent) => {
+    touchStartYRef.current = e.touches[0].clientY;
+    setDragY(0);
+    setIsDraggingY(false);
+  };
+
+  const handleHeaderTouchMove = (e: React.TouchEvent) => {
+    if (touchStartYRef.current === null) return;
+    const diffY = e.touches[0].clientY - touchStartYRef.current;
+    if (diffY > 0) {
+      setDragY(diffY);
+      setIsDraggingY(true);
+    }
+  };
+
+  const handleHeaderTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartYRef.current === null) {
+      setDragY(0);
+      setIsDraggingY(false);
+      return;
+    }
+    const diffY = e.changedTouches[0].clientY - touchStartYRef.current;
+    if (diffY > 60) {
+      onClose();
+      if (typeof navigator !== 'undefined') {
+        navigator.vibrate?.(12);
+      }
+    }
+    setDragY(0);
+    setIsDraggingY(false);
+    touchStartYRef.current = null;
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-b from-[#1c382b]/95 via-[#121212]/98 to-black backdrop-blur-2xl flex flex-col p-4 md:p-10 animate-fade-in select-none">
+    <div
+      style={{
+        transform:
+          dragY > 0
+            ? `translateY(${dragY}px) scale(${Math.max(0.92, 1 - dragY / 1400)})`
+            : 'translateY(0px)',
+        transition: isDraggingY
+          ? 'none'
+          : 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.2s ease',
+        borderRadius: dragY > 10 ? `${Math.min(32, 16 + dragY / 8)}px` : '0px',
+      }}
+      className="fixed inset-0 z-50 bg-gradient-to-b from-[#1c382b]/95 via-[#121212]/98 to-black backdrop-blur-2xl flex flex-col p-4 md:p-10 animate-fade-in select-none shadow-2xl overflow-hidden"
+    >
+      {/* Top Pull Handle for mobile gestures */}
+      <div
+        onTouchStart={handleHeaderTouchStart}
+        onTouchMove={handleHeaderTouchMove}
+        onTouchEnd={handleHeaderTouchEnd}
+        className="md:hidden w-full flex justify-center -mt-2 pb-2 cursor-grab active:cursor-grabbing shrink-0 z-20"
+      >
+        <div className="w-10 h-1 rounded-full bg-white/30" />
+      </div>
+
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+      <div
+        onTouchStart={handleHeaderTouchStart}
+        onTouchMove={handleHeaderTouchMove}
+        onTouchEnd={handleHeaderTouchEnd}
+        className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0 touch-none"
+      >
         <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <div className="w-11 h-11 md:w-12 md:h-12 rounded-lg overflow-hidden bg-spotify-elevated shadow-lg shrink-0">
             {currentTrack?.artworkUrl ? (

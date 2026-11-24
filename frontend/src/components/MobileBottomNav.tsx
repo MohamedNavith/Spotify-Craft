@@ -9,6 +9,12 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const { setIsVerciOpen } = usePlayerStore();
 
+  const triggerHaptic = (ms = 10) => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate?.(ms);
+    }
+  };
+
   const navItems = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'Search', href: '/search', icon: Search },
@@ -25,7 +31,8 @@ export default function MobileBottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 ${
+            onClick={() => triggerHaptic(10)}
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 touch-manipulation ${
               isActive ? 'text-white font-bold' : 'text-spotify-subtext hover:text-white font-medium'
             }`}
           >
@@ -39,8 +46,11 @@ export default function MobileBottomNav() {
 
       {/* Special Dedicated Mode: Verci & Lumn button on Mobile Nav */}
       <button
-        onClick={() => setIsVerciOpen(true)}
-        className="flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 text-spotify-subtext hover:text-white"
+        onClick={() => {
+          triggerHaptic(12);
+          setIsVerciOpen(true);
+        }}
+        className="flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-lg transition-all active:scale-95 text-spotify-subtext hover:text-white touch-manipulation"
         title="Open Verci & Lumn Cosmic Mode"
       >
         <div className="relative">

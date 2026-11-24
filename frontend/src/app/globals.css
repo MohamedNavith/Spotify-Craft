@@ -110,6 +110,11 @@ html, body {
   touch-action: manipulation;
 }
 
+button, a, input, select, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 @keyframes spinSlow {
   from {
     transform: rotate(0deg);

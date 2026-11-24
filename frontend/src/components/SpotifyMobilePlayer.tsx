@@ -72,6 +72,8 @@ export default function SpotifyMobilePlayer({
   } = usePlayerStore();
 
   const [dragX, setDragX] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [isDraggingY, setIsDraggingY] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -130,6 +132,8 @@ export default function SpotifyMobilePlayer({
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
     setDragX(0);
+    setDragY(0);
+    setIsDraggingY(false);
   };
 
   const handleDeckTouchMove = (e: React.TouchEvent) => {
@@ -139,14 +143,22 @@ export default function SpotifyMobilePlayer({
     const diffX = currentX - touchStartX;
     const diffY = currentY - touchStartY;
 
-    if (Math.abs(diffX) > Math.abs(diffY)) {
+    if (diffY > 0 && diffY > Math.abs(diffX)) {
+      setDragY(diffY);
+      setIsDraggingY(true);
+      setDragX(0);
+    } else if (Math.abs(diffX) > Math.abs(diffY)) {
       setDragX(diffX);
+      setDragY(0);
+      setIsDraggingY(false);
     }
   };
 
   const handleDeckTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX === null || touchStartY === null) {
       setDragX(0);
+      setDragY(0);
+      setIsDraggingY(false);
       return;
     }
     const diffX = e.changedTouches[0].clientX - touchStartX;
@@ -167,22 +179,41 @@ export default function SpotifyMobilePlayer({
     }
 
     setDragX(0);
+    setDragY(0);
+    setIsDraggingY(false);
     setTouchStartX(null);
     setTouchStartY(null);
   };
 
-  // Top Bar Touch Handlers (Drag down from top bar to collapse)
+  // Top Bar Touch Handlers (Fluid real-time drag down to collapse)
   const handleTopBarTouchStart = (e: React.TouchEvent) => {
     setTouchStartY(e.touches[0].clientY);
+    setDragY(0);
+    setIsDraggingY(false);
+  };
+
+  const handleTopBarTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY === null) return;
+    const diffY = e.touches[0].clientY - touchStartY;
+    if (diffY > 0) {
+      setDragY(diffY);
+      setIsDraggingY(true);
+    }
   };
 
   const handleTopBarTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartY === null) return;
+    if (touchStartY === null) {
+      setDragY(0);
+      setIsDraggingY(false);
+      return;
+    }
     const diffY = e.changedTouches[0].clientY - touchStartY;
-    if (diffY > 40) {
+    if (diffY > 50) {
       setIsExpandedNowPlaying(false);
       triggerHaptic(12);
     }
+    setDragY(0);
+    setIsDraggingY(false);
     setTouchStartY(null);
   };
 
@@ -263,8 +294,28 @@ export default function SpotifyMobilePlayer({
       {/* 2. Full-Screen Now Playing View (Matching Screenshot #1 & #3) */}
       {isExpandedNowPlaying && (
         <div
-          className="md:hidden fixed inset-0 z-50 bg-[#121212] flex flex-col justify-between text-white select-none animate-in slide-in-from-bottom duration-300 overflow-hidden touch-manipulation"
+          style={{
+            transform:
+              dragY > 0
+                ? `translateY(${dragY}px) scale(${Math.max(0.92, 1 - dragY / 1400)})`
+                : 'translateY(0px)',
+            transition: isDraggingY
+              ? 'none'
+              : 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.2s ease',
+            borderRadius: dragY > 10 ? `${Math.min(32, 16 + dragY / 8)}px` : '0px',
+          }}
+          className="md:hidden fixed inset-0 z-50 bg-[#121212] flex flex-col justify-between text-white select-none animate-in slide-in-from-bottom duration-300 overflow-hidden touch-manipulation shadow-2xl"
         >
+          {/* Native Pull-Down Drag Pill Handle */}
+          <div
+            onTouchStart={handleTopBarTouchStart}
+            onTouchMove={handleTopBarTouchMove}
+            onTouchEnd={handleTopBarTouchEnd}
+            className="w-full flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing shrink-0 z-20"
+          >
+            <div className="w-10 h-1 rounded-full bg-white/30" />
+          </div>
+
           {/* Immersive Video/Canvas Dimmed Background */}
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             {currentTrack.artworkUrl ? (
@@ -280,9 +331,10 @@ export default function SpotifyMobilePlayer({
           {/* Top Bar (ChevronDown, Album Title, 3-dots) with pull-down gesture */}
           <div
             onTouchStart={handleTopBarTouchStart}
+            onTouchMove={handleTopBarTouchMove}
             onTouchEnd={handleTopBarTouchEnd}
             style={{
-              paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)',
+              paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
             }}
             className="relative z-10 flex items-center justify-between px-5 pb-2 shrink-0 touch-none"
           >

@@ -116,6 +116,18 @@ const getInitialHistory = (): UnifiedTrack[] => {
   }
 };
 
+const getInitialTabHistory = (): string[] => {
+  if (typeof window === 'undefined') return ['/'];
+  try {
+    const raw = sessionStorage.getItem('wavelength_tab_history');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return ['/'];
+};
+
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   currentTrack: null,
   playback: null,
@@ -157,7 +169,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isQueueOpen: false,
   isEqualizerOpen: false,
   lyricsSyncOffset: typeof window !== 'undefined' ? parseFloat(localStorage.getItem('wl_lyrics_sync_offset') || '0') || 0 : 0,
-  tabHistory: ['/'],
+  tabHistory: getInitialTabHistory(),
   setIsQualityModalOpen: (open) =>
     set((state) => ({
       isQualityModalOpen: typeof open === 'function' ? open(state.isQualityModalOpen) : open,
@@ -697,17 +709,39 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     set({ lyricsSyncOffset: offset });
   },
   pushTabHistory: (path: string) => {
+    let clean = path || '/';
+    if (clean.startsWith('/Spotify-Craft')) {
+      clean = clean.replace('/Spotify-Craft', '') || '/';
+    }
+    clean = clean.replace(/\/+$/, '') || '/';
+
     const hist = get().tabHistory;
-    if (hist[hist.length - 1] === path) return;
-    set({ tabHistory: [...hist.slice(-15), path] });
+    if (hist[hist.length - 1] === clean) return;
+    const nextHist = [...hist.slice(-20), clean];
+    try {
+      sessionStorage.setItem('wavelength_tab_history', JSON.stringify(nextHist));
+    } catch {}
+    set({ tabHistory: nextHist });
   },
   popTabHistory: () => {
     const hist = get().tabHistory;
     if (hist.length <= 1) return null;
-    const newHist = [...hist];
-    newHist.pop(); // remove current
-    const prev = newHist[newHist.length - 1];
-    set({ tabHistory: newHist });
-    return prev || '/';
+    const current = hist[hist.length - 1];
+    // Find the last item that is DIFFERENT from current tab
+    let targetIdx = -1;
+    for (let i = hist.length - 2; i >= 0; i--) {
+      if (hist[i] !== current) {
+        targetIdx = i;
+        break;
+      }
+    }
+    if (targetIdx === -1) return null;
+    const nextHist = hist.slice(0, targetIdx + 1);
+    const targetPath = nextHist[nextHist.length - 1];
+    try {
+      sessionStorage.setItem('wavelength_tab_history', JSON.stringify(nextHist));
+    } catch {}
+    set({ tabHistory: nextHist });
+    return targetPath;
   },
 }));

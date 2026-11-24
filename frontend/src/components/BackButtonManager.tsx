@@ -5,39 +5,23 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
+function normalizePath(rawPath: string | null | undefined): string {
+  if (!rawPath) return '/';
+  let p = rawPath.trim();
+  if (p.startsWith('/Spotify-Craft')) {
+    p = p.replace('/Spotify-Craft', '');
+  }
+  p = p.replace(/\/+$/, '');
+  return p === '' ? '/' : p;
+}
+
 export default function BackButtonManager() {
   const router = useRouter();
   const pathname = usePathname();
   const lastPressRef = useRef(0);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const {
-    isExpandedNowPlaying,
-    setIsExpandedNowPlaying,
-    isQualityModalOpen,
-    setIsQualityModalOpen,
-    isLyricsOpen,
-    setIsLyricsOpen,
-    isQueueOpen,
-    setIsQueueOpen,
-    isEqualizerOpen,
-    setIsEqualizerOpen,
-    isSleepTimerModalOpen,
-    closeSleepTimerModal,
-    isShareModalOpen,
-    closeShareModal,
-    isCreateSheetOpen,
-    setIsCreateSheetOpen,
-    isDiscordModalOpen,
-    setIsDiscordModalOpen,
-    isVerciOpen,
-    setIsVerciOpen,
-    isNowPlayingViewOpen,
-    setIsNowPlayingViewOpen,
-    isSpotifyImportOpen,
-    setIsSpotifyImportOpen,
-    pushTabHistory,
-  } = usePlayerStore();
+  const { pushTabHistory } = usePlayerStore();
 
   // Track page transitions for Android back button tab history
   useEffect(() => {
@@ -46,91 +30,90 @@ export default function BackButtonManager() {
     }
   }, [pathname, pushTabHistory]);
 
+  const handleBackNavigationRef = useRef<() => void>(() => {});
+
   const handleBackNavigation = () => {
+    const state = usePlayerStore.getState();
+
     // Priority 1: Dismiss full-screen player or top-level modals
-    if (isExpandedNowPlaying) {
-      setIsExpandedNowPlaying(false);
+    if (state.isExpandedNowPlaying) {
+      state.setIsExpandedNowPlaying(false);
       return;
     }
-    if (isLyricsOpen) {
-      setIsLyricsOpen(false);
+    if (state.isLyricsOpen) {
+      state.setIsLyricsOpen(false);
       return;
     }
-    if (isQualityModalOpen) {
-      setIsQualityModalOpen(false);
+    if (state.isQualityModalOpen) {
+      state.setIsQualityModalOpen(false);
       return;
     }
-    if (isQueueOpen) {
-      setIsQueueOpen(false);
+    if (state.isQueueOpen) {
+      state.setIsQueueOpen(false);
       return;
     }
-    if (isEqualizerOpen) {
-      setIsEqualizerOpen(false);
+    if (state.isEqualizerOpen) {
+      state.setIsEqualizerOpen(false);
       return;
     }
-    if (isSleepTimerModalOpen) {
-      closeSleepTimerModal();
+    if (state.isSleepTimerModalOpen) {
+      state.closeSleepTimerModal();
       return;
     }
-    if (isShareModalOpen) {
-      closeShareModal();
+    if (state.isShareModalOpen) {
+      state.closeShareModal();
       return;
     }
-    if (isCreateSheetOpen) {
-      setIsCreateSheetOpen(false);
+    if (state.isCreateSheetOpen) {
+      state.setIsCreateSheetOpen(false);
       return;
     }
-    if (isDiscordModalOpen) {
-      setIsDiscordModalOpen(false);
+    if (state.isDiscordModalOpen) {
+      state.setIsDiscordModalOpen(false);
       return;
     }
-    if (isVerciOpen) {
-      setIsVerciOpen(false);
+    if (state.isVerciOpen) {
+      state.setIsVerciOpen(false);
       return;
     }
-    if (isNowPlayingViewOpen) {
-      setIsNowPlayingViewOpen(false);
+    if (state.isNowPlayingViewOpen) {
+      state.setIsNowPlayingViewOpen(false);
       return;
     }
-    if (isSpotifyImportOpen) {
-      setIsSpotifyImportOpen(false);
+    if (state.isSpotifyImportOpen) {
+      state.setIsSpotifyImportOpen(false);
       return;
     }
 
     // Priority 2: Navigate back to the previous tab or page viewed
-    const tabHistory = usePlayerStore.getState().tabHistory;
-    if (tabHistory && tabHistory.length > 1) {
-      const prevPath = usePlayerStore.getState().popTabHistory();
-      if (prevPath && prevPath !== pathname) {
-        router.push(prevPath);
-        return;
-      }
+    const prevTab = state.popTabHistory();
+    if (prevTab) {
+      router.push(prevTab);
+      return;
     }
 
-    const isRootHome =
-      !pathname ||
-      pathname === '/' ||
-      pathname === '/Spotify-Craft' ||
-      pathname === '/Spotify-Craft/';
-
-    if (!isRootHome) {
-      // Go back to the root home tab if no previous history
+    // If no previous tab exists in history but not on root home, go to Home
+    const currentPath = normalizePath(
+      pathname || (typeof window !== 'undefined' ? window.location.pathname : '/')
+    );
+    if (currentPath !== '/') {
       router.push('/');
       return;
     }
 
-    // Priority 3: On Root Home: Require double-press within 2 seconds to exit app
+    // Priority 3: On Root Home with no prior history: Require double-press within 2 seconds to exit app
     const now = Date.now();
     if (now - lastPressRef.current <= 2000) {
-      // Second press within 2s -> exit native Android app safely
       try {
         App.exitApp();
       } catch {
         // In browser or webview fallback
       }
     } else {
-      // First press: record timestamp and show floating Spotify pill toast
       lastPressRef.current = now;
+      if (typeof navigator !== 'undefined') {
+        navigator.vibrate?.(15);
+      }
 
       // Remove any existing toast
       const existing = document.getElementById('wavelength-exit-toast');
@@ -152,12 +135,14 @@ export default function BackButtonManager() {
     }
   };
 
+  handleBackNavigationRef.current = handleBackNavigation;
+
   useEffect(() => {
-    // 1. Native Capacitor Android Back Button Listener (captures hardware key & edge swipe)
+    // 1. Native Capacitor Android Back Button Listener (captures hardware key & Android system gesture)
     let backListenerHandle: any = null;
     try {
       App.addListener('backButton', () => {
-        handleBackNavigation();
+        handleBackNavigationRef.current?.();
       }).then((handle) => {
         backListenerHandle = handle;
       });
@@ -165,20 +150,70 @@ export default function BackButtonManager() {
       // Browser fallback
     }
 
-    // 2. Standard document 'backbutton' event (Cordova / Webview legacy fallback)
+    // 2. Standard document 'backbutton' event (Cordova / Webview fallback)
     const onBackButton = (e: Event) => {
       e.preventDefault();
-      handleBackNavigation();
+      handleBackNavigationRef.current?.();
     };
     document.addEventListener('backbutton', onBackButton);
 
     // 3. Desktop Escape key
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        handleBackNavigation();
+        handleBackNavigationRef.current?.();
       }
     };
     window.addEventListener('keydown', onKeyDown);
+
+    // 4. In-App Fluid Edge Swipe Gesture Listener (Left-edge swipe & Right-edge swipe)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isEdgeSwipe = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+      const screenWidth = window.innerWidth;
+
+      // Edge swipe starts within 35px of left edge or 35px of right edge
+      if (x <= 35 || x >= screenWidth - 35) {
+        touchStartX = x;
+        touchStartY = y;
+        isEdgeSwipe = true;
+      } else {
+        isEdgeSwipe = false;
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!isEdgeSwipe || e.changedTouches.length !== 1) return;
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = endX - touchStartX;
+      const diffY = endY - touchStartY;
+      const screenWidth = window.innerWidth;
+
+      // Left-to-right edge swipe (swipe from left edge inwards)
+      const isLeftEdgeSwipe =
+        touchStartX <= 35 && diffX > 60 && Math.abs(diffX) > Math.abs(diffY) * 1.4;
+      // Right-to-left edge swipe (swipe from right edge inwards)
+      const isRightEdgeSwipe =
+        touchStartX >= screenWidth - 35 &&
+        diffX < -60 &&
+        Math.abs(diffX) > Math.abs(diffY) * 1.4;
+
+      if (isLeftEdgeSwipe || isRightEdgeSwipe) {
+        if (typeof navigator !== 'undefined') {
+          navigator.vibrate?.(12);
+        }
+        handleBackNavigationRef.current?.();
+      }
+      isEdgeSwipe = false;
+    };
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
 
     return () => {
       if (backListenerHandle) {
@@ -186,26 +221,13 @@ export default function BackButtonManager() {
       }
       document.removeEventListener('backbutton', onBackButton);
       window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
       if (toastTimeoutRef.current) {
         clearTimeout(toastTimeoutRef.current);
       }
     };
-  }, [
-    pathname,
-    isExpandedNowPlaying,
-    isQualityModalOpen,
-    isLyricsOpen,
-    isQueueOpen,
-    isEqualizerOpen,
-    isSleepTimerModalOpen,
-    isShareModalOpen,
-    isCreateSheetOpen,
-    isDiscordModalOpen,
-    isVerciOpen,
-    isNowPlayingViewOpen,
-    isSpotifyImportOpen,
-    router,
-  ]);
+  }, []);
 
   return null;
 }
