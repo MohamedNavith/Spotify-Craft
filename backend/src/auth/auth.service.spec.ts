@@ -8,6 +8,11 @@ describe('AuthService', () => {
   let jwtService: JwtService;
   let mockPrisma: any;
 
+  beforeAll(() => {
+    process.env.JWT_SECRET = 'unit-test-access';
+    process.env.JWT_REFRESH_SECRET = 'unit-test-refresh';
+  });
+
   beforeEach(() => {
     const users = new Map<string, any>();
 

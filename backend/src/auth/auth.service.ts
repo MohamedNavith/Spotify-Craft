@@ -1,3 +1,4 @@
+import { jwtSecret } from './jwt-secrets';
 import {
   ConflictException,
   Injectable,
@@ -91,7 +92,7 @@ export class AuthService {
     let payload: any;
     try {
       payload = this.jwtService.verify(rawRefreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || 'wavelength-dev-refresh-token-super-secret',
+        secret: jwtSecret('JWT_REFRESH_SECRET'),
       });
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
@@ -157,7 +158,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m',
-      secret: process.env.JWT_SECRET || 'wavelength-dev-jwt-super-secret-key',
+      secret: jwtSecret('JWT_SECRET'),
     });
 
     const family = familyId || crypto.randomUUID();
@@ -165,7 +166,7 @@ export class AuthService {
       { sub: user.id, family, jti: crypto.randomUUID() },
       {
         expiresIn: '7d',
-        secret: process.env.JWT_REFRESH_SECRET || 'wavelength-dev-refresh-token-super-secret',
+        secret: jwtSecret('JWT_REFRESH_SECRET'),
       },
     );
 

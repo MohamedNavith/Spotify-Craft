@@ -92,8 +92,8 @@ services:
       REDIS_PORT: 6379
       MEILI_HOST: http://meilisearch:7700
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-wavelength_meili_master_key_2026}
-      JWT_SECRET: ${JWT_SECRET:-wavelength-dev-jwt-super-secret-key-change-in-production-2026}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-wavelength-dev-refresh-token-super-secret-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env}
       JAMENDO_CLIENT_ID: ${JAMENDO_CLIENT_ID:-17ed92bf}
       JAMENDO_BASE_URL: https://api.jamendo.com/v3.0
       APP_URL: ${APP_URL:-http://localhost:3000}
