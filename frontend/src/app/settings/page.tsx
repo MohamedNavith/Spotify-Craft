@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, Check, Disc3, Download, Heart, Info, Music, Plus, RefreshCw, Settings, Sparkles, Trash2, UserCheck, X } from 'lucide-react';
+import { AlertTriangle, Check, Disc3, Download, Headphones, Heart, Info, Music, Plus, RefreshCw, Settings, Sparkles, Trash2, UserCheck, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CURRENT_APP_VERSION, isNewerVersion } from '../../components/AppUpdateChecker';
 import { usePlayerStore } from '../../stores/usePlayerStore';
@@ -425,6 +425,23 @@ export default function SettingsPage() {
                     <span className="text-white font-mono font-medium">
                       ~{audioStreamDetails?.sizeEstimateMb || 6.8} MB / song
                     </span>
+                  </div>
+                </div>
+
+                {/* DAC & Hardware Decoding Notice */}
+                <div className="mt-1 pt-2.5 border-t border-white/5 flex items-start gap-2.5 text-[11px] text-[#A1A1A6] leading-relaxed">
+                  <Headphones className="w-4 h-4 text-[#0A84FF] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-white font-semibold">DAC &amp; Hardware Output: </span>
+                    {audioStreamDetails?.isRealLossless ? (
+                      <span>
+                        Bit-perfect FLAC stream actively rendering to your DAC at {audioStreamDetails.bitrate} / {audioStreamDetails.sampleRate}.
+                      </span>
+                    ) : (
+                      <span>
+                        External DAC is active. Your DAC converts incoming digital PCM to analog output. Because uncompressed FLAC is not indexed for this track or network was throttled, Wavelength streams 320 kbps Studio Master AAC so playback never stutters.
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

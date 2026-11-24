@@ -73,16 +73,27 @@ function createLineRng(seed: number) {
 function parseLRC(lrcText: string): LyricLine[] {
   const lines: LyricLine[] = [];
   const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
+  let offsetMs = 0;
+
   for (const raw of lrcText.split('\n')) {
-    const match = raw.match(regex);
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+
+    const offsetMatch = trimmed.match(/\[offset:\s*([+-]?\d+)\]/i);
+    if (offsetMatch) {
+      offsetMs = parseInt(offsetMatch[1], 10) || 0;
+      continue;
+    }
+
+    const match = trimmed.match(regex);
     if (match) {
       const mins = parseInt(match[1], 10);
       const secs = parseInt(match[2], 10);
       const ms = parseInt(match[3].padEnd(3, '0').slice(0, 3), 10);
-      const time = mins * 60 + secs + ms / 1000;
+      const time = mins * 60 + secs + (ms + offsetMs) / 1000;
       const text = match[4].trim();
       if (text) {
-        lines.push({ time, text });
+        lines.push({ time: Math.max(0, time), text });
       }
     }
   }
@@ -384,9 +395,9 @@ export default function VerciExperience() {
     return 0;
   }, [constellationNodes, progress]);
 
-  // Auto-scroll active lyric into view for Spicetify mode
+  // Auto-scroll active lyric into view for Spicetify and Canvas modes
   useEffect(() => {
-    if (verciStyle === 'spicetify') {
+    if (verciStyle === 'spicetify' || verciStyle === 'canvas') {
       const container = lyricsScrollContainerRef.current;
       const el = activeLyricRef.current;
       if (container && el) {

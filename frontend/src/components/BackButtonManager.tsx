@@ -36,7 +36,15 @@ export default function BackButtonManager() {
     setIsNowPlayingViewOpen,
     isSpotifyImportOpen,
     setIsSpotifyImportOpen,
+    pushTabHistory,
   } = usePlayerStore();
+
+  // Track page transitions for Android back button tab history
+  useEffect(() => {
+    if (pathname) {
+      pushTabHistory(pathname);
+    }
+  }, [pathname, pushTabHistory]);
 
   const handleBackNavigation = () => {
     // Priority 1: Dismiss full-screen player or top-level modals
@@ -90,6 +98,15 @@ export default function BackButtonManager() {
     }
 
     // Priority 2: Navigate back to the previous tab or page viewed
+    const tabHistory = usePlayerStore.getState().tabHistory;
+    if (tabHistory && tabHistory.length > 1) {
+      const prevPath = usePlayerStore.getState().popTabHistory();
+      if (prevPath && prevPath !== pathname) {
+        router.push(prevPath);
+        return;
+      }
+    }
+
     const isRootHome =
       !pathname ||
       pathname === '/' ||
@@ -97,12 +114,8 @@ export default function BackButtonManager() {
       pathname === '/Spotify-Craft/';
 
     if (!isRootHome) {
-      // Go back to the previous tab in history!
-      if (typeof window !== 'undefined' && window.history.length > 1) {
-        router.back();
-      } else {
-        router.push('/');
-      }
+      // Go back to the root home tab if no previous history
+      router.push('/');
       return;
     }
 

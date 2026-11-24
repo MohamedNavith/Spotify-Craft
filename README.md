@@ -115,11 +115,16 @@ All official studio master releases from major labels and authorized distributio
 #### 🛡️ Transparent Quality Assurance: No Fake Upsampling
 Wavelength adheres to strict audiophile transparency. We **never** artificially upsample a 128kbps or 320kbps MP3 into a pseudo-FLAC file:
 - When a track has an authentic studio master, Wavelength delivers the bit-for-bit uncompressed stream with an active **LOSSLESS** or **HI-RES LOSSLESS** badge.
-- If only a standard audio stream is available (e.g., for niche covers), Wavelength smoothly plays the 320kbps master stream and honestly displays:
+- If only a standard audio stream is available (e.g., for niche covers or when a lossless CDN node is throttled), Wavelength smoothly plays the 320kbps master stream and honestly displays:
   ```
   HIGH QUALITY (LOSSLESS UNAVAILABLE)
   ```
   in the stream specs inspector, guaranteeing you always know the exact provenance of what you are hearing.
+
+#### 🎛️ Why Does My DAC Controller Show "Lossless Unavailable" On Some Tracks?
+- **DAC (Digital-to-Analog Converter) Function**: A DAC is a physical output hardware device. It receives the digital audio stream (PCM data) sent by the app/operating system and converts it into pure analog voltage to drive headphones or speakers.
+- **Hardware vs. Stream Source**: A DAC **cannot** fetch, create, or upscale lossless audio from the internet. If a song's uncompressed 24-bit FLAC master is not licensed or cataloged on the streaming server, or if the cloud provider throttles the connection, the app feeds the highest available stream (320 kbps Studio Master AAC). Your DAC faithfully converts those 320 kbps bits to analog sound.
+- **When True Lossless Reaches Your DAC**: When playing a verified studio release (e.g., The Weeknd, Taylor Swift, Billie Eilish, Bruno Mars, Daft Punk) with Lossless enabled in settings, Wavelength routes the raw bit-perfect FLAC stream directly through your audio pipeline to your DAC.
 
 ---
 

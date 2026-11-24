@@ -51,6 +51,8 @@ interface PlayerState {
   isLyricsOpen: boolean;
   isQueueOpen: boolean;
   isEqualizerOpen: boolean;
+  lyricsSyncOffset: number;
+  tabHistory: string[];
 
   // Actions
   setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
@@ -99,6 +101,9 @@ interface PlayerState {
   setIsLyricsOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   setIsQueueOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   setIsEqualizerOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+  setLyricsSyncOffset: (offset: number) => void;
+  pushTabHistory: (path: string) => void;
+  popTabHistory: () => string | null;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -151,6 +156,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isLyricsOpen: false,
   isQueueOpen: false,
   isEqualizerOpen: false,
+  lyricsSyncOffset: typeof window !== 'undefined' ? parseFloat(localStorage.getItem('wl_lyrics_sync_offset') || '0') || 0 : 0,
+  tabHistory: ['/'],
   setIsQualityModalOpen: (open) =>
     set((state) => ({
       isQualityModalOpen: typeof open === 'function' ? open(state.isQualityModalOpen) : open,
@@ -682,5 +689,25 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         }
       });
     }
+  },
+  setLyricsSyncOffset: (offset: number) => {
+    try {
+      localStorage.setItem('wl_lyrics_sync_offset', String(offset));
+    } catch {}
+    set({ lyricsSyncOffset: offset });
+  },
+  pushTabHistory: (path: string) => {
+    const hist = get().tabHistory;
+    if (hist[hist.length - 1] === path) return;
+    set({ tabHistory: [...hist.slice(-15), path] });
+  },
+  popTabHistory: () => {
+    const hist = get().tabHistory;
+    if (hist.length <= 1) return null;
+    const newHist = [...hist];
+    newHist.pop(); // remove current
+    const prev = newHist[newHist.length - 1];
+    set({ tabHistory: newHist });
+    return prev || '/';
   },
 }));

@@ -1,6 +1,6 @@
 'use client';
 
-import { Mic2, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Clock, Mic2, RotateCcw, Sliders, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '../stores/usePlayerStore';
 
@@ -24,19 +24,36 @@ function cleanString(str: string): string {
     .trim();
 }
 
+/**
+ * Enhanced LRC parser supporting:
+ * - standard [mm:ss.xx] timestamps
+ * - [offset:+/-ms] tag specification
+ */
 function parseLRC(lrcText: string): LyricLine[] {
   const lines: LyricLine[] = [];
   const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
+  let offsetMs = 0;
+
   for (const raw of lrcText.split('\n')) {
-    const match = raw.match(regex);
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+
+    // Check for [offset:+/-ms] tag
+    const offsetMatch = trimmed.match(/\[offset:\s*([+-]?\d+)\]/i);
+    if (offsetMatch) {
+      offsetMs = parseInt(offsetMatch[1], 10) || 0;
+      continue;
+    }
+
+    const match = trimmed.match(regex);
     if (match) {
       const mins = parseInt(match[1], 10);
       const secs = parseInt(match[2], 10);
       const ms = parseInt(match[3].padEnd(3, '0').slice(0, 3), 10);
-      const time = mins * 60 + secs + ms / 1000;
+      const time = mins * 60 + secs + (ms + offsetMs) / 1000;
       const text = match[4].trim();
       if (text) {
-        lines.push({ time, text });
+        lines.push({ time: Math.max(0, time), text });
       }
     }
   }
@@ -44,18 +61,21 @@ function parseLRC(lrcText: string): LyricLine[] {
 }
 
 export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
-  const { currentTrack, progress, seek } = usePlayerStore();
+  const { currentTrack, progress, seek, lyricsSyncOffset, setLyricsSyncOffset } = usePlayerStore();
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [plainLyrics, setPlainLyrics] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showSyncButton, setShowSyncButton] = useState(false);
+  const [showOffsetControls, setShowOffsetControls] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const lineRefs = useRef<Map<number, HTMLParagraphElement>>(new Map());
   const isUserScrollingRef = useRef(false);
+  const isProgrammaticScrollRef = useRef(false);
   const userScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const programmaticScrollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch Synced & Plain Lyrics from LRCLIB
+  // Fetch Synced & Plain Lyrics from LRCLIB with duration-aware matching
   useEffect(() => {
     if (!isOpen || !currentTrack) return;
 
@@ -66,45 +86,19 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
       const rawArtist = currentTrack?.artistName || '';
       const cleanTitle = cleanString(rawTitle);
       const cleanArtist = cleanString(rawArtist);
+      const targetDuration = currentTrack?.duration ? Math.round(currentTrack.duration) : 0;
 
       try {
-        // Strategy 1: Search LRCLIB
-        const searchRes = await fetch(
-          `https://lrclib.net/api/search?q=${encodeURIComponent(
-            `${cleanTitle} ${cleanArtist}`,
-          )}`,
-        );
-
-        if (searchRes.ok && active) {
-          const list = await searchRes.json();
-          if (Array.isArray(list) && list.length > 0) {
-            const withSynced = list.find((item) => item.syncedLyrics);
-            if (withSynced && withSynced.syncedLyrics) {
-              const parsed = parseLRC(withSynced.syncedLyrics);
-              if (parsed.length > 0) {
-                setLyrics(parsed);
-                setPlainLyrics(null);
-                setIsLoading(false);
-                return;
-              }
-            }
-            if (list[0].plainLyrics) {
-              setPlainLyrics(list[0].plainLyrics);
-              setLyrics([]);
-              setIsLoading(false);
-              return;
-            }
-          }
+        // Strategy 1: Exact track_name + artist_name + duration query (Most accurate)
+        let exactUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(
+          cleanTitle,
+        )}&artist_name=${encodeURIComponent(cleanArtist)}`;
+        if (targetDuration > 0) {
+          exactUrl += `&duration=${targetDuration}`;
         }
 
-        // Strategy 2: Exact Get
-        const exactRes = await fetch(
-          `https://lrclib.net/api/get?track_name=${encodeURIComponent(
-            cleanTitle,
-          )}&artist_name=${encodeURIComponent(cleanArtist)}`,
-        );
-
-        if (exactRes.ok && active) {
+        const exactRes = await fetch(exactUrl).catch(() => null);
+        if (exactRes && exactRes.ok && active) {
           const item = await exactRes.json();
           if (item.syncedLyrics) {
             const parsed = parseLRC(item.syncedLyrics);
@@ -120,6 +114,44 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
             setLyrics([]);
             setIsLoading(false);
             return;
+          }
+        }
+
+        // Strategy 2: Search LRCLIB and prioritize candidate matching track duration
+        const searchRes = await fetch(
+          `https://lrclib.net/api/search?q=${encodeURIComponent(
+            `${cleanTitle} ${cleanArtist}`,
+          )}`,
+        ).catch(() => null);
+
+        if (searchRes && searchRes.ok && active) {
+          const list = await searchRes.json();
+          if (Array.isArray(list) && list.length > 0) {
+            const withSynced = list.filter((item) => item.syncedLyrics);
+            if (withSynced.length > 0) {
+              // Sort by closest duration match to avoid picking live/extended versions
+              if (targetDuration > 0) {
+                withSynced.sort(
+                  (a, b) =>
+                    Math.abs((a.duration || 0) - targetDuration) -
+                    Math.abs((b.duration || 0) - targetDuration),
+                );
+              }
+              const best = withSynced[0];
+              const parsed = parseLRC(best.syncedLyrics);
+              if (parsed.length > 0) {
+                setLyrics(parsed);
+                setPlainLyrics(null);
+                setIsLoading(false);
+                return;
+              }
+            }
+            if (list[0].plainLyrics) {
+              setPlainLyrics(list[0].plainLyrics);
+              setLyrics([]);
+              setIsLoading(false);
+              return;
+            }
           }
         }
 
@@ -143,10 +175,11 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
     };
   }, [isOpen, currentTrack?.id]);
 
-  // Compute active lyric line with anticipation offset (-0.2s) for vocal onset
+  // Compute active lyric line with user sync calibration offset
+  const effectiveProgress = progress + (lyricsSyncOffset || 0);
   let activeIndex = -1;
   for (let i = 0; i < lyrics.length; i++) {
-    if (progress >= lyrics[i].time - 0.2) {
+    if (effectiveProgress >= lyrics[i].time - 0.1) {
       activeIndex = i;
     } else {
       break;
@@ -165,6 +198,14 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
 
     // Center active lyric at 38% from container top
     const targetTop = elTop - containerHeight * 0.38 + elHeight / 2;
+
+    isProgrammaticScrollRef.current = true;
+    if (programmaticScrollTimerRef.current) {
+      clearTimeout(programmaticScrollTimerRef.current);
+    }
+    programmaticScrollTimerRef.current = setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 650);
 
     container.scrollTo({
       top: Math.max(0, targetTop),
@@ -189,9 +230,9 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
     }
   }, [isOpen]);
 
-  // Detect user manual scroll to prevent fighting their thumb / mouse
-  const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
+  // Detect explicit user manual scroll/touch/wheel (does NOT trigger on programmatic auto-scroll)
+  const handleUserGesture = () => {
+    if (isProgrammaticScrollRef.current) return;
     isUserScrollingRef.current = true;
     setShowSyncButton(true);
 
@@ -206,6 +247,11 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
         scrollToLine(activeIndex, true);
       }
     }, 3200);
+  };
+
+  const handleScroll = () => {
+    if (isProgrammaticScrollRef.current) return;
+    handleUserGesture();
   };
 
   const handleSyncClick = () => {
@@ -226,11 +272,11 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-b from-[#1c382b]/95 via-[#121212]/98 to-black backdrop-blur-2xl flex flex-col p-6 md:p-10 animate-fade-in select-none">
+    <div className="fixed inset-0 z-50 bg-gradient-to-b from-[#1c382b]/95 via-[#121212]/98 to-black backdrop-blur-2xl flex flex-col p-4 md:p-10 animate-fade-in select-none">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-6 border-b border-white/10 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg overflow-hidden bg-spotify-elevated shadow-lg shrink-0">
+      <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="w-11 h-11 md:w-12 md:h-12 rounded-lg overflow-hidden bg-spotify-elevated shadow-lg shrink-0">
             {currentTrack?.artworkUrl ? (
               <img
                 src={currentTrack.artworkUrl}
@@ -243,11 +289,11 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
               </div>
             )}
           </div>
-          <div className="flex flex-col">
-            <h3 className="text-lg md:text-xl font-black text-white tracking-tight">
+          <div className="flex flex-col min-w-0">
+            <h3 className="text-base md:text-xl font-black text-white tracking-tight truncate">
               {currentTrack?.title}
             </h3>
-            <p className="text-xs md:text-sm text-spotify-subtext font-medium flex items-center gap-1.5">
+            <p className="text-xs md:text-sm text-spotify-subtext font-medium flex items-center gap-1.5 truncate">
               <span>{currentTrack?.artistName}</span>
               <span>•</span>
               <span className="text-spotify-green font-semibold">Live Karaoke Lyrics</span>
@@ -255,19 +301,77 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
           </div>
         </div>
 
-        <button
-          onClick={onClose}
-          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Sync Calibration Toggle Button */}
+          <button
+            onClick={() => setShowOffsetControls((prev) => !prev)}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${
+              showOffsetControls || lyricsSyncOffset !== 0
+                ? 'bg-spotify-green text-black shadow-md'
+                : 'bg-white/10 hover:bg-white/20 text-white/80'
+            }`}
+            title="Calibrate lyrics timing"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Sync:</span>
+            <span>{lyricsSyncOffset > 0 ? `+${lyricsSyncOffset.toFixed(1)}s` : `${lyricsSyncOffset.toFixed(1)}s`}</span>
+          </button>
+
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shrink-0"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
+
+      {/* Sync Calibration Sub-Bar (Fine-Tune Timing for Bluetooth / DAC Latency) */}
+      {showOffsetControls && (
+        <div className="mt-2 p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs text-white/90 animate-fade-in shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-spotify-subtext">Calibrate Audio Timing:</span>
+            <span className="font-mono font-bold text-spotify-green">
+              {lyricsSyncOffset > 0 ? `+${lyricsSyncOffset.toFixed(1)}s` : `${lyricsSyncOffset.toFixed(1)}s`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setLyricsSyncOffset(Math.round((lyricsSyncOffset - 0.2) * 10) / 10)}
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 font-mono font-bold text-xs"
+              title="Shift lyrics earlier (-0.2s)"
+            >
+              -0.2s
+            </button>
+            <button
+              onClick={() => setLyricsSyncOffset(Math.round((lyricsSyncOffset + 0.2) * 10) / 10)}
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 font-mono font-bold text-xs"
+              title="Shift lyrics later (+0.2s)"
+            >
+              +0.2s
+            </button>
+            {lyricsSyncOffset !== 0 && (
+              <button
+                onClick={() => setLyricsSyncOffset(0)}
+                className="px-2 py-1 rounded-lg bg-white/10 hover:bg-red-500/30 text-white/70 hover:text-white text-xs flex items-center gap-1"
+                title="Reset timing to 0.0s"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Authentic Spotify Lyrics Stream */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto custom-scrollbar py-[38vh] px-4 md:px-12 flex flex-col items-start max-w-4xl mx-auto w-full space-y-6 md:space-y-8 relative"
+        onTouchMove={handleUserGesture}
+        onWheel={handleUserGesture}
+        className="flex-1 overflow-y-auto custom-scrollbar py-[38vh] px-4 md:px-12 flex flex-col items-start max-w-4xl mx-auto w-full space-y-6 md:space-y-8 relative touch-manipulation"
       >
         {isLoading && (
           <div className="text-spotify-subtext text-xl italic mt-10 animate-pulse">
@@ -277,7 +381,7 @@ export default function LyricsModal({ isOpen, onClose }: LyricsModalProps) {
 
         {!isLoading && lyrics.length === 0 && !plainLyrics && (
           <div className="flex flex-col items-start justify-center mt-10">
-            <p className="text-3xl font-black text-white/70">
+            <p className="text-2xl md:text-3xl font-black text-white/70">
               Lyrics aren&apos;t available for this song yet.
             </p>
             <p className="text-sm text-spotify-subtext mt-2 font-medium">

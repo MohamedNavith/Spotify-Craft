@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronLeft, Check, AlertTriangle, Disc3, Info, X } from 'lucide-react';
+import { ChevronLeft, Check, AlertTriangle, Disc3, Info, X, Headphones, Cpu, Sparkles } from 'lucide-react';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { StreamingQuality } from '../types';
 
@@ -150,7 +150,7 @@ export default function StreamingQualityModal() {
 
           {/* Live Audio Stream Details (Verified Engine Specs) */}
           {currentTrack && (
-            <div className="p-3.5 rounded-2xl bg-[#1C1C1E]/90 border border-white/5 flex flex-col gap-2">
+            <div className="p-3.5 rounded-2xl bg-[#1C1C1E]/90 border border-white/5 flex flex-col gap-2.5">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-[#8E8E93] flex items-center gap-1.5">
                   <Disc3 className="w-3.5 h-3.5 text-[#0A84FF] animate-spin-slow" />
@@ -191,6 +191,23 @@ export default function StreamingQualityModal() {
                   <span className="text-white font-mono font-medium">
                     ~{audioStreamDetails?.sizeEstimateMb || 6.8} MB / song
                   </span>
+                </div>
+              </div>
+
+              {/* DAC & Lossless Status Notice */}
+              <div className="mt-1 pt-2 border-t border-white/5 flex items-start gap-2 text-[11px] text-[#A1A1A6] leading-relaxed">
+                <Headphones className="w-4 h-4 text-[#0A84FF] shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-white font-semibold">DAC &amp; Hardware Output: </span>
+                  {audioStreamDetails?.isRealLossless ? (
+                    <span>
+                      Bit-perfect FLAC stream actively rendering to your DAC at {audioStreamDetails.bitrate} / {audioStreamDetails.sampleRate}.
+                    </span>
+                  ) : (
+                    <span>
+                      External DAC is active. Your DAC converts incoming digital PCM to analog output. Because uncompressed FLAC is not indexed for this track or network was throttled, Wavelength streams 320 kbps Studio Master AAC so playback never stutters.
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

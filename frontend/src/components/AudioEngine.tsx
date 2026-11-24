@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
-import { resolveMasterAudioStream } from '../lib/masterAudioResolver';
+import { invalidateAudioCache, resolveMasterAudioStream } from '../lib/masterAudioResolver';
 import { resolveVideoId } from '../lib/videoResolver';
 import { useAuthStore } from '../stores/useAuthStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -317,14 +317,32 @@ export default function AudioEngine() {
           console.warn('Audio stream error, self-healing with master resolver:', e);
           if (currentTrack && !isLocalOrOffline) {
             try {
+              // Invalidate any failing cached stream URL
+              invalidateAudioCache(currentTrack.title, currentTrack.artistName);
+
+              // Fall back to resilient 320kbps Studio Master
               const fresh = await resolveMasterAudioStream(
                 currentTrack.title,
                 currentTrack.artistName,
-                usePlayerStore.getState().streamingQuality,
+                'high-quality',
               );
               if (fresh && fresh.streamUrl && audioRef.current) {
                 audioRef.current.src = fresh.streamUrl;
                 audioRef.current.play().catch(() => {});
+                usePlayerStore.getState().setAudioStreamDetails({
+                  ...(fresh.details || {
+                    codec: 'AAC',
+                    bitrate: '320 kbps',
+                    sampleRate: '44.1 kHz',
+                    bitDepth: '16-bit',
+                    channels: 'Stereo 2.0',
+                    tier: 'high-quality',
+                    tierLabel: 'High Quality (Lossless Unavailable)',
+                    sizeEstimateMb: 6.8,
+                    isRealLossless: false,
+                  }),
+                  tierLabel: 'High Quality (Lossless Unavailable)',
+                });
               }
             } catch {}
           }

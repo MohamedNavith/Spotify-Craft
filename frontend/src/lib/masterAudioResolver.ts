@@ -42,6 +42,28 @@ export function isPreviewAudioUrl(url?: string | null): boolean {
   );
 }
 
+export function invalidateAudioCache(
+  title: string,
+  artist = '',
+  qualityParam?: StreamingQuality
+) {
+  const query = cleanTrackQuery(title, artist);
+  if (!query) return;
+  const qualities: StreamingQuality[] = qualityParam
+    ? [qualityParam]
+    : ['lossless', 'hi-res-lossless', 'high-quality', 'high-efficiency', 'none'];
+
+  for (const q of qualities) {
+    const key = `${query}__${q}`;
+    MEMORY_CACHE.delete(key);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(`wl_audio_${key}`);
+      } catch {}
+    }
+  }
+}
+
 export function getCachedMasterAudio(
   title: string,
   artist = '',
@@ -145,7 +167,7 @@ export async function resolveMasterAudioStream(
   if (quality === 'lossless' || quality === 'hi-res-lossless') {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000);
+      const timer = setTimeout(() => controller.abort(), 7500);
 
       const flacSearchUrl = `https://tracks.monochrome.st/search/tracks?q=${encodeURIComponent(query)}&limit=3`;
       const res = await fetch(flacSearchUrl, {
