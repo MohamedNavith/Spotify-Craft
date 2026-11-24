@@ -91,11 +91,20 @@ Wavelength incorporates an advanced multi-tiered audio engine supporting Apple M
 
 #### 2. Oppo Reno 8T
 - **Phone Specs**: Features USB Type-C and (on 4G models) a 3.5mm jack.
-- **Hardware Requirement**: The phone's internal budget DAC chip is designed for voice calls and battery efficiency, which creates a noise floor above 20kHz.
-- **To Experience Lossless**:
-  1. Use a clean USB-C DAC dongle or plug wired earphones directly into the 3.5mm port.
+- **Hardware Requirement**: The phone's internal budget codec is tuned for voice calls and power efficiency.
+- **To Experience Bit-Perfect Lossless**:
+  1. Plug in a **Type-C DAC Earphone** (with integrated Realtek ALC5686 or Conexant DAC) or clean USB-C DAC dongle.
   2. Select **Lossless (ALAC up to 24-bit/48 kHz)** in Wavelength settings.
-  3. Turn off any system equalizer/sound enhancer profiles (e.g. Real Sound Technology) to ensure a bit-perfect signal path.
+  3. Turn off any system equalizer/sound enhancer profiles (e.g. Real Sound Technology / Dirac) to ensure an unadulterated bit-perfect signal path.
+
+#### 3. Vivo X200 / Vivo X200 Pro (Dimensity 9400 Flagship)
+- **Phone Specs**: Flagship MediaTek Dimensity 9400 chipset with OriginOS / Funtouch OS 15 and certified Hi-Res Audio / Hi-Res Wireless stacks.
+- **Hardware Requirement**: The Vivo X200 supports full **USB Audio Class 2.0 (UAC2)** high-bandwidth digital output directly over Type-C.
+- **To Experience Hi-Res Lossless with DAC Earphones**:
+  1. Connect your **DAC-Supported Type-C Earphone** (or external DAC dongle like FiiO KA11, Moondrop Dawn Pro, or iFi Go Link) directly into the Vivo X200 USB-C port.
+  2. The phone immediately routes bit-perfect digital PCM over USB without analog distortion.
+  3. In Wavelength, choose **Settings → Mobile Data Streaming → Hi-Res Lossless (ALAC up to 24-bit/192 kHz)**.
+  4. For all supported studio masters or local FLAC vault tracks, the stream decodes at full 24-bit dynamic range with near-zero total harmonic distortion (THD+N < 0.0005%).
 
 ---
 

@@ -17,7 +17,7 @@ export type StreamingQuality =
   | 'hi-res-lossless';
 
 export interface AudioStreamDetails {
-  codec: 'FLAC' | 'AAC' | 'MP3' | 'ALAC';
+  codec: 'FLAC' | 'AAC' | 'MP3' | 'ALAC' | 'WAV';
   bitrate: string;
   sampleRate: string;
   bitDepth: string;

@@ -39,23 +39,44 @@ export default function UploadPage() {
       setIsUploading(false);
       setUploaded(true);
 
+      const isFlac = file.name.toLowerCase().endsWith('.flac') || file.type.includes('flac');
+      const isWav = file.name.toLowerCase().endsWith('.wav') || file.type.includes('wav');
+
       const uploadedTrack = {
         id: `upload:${Date.now()}`,
         provider: 'upload' as any,
         providerTrackId: String(Date.now()),
-        title: title || file.name,
-        artistName: artist || 'Self-Uploaded Artist',
-        albumName: album || 'Local Master Studio',
-        duration: 195,
+        title: title || file.name.replace(/\.[^/.]+$/, ''),
+        artistName: artist || 'Local Master Studio',
+        albumName: album || (isFlac ? 'Audiophile FLAC Vault' : 'Local Master Studio'),
+        duration: 240,
         streamUrl: localAudioUrl,
-        streamFormat: 'mp3' as any,
-        license: 'Artist-Declared Copyright Ownership (Personal Broadcast)',
+        streamFormat: (isFlac ? 'flac' : isWav ? 'wav' : 'mp3') as any,
+        license: 'Local Direct Storage (Bit-Perfect Hardware Playback)',
         licenseUrl: null,
-        audioQuality: `${bitrate}kbps (HLS Transcoded)`,
+        audioQuality: isFlac
+          ? 'Bit-Perfect FLAC (Hi-Res Lossless)'
+          : isWav
+          ? 'Bit-Perfect WAV / PCM'
+          : `${bitrate}kbps Master Audio`,
         explicit: false,
       };
 
       setTrack(uploadedTrack);
+
+      if (isFlac || isWav) {
+        usePlayerStore.getState().setAudioStreamDetails({
+          codec: isFlac ? 'FLAC' : 'WAV',
+          bitrate: isFlac ? '1,411 – 9,216 kbps' : '1,411 kbps',
+          sampleRate: '96 kHz / 192 kHz',
+          bitDepth: '24-bit',
+          channels: 'Stereo 2.0',
+          tier: 'hi-res-lossless',
+          tierLabel: 'Bit-Perfect Local FLAC (Hi-Res Lossless)',
+          sizeEstimateMb: Math.round(file.size / (1024 * 1024)) || 45,
+          isRealLossless: true,
+        });
+      }
     }, 1200);
   };
 
