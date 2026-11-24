@@ -302,15 +302,18 @@ export default function LibraryPage() {
         {(filter === 'all' || filter === 'playlists') && (
           <>
             {/* Pinned: Liked Songs */}
-            <div
+            <button
+              id="liked-songs"
+              type="button"
+              disabled={!likedTracks.length}
               onClick={() => {
                 if (likedTracks.length > 0) {
                   setTrack(likedTracks[0], likedTracks);
                 } else {
-                  setIsCreateSheetOpen(true);
+                  return;
                 }
               }}
-              className="flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
+              className="w-full text-left flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
             >
               <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-transform">
                 <Heart className="w-6 h-6 fill-white" />
@@ -320,13 +323,14 @@ export default function LibraryPage() {
                   Liked Songs
                 </span>
                 <span className="text-xs text-[#b3b3b3] flex items-center gap-1 mt-0.5">
-                  <span className="text-spotify-green font-bold">📌 Pinned</span> &bull; {likedTracks.length > 0 ? `${likedTracks.length} songs` : 'Add songs you desire'}
+                  <span className="text-spotify-green font-bold">📌 Pinned</span> &bull; {likedTracks.length > 0 ? `${likedTracks.length} songs` : 'Like a song to add it here'}
                 </span>
               </div>
-            </div>
+            </button>
 
             {/* Pinned: Downloaded Songs */}
-            <div
+            <button
+              type="button"
               onClick={async () => {
                 const offTracks = await getOfflineTracks();
                 if (offTracks.length > 0) {
@@ -335,7 +339,7 @@ export default function LibraryPage() {
                   alert('No tracks saved offline yet. Click the download checkmark on any track to save it offline!');
                 }
               }}
-              className="flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
+              className="w-full text-left flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
             >
               <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center text-white shrink-0 shadow-md">
                 <ArrowDownToLine className="w-6 h-6 text-white" />
@@ -348,7 +352,7 @@ export default function LibraryPage() {
                   <span className="text-spotify-green font-bold">📌 Pinned</span> • Offline Storage
                 </span>
               </div>
-            </div>
+            </button>
 
             {/* Custom User Playlists */}
             {filteredPlaylists.map((pl) => (

@@ -214,7 +214,8 @@ export class AuthService {
           },
         });
         return;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -229,7 +230,8 @@ export class AuthService {
           where: { tokenHash },
         });
         return found ? (found as unknown as StoredRefreshToken) : null;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -245,7 +247,8 @@ export class AuthService {
           data: { revoked: true },
         });
         return;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -264,7 +267,8 @@ export class AuthService {
           data: { revoked: true },
         });
         return;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -284,7 +288,8 @@ export class AuthService {
           data: { revoked: true },
         });
         return;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }

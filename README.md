@@ -39,6 +39,14 @@
 
 The mobile web images use a 393 × 852 CSS-pixel browser viewport. The Android image comes from the installed APK. The APK attached to the v2.0.0 release reports version 1.4.0 (code 3) to Android.
 
+## Self-hosting
+
+Copy `.env.example` to `.env`. Set distinct random values for `JWT_SECRET` and `JWT_REFRESH_SECRET` and replace `POSTGRES_PASSWORD` with a random URL-safe value. Run `docker compose up --build -d` and open `http://localhost:3000`. The schema service initializes PostgreSQL before the API starts. For an existing database, back it up before applying schema changes. The schema service stops if Prisma detects a change that requires accepting data loss.
+
+For a public deployment, put the frontend behind an HTTPS reverse proxy. The frontend serves the static player and proxies `/api/` to NestJS. The API health endpoint is available on the host at `http://localhost:4000/health` and checks that PostgreSQL can query the users table. Add `--profile bot` and configure `DISCORD_TOKEN` and `CLIENT_ID` to start the Discord bot.
+
+The player’s profiles and library are browser-local. The self-hosted API has its own authentication and playlist endpoints. Capacity depends on hosting resources and streaming-provider limits.
+
 ## Playback quality
 
 Settings lets you select a preferred audio quality. The stream supplied by the provider, the output device, and the operating system determine what you hear. A quality selection alone does not verify the codec, sample rate, or bit-perfect output.

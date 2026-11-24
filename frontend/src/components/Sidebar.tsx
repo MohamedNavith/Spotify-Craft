@@ -269,7 +269,7 @@ export default function Sidebar() {
               <>
                 {/* Pinned: Liked Songs */}
                 <Link
-                  href="/search"
+                  href="/library#liked-songs"
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group"
                 >
                   <div className="w-12 h-12 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">

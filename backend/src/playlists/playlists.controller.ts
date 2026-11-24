@@ -38,18 +38,20 @@ export class PlaylistsController {
   @UseGuards(JwtAuthGuard)
   @Post(':id/tracks')
   async addTrack(
+    @Request() req: any,
     @Param('id') id: string,
     @Body() body: { trackId: string },
   ) {
-    return this.playlistsService.addTrack(id, body.trackId);
+    return this.playlistsService.addTrack(id, body.trackId, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id/tracks/:trackId')
   async removeTrack(
+    @Request() req: any,
     @Param('id') id: string,
     @Param('trackId') trackId: string,
   ) {
-    return this.playlistsService.removeTrack(id, trackId);
+    return this.playlistsService.removeTrack(id, trackId, req.user.id);
   }
 }

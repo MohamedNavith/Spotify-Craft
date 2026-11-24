@@ -36,10 +36,11 @@ export class PlaylistsService {
             description: description || null,
             userId,
           },
-          include: { items: true },
+          include: { items: { orderBy: [{ position: 'asc' }, { id: 'asc' }] } },
         });
         return created as unknown as PlaylistRecord;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -66,11 +67,12 @@ export class PlaylistsService {
       try {
         const lists = await this.prisma.playlist.findMany({
           where: { userId },
-          include: { items: true },
+          include: { items: { orderBy: [{ position: 'asc' }, { id: 'asc' }] } },
           orderBy: { createdAt: 'desc' },
         });
         return lists as unknown as PlaylistRecord[];
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -83,10 +85,11 @@ export class PlaylistsService {
       try {
         const pl = await this.prisma.playlist.findUnique({
           where: { id },
-          include: { items: true },
+          include: { items: { orderBy: [{ position: 'asc' }, { id: 'asc' }] } },
         });
         if (pl) return pl as unknown as PlaylistRecord;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -98,9 +101,23 @@ export class PlaylistsService {
     return found;
   }
 
-  async addTrack(playlistId: string, trackId: string): Promise<PlaylistRecord> {
+  async addTrack(playlistId: string, trackId: string, userId: string): Promise<PlaylistRecord> {
     const playlist = await this.getById(playlistId);
+    if (playlist.userId !== userId) throw new NotFoundException('Playlist not found');
 
+    if (this.prisma.isConnected) {
+      const track = await this.prisma.track.findUnique({ where: { id: trackId } });
+      if (!track) throw new NotFoundException('Track not found');
+      const position = (playlist.items[playlist.items.length - 1]?.position ?? -1) + 1;
+      await this.prisma.playlistItem.upsert({
+        where: { playlistId_trackId: { playlistId, trackId } },
+        create: { playlistId, trackId, position },
+        update: {},
+      });
+      return this.getById(playlistId);
+    }
+
+    if (playlist.items.some(item => item.trackId === trackId)) return playlist;
     const newItem: PlaylistItemRecord = {
       id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       trackId,
@@ -114,8 +131,14 @@ export class PlaylistsService {
     return playlist;
   }
 
-  async removeTrack(playlistId: string, trackId: string): Promise<PlaylistRecord> {
+  async removeTrack(playlistId: string, trackId: string, userId: string): Promise<PlaylistRecord> {
     const playlist = await this.getById(playlistId);
+    if (playlist.userId !== userId) throw new NotFoundException('Playlist not found');
+    if (this.prisma.isConnected) {
+      await this.prisma.playlistItem.deleteMany({ where: { playlistId, trackId } });
+      return this.getById(playlistId);
+    }
+
     playlist.items = playlist.items.filter((item) => item.trackId !== trackId);
     playlist.updatedAt = new Date();
     return playlist;

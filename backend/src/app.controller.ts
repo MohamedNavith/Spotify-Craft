@@ -1,9 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { PrismaService } from './database/prisma.service';
 
 @Controller()
 export class AppController {
+  constructor(private readonly prisma: PrismaService) {}
+
   @Get('health')
-  getHealth() {
+  async getHealth() {
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        await this.prisma.user.findFirst({ select: { id: true } });
+      } catch {
+        throw new ServiceUnavailableException('Database unavailable');
+      }
+    }
     return {
       status: 'ok',
       service: 'Wavelength API',

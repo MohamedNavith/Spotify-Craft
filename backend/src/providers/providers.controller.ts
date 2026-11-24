@@ -1,9 +1,9 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Param,
   Query,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ProviderRegistryService } from './provider-registry.service';
 import {
@@ -34,7 +34,11 @@ export class ProvidersController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ): Promise<UnifiedSearchResult> {
-    if (!query || !query.trim()) {
+    if (query !== undefined && (typeof query !== 'string' || query.length > 200)) {
+      throw new BadRequestException('Search query must be at most 200 characters');
+    }
+
+    if (!query?.trim()) {
       return {
         provider: 'aggregated',
         tracks: [],
@@ -44,10 +48,14 @@ export class ProvidersController {
       };
     }
 
-    return this.registry.search(query.trim(), {
-      limit: limit ? parseInt(limit, 10) : 20,
-      offset: offset ? parseInt(offset, 10) : 0,
-    });
+    const pageSize = limit === undefined ? 20 : Number(limit);
+    const start = offset === undefined ? 0 : Number(offset);
+    if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 50 ||
+        !Number.isSafeInteger(start) || start < 0) {
+      throw new BadRequestException('Use a limit from 1 to 50 and a non-negative offset');
+    }
+
+    return this.registry.search(query.trim(), { limit: pageSize, offset: start });
   }
 
   @Get('tracks/:id')

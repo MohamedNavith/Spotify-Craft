@@ -30,7 +30,8 @@ export class UsersService {
           where: { email: normalizedEmail },
         });
         return user as UserRecord | null;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory if query fails
       }
     }
@@ -50,7 +51,8 @@ export class UsersService {
           where: { id },
         });
         return user as UserRecord | null;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }
@@ -77,7 +79,8 @@ export class UsersService {
           },
         });
         return created as UserRecord;
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV === 'production') throw error;
         // Fall back to memory
       }
     }

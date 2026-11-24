@@ -61,17 +61,22 @@ export default function TopBar({
       return;
     }
 
+    let active = true;
     const timer = setTimeout(async () => {
       try {
         const results = await searchOfficialMusic(query.trim(), 6);
+        if (!active) return;
         setSuggestions(results);
         setIsDropdownOpen(results.length > 0);
       } catch {
-        setSuggestions([]);
+        if (active) setSuggestions([]);
       }
     }, 200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   // Click outside to close dropdown

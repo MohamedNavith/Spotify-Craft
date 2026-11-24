@@ -49,8 +49,9 @@ export default function RegisterPage() {
 
         <div className="text-center">
           <h1 className="text-2xl md:text-3xl font-black text-white">
-            Create your account
+            Create a local profile
           </h1>
+          <p className="mt-2 text-sm text-spotify-subtext">Your profile is stored in this browser. Use a password you haven’t used elsewhere.</p>
           <p className="text-xs text-spotify-subtext mt-1">
             Track your songs watched, watch time, and build your personalized music library
           </p>

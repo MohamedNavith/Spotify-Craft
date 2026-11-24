@@ -4,6 +4,7 @@ import { UserProfile } from '../types';
 interface StoredAccount {
   user: UserProfile;
   passwordHash: string;
+  salt?: string;
 }
 
 interface AuthState {
@@ -42,6 +43,25 @@ const saveStoredAccounts = (accounts: StoredAccount[]) => {
     localStorage.setItem(STORAGE_ACCOUNTS_KEY, JSON.stringify(accounts));
   } catch {}
 };
+
+function newSalt() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), byte =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
+}
+
+async function hashPassword(password: string, salt: string) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: encoder.encode(salt), iterations: 600_000 },
+    key,
+    256,
+  );
+  return Array.from(new Uint8Array(bits), byte => byte.toString(16).padStart(2, '0')).join('');
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -85,9 +105,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       createdAt: Date.now(),
     };
 
+    if (!globalThis.crypto?.subtle) {
+      return { success: false, message: 'Local profiles require HTTPS or localhost.' };
+    }
+    const salt = newSalt();
     const newAccount: StoredAccount = {
       user: newUser,
-      passwordHash: password, // client-side saltless hash for local portability
+      salt,
+      passwordHash: await hashPassword(password, salt),
     };
 
     accounts.push(newAccount);
@@ -104,16 +129,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     const accounts = getStoredAccounts();
-    const match = accounts.find((a) => a.user.email === cleanEmail && a.passwordHash === password);
-
-    if (!match) {
-      // If no account exists yet, automatically create one so the user isn't blocked!
-      if (!accounts.some((a) => a.user.email === cleanEmail)) {
-        return get().register(email, password);
-      }
-      return { success: false, message: 'Invalid password. Please check your credentials.' };
+    if (!globalThis.crypto?.subtle) {
+      return { success: false, message: 'Local profiles require HTTPS or localhost.' };
     }
+    const match = accounts.find(account => account.user.email === cleanEmail);
+    if (!match) return { success: false, message: 'No local profile found. Create one to get started.' };
 
+    const hash = match.salt ? await hashPassword(password, match.salt) : password;
+    if (hash !== match.passwordHash) return { success: false, message: 'Incorrect password.' };
+
+    if (!match.salt) {
+      match.salt = newSalt();
+      match.passwordHash = await hashPassword(password, match.salt);
+      saveStoredAccounts(accounts);
+    }
     get().setAuth(match.user);
     return { success: true };
   },

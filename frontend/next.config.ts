@@ -5,6 +5,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  trailingSlash: true,
   output: isExport ? 'export' : undefined,
   basePath: basePath || undefined,
   images: {

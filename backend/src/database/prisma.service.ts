@@ -12,6 +12,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       this.isConnected = true;
       this.logger.log('Successfully connected to PostgreSQL via Prisma');
     } catch (err: any) {
+      if (process.env.NODE_ENV === 'production') throw err;
       this.isConnected = false;
       this.logger.warn(
         `PostgreSQL not reachable (${err.message}). Wavelength running with resilient in-memory store for local development/testing.`,

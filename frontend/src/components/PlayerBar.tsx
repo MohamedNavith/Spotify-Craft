@@ -93,7 +93,15 @@ export default function PlayerBar() {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      const target = e.target instanceof Element ? e.target : null;
+      if (
+        e.defaultPrevented ||
+        e.isComposing ||
+        e.metaKey ||
+        e.altKey ||
+        (e.ctrlKey && e.code !== 'ArrowLeft' && e.code !== 'ArrowRight') ||
+        target?.closest('input, textarea, select, button, a, [contenteditable], [role="button"], [role="slider"], [role="textbox"]')
+      ) {
         return;
       }
 
