@@ -11,7 +11,7 @@ export default function UploadPage() {
   const [album, setAlbum] = useState('');
   const [bitrate, setBitrate] = useState<'128' | '256'>('256');
   const [rightsDeclared, setRightsDeclared] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+
   const [uploaded, setUploaded] = useState(false);
 
   const { addToQueue, setTrack } = usePlayerStore();
@@ -26,58 +26,36 @@ export default function UploadPage() {
     }
   };
 
-  const handleUploadSubmit = async (e: React.FormEvent) => {
+  const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !rightsDeclared) return;
-
-    setIsUploading(true);
 
     // Create an object URL so the user can immediately play their uploaded track locally
     const localAudioUrl = URL.createObjectURL(file);
 
-    setTimeout(() => {
-      setIsUploading(false);
-      setUploaded(true);
+    setUploaded(true);
 
-      const isFlac = file.name.toLowerCase().endsWith('.flac') || file.type.includes('flac');
-      const isWav = file.name.toLowerCase().endsWith('.wav') || file.type.includes('wav');
+    const isFlac = file.name.toLowerCase().endsWith('.flac') || file.type.includes('flac');
+    const isWav = file.name.toLowerCase().endsWith('.wav') || file.type.includes('wav');
 
-      const uploadedTrack = {
-        id: `upload:${Date.now()}`,
-        provider: 'upload' as any,
-        providerTrackId: String(Date.now()),
-        title: title || file.name.replace(/\.[^/.]+$/, ''),
-        artistName: artist || 'Local Master Studio',
-        albumName: album || (isFlac ? 'Audiophile FLAC Vault' : 'Local Master Studio'),
-        duration: 240,
-        streamUrl: localAudioUrl,
-        streamFormat: (isFlac ? 'flac' : isWav ? 'wav' : 'mp3') as any,
-        license: 'Local Direct Storage (Bit-Perfect Hardware Playback)',
-        licenseUrl: null,
-        audioQuality: isFlac
-          ? 'Bit-Perfect FLAC (Hi-Res Lossless)'
-          : isWav
-          ? 'Bit-Perfect WAV / PCM'
-          : `${bitrate}kbps Master Audio`,
-        explicit: false,
-      };
+    const uploadedTrack = {
+      id: `upload:${Date.now()}`,
+      provider: 'upload' as any,
+      providerTrackId: String(Date.now()),
+      title: title || file.name.replace(/\.[^/.]+$/, ''),
+      artistName: artist || 'Local Master Studio',
+      albumName: album || (isFlac ? 'Audiophile FLAC Vault' : 'Local Master Studio'),
+      duration: 0,
+      streamUrl: localAudioUrl,
+      streamFormat: (isFlac ? 'flac' : isWav ? 'wav' : 'mp3') as any,
+      license: 'Local file',
+      licenseUrl: null,
+      audioQuality: isFlac ? 'FLAC' : isWav ? 'WAV' : 'Original file',
+      explicit: false,
+    };
 
-      setTrack(uploadedTrack);
+    setTrack(uploadedTrack);
 
-      if (isFlac || isWav) {
-        usePlayerStore.getState().setAudioStreamDetails({
-          codec: isFlac ? 'FLAC' : 'WAV',
-          bitrate: isFlac ? '1,411 – 9,216 kbps' : '1,411 kbps',
-          sampleRate: '96 kHz / 192 kHz',
-          bitDepth: '24-bit',
-          channels: 'Stereo 2.0',
-          tier: 'hi-res-lossless',
-          tierLabel: 'Bit-Perfect Local FLAC (Hi-Res Lossless)',
-          sizeEstimateMb: Math.round(file.size / (1024 * 1024)) || 45,
-          isRealLossless: true,
-        });
-      }
-    }, 1200);
   };
 
   return (
@@ -86,7 +64,7 @@ export default function UploadPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-white">Upload Your Audio</h1>
           <p className="text-spotify-subtext text-sm mt-1">
-            Transcode your audio via our ffmpeg HLS pipeline (AAC 128/256 kbps).
+            Choose a file from your device to play in this session.
           </p>
         </div>
 
@@ -96,10 +74,10 @@ export default function UploadPage() {
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold text-white">
-              "{title}" is Ready & Streaming!
+              "{title}" is ready to play
             </h2>
             <p className="text-xs text-spotify-subtext max-w-sm">
-              Your audio has been transcoded into high-fidelity HLS streams and added to your active player.
+              Your original file is available in the player for this session.
             </p>
             <button
               onClick={() => {
@@ -121,28 +99,28 @@ export default function UploadPage() {
             <label className="border-2 border-dashed border-spotify-border hover:border-spotify-green/60 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors bg-spotify-elevated/40">
               <UploadCloud className="w-12 h-12 text-spotify-green mb-3" />
               <span className="text-sm font-bold text-white">
-                {file ? file.name : 'Choose an audio file or drag & drop here'}
+                {file ? file.name : 'Choose an audio file'}
               </span>
               <span className="text-xs text-spotify-subtext mt-1">
-                WAV, FLAC, MP3, or AAC up to 100MB
+                WAV, FLAC, MP3, or AAC
               </span>
               <input
                 type="file"
                 accept="audio/*"
                 required
                 onChange={handleFileChange}
-                className="hidden"
+                className="sr-only"
               />
             </label>
 
             {/* Track Metadata Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-white">Track Title</label>
+                <label htmlFor="upload-title" className="text-sm font-bold text-spotify-text">Track Title</label>
                 <input
                   type="text"
                   required
-                  value={title}
+                  id="upload-title" value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Midnight Horizon"
                   className="bg-spotify-elevated border border-spotify-border focus:border-white rounded px-3 py-2 text-sm text-white outline-none"
@@ -150,11 +128,11 @@ export default function UploadPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-white">Artist Name</label>
+                <label htmlFor="upload-artist" className="text-sm font-bold text-spotify-text">Artist Name</label>
                 <input
                   type="text"
                   required
-                  value={artist}
+                  id="upload-artist" value={artist}
                   onChange={(e) => setArtist(e.target.value)}
                   placeholder="e.g. Your Band or Producer Name"
                   className="bg-spotify-elevated border border-spotify-border focus:border-white rounded px-3 py-2 text-sm text-white outline-none"
@@ -165,7 +143,7 @@ export default function UploadPage() {
             {/* Transcoding HLS Profile */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-white">
-                HLS Transcoding Target Quality
+                Preferred encoding profile (local playback uses the original file)
               </label>
               <div className="flex gap-4">
                 <button
@@ -219,10 +197,10 @@ export default function UploadPage() {
 
             <button
               type="submit"
-              disabled={!file || !rightsDeclared || isUploading}
+              disabled={!file || !rightsDeclared}
               className="w-full py-3 bg-spotify-green hover:bg-spotify-green-hover text-black font-extrabold rounded-full transition-transform active:scale-95 disabled:opacity-40"
             >
-              {isUploading ? 'Transcoding via ffmpeg HLS...' : 'Transcode & Stream'}
+              Play local file
             </button>
           </form>
         )}

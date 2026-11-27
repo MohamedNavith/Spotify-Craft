@@ -13,6 +13,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 export async function searchTracks(
   query: string,
   limit = 20,
+  reportFailure = false,
 ): Promise<UnifiedSearchResult> {
   // Strategy 1: Try official client-side catalog first for real composer/artist songs
   try {
@@ -48,7 +49,7 @@ export async function searchTracks(
   }
 
   // Strategy 3: Jamendo fallback
-  return searchJamendoDirect(query, limit);
+  return searchJamendoDirect(query, limit, reportFailure);
 }
 
 export async function getTrack(id: string): Promise<UnifiedTrack> {
@@ -93,6 +94,7 @@ export async function fetchTrendingTracks(): Promise<UnifiedTrack[]> {
 async function searchJamendoDirect(
   query: string,
   limit: number,
+  reportFailure: boolean,
 ): Promise<UnifiedSearchResult> {
   try {
     const clientId = '17ed92bf';
@@ -101,7 +103,9 @@ async function searchJamendoDirect(
         query,
       )}&include=musicinfo&order=popularity_total`,
     );
+    if (!res.ok) throw new Error('Song catalog unavailable');
     const data = await res.json();
+    if (data.headers?.status === 'failed') throw new Error('Song catalog unavailable');
 
     const tracks: UnifiedTrack[] = (data.results || []).map((raw: any) => ({
       id: `jamendo:${raw.id}`,
@@ -131,7 +135,8 @@ async function searchJamendoDirect(
       artists: [],
       totalResults: tracks.length,
     };
-  } catch {
+  } catch (error) {
+    if (reportFailure) throw error;
     return {
       provider: 'jamendo',
       tracks: [],

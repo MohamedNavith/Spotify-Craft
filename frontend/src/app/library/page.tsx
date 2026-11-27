@@ -1,5 +1,10 @@
 'use client';
 
+import PlaylistRow from '../../components/PlaylistRow';
+import { curatedPlaylists } from '../../lib/playlistCatalog';
+import { notify } from '../../components/InterfaceEffects';
+import { artistPortrait } from '../../lib/artistPortrait';
+
 import {
   ArrowDownToLine,
   ArrowUpDown,
@@ -71,61 +76,55 @@ const LIBRARY_ARTISTS = [
   {
     name: 'Anirudh Ravichander',
     listeners: '28.4M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/600x600bb.jpg',
+    image: artistPortrait('anirudh-ravichander'),
   },
   {
     name: 'A.R. Rahman',
     listeners: '32.1M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/600x600bb.jpg',
+    image: artistPortrait('a-r-rahman'),
   },
   {
     name: 'Arijit Singh',
     listeners: '44.8M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/600x600bb.jpg',
+    image: artistPortrait('arijit-singh'),
   },
   {
     name: 'Taylor Swift',
     listeners: '104.2M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('taylor-swift'),
   },
   {
     name: 'Billie Eilish',
     listeners: '98.5M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('billie-eilish'),
   },
   {
     name: 'Bruno Mars',
     listeners: '110.3M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
+    image: artistPortrait('bruno-mars'),
   },
   {
     name: 'Sabrina Carpenter',
     listeners: '86.7M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/57/e8/7b/57e87ba0-5057-9bb9-c247-ce7dbe426e89/24UMGIM55213.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('sabrina-carpenter'),
   },
   {
     name: 'The Weeknd',
     listeners: '118.0M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('the-weeknd'),
   },
   {
     name: 'Diljit Dosanjh',
     listeners: '24.9M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('diljit-dosanjh'),
   },
   {
     name: 'Karan Aujla',
     listeners: '18.2M monthly listeners',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f7/6d/78/f76d78c5-cc9c-f2d6-8603-ba690eaa5c7d/5064089826918_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('karan-aujla'),
   },
 ];
 
-const CURATED_PLAYLISTS = [
-  { title: "Today's Top Hits", author: 'Spotify Curated', coverBg: 'bg-emerald-900', tracksCount: 50 },
-  { title: 'Global Top 50', author: 'Daily Chart', coverBg: 'bg-cyan-900', tracksCount: 50 },
-  { title: 'Hot Hits India', author: 'Bollywood & Desi', coverBg: 'bg-amber-900', tracksCount: 40 },
-  { title: 'Chill Waves & Lo-Fi', author: 'Lofi Records', coverBg: 'bg-violet-900', tracksCount: 60 },
-];
 
 export default function LibraryPage() {
   const router = useRouter();
@@ -305,14 +304,7 @@ export default function LibraryPage() {
             <button
               id="liked-songs"
               type="button"
-              disabled={!likedTracks.length}
-              onClick={() => {
-                if (likedTracks.length > 0) {
-                  setTrack(likedTracks[0], likedTracks);
-                } else {
-                  return;
-                }
-              }}
+              onClick={() => router.push('/playlist?id=liked')}
               className="w-full text-left flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
             >
               <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -336,7 +328,7 @@ export default function LibraryPage() {
                 if (offTracks.length > 0) {
                   setTrack(offTracks[0], offTracks);
                 } else {
-                  alert('No tracks saved offline yet. Click the download checkmark on any track to save it offline!');
+                  notify('No downloads yet. Save a track with the download button.');
                 }
               }}
               className="w-full text-left flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
@@ -354,68 +346,18 @@ export default function LibraryPage() {
               </div>
             </button>
 
-            {/* Custom User Playlists */}
-            {filteredPlaylists.map((pl) => (
-              <div
-                key={pl.id}
-                onClick={() => {
-                  if (pl.tracks.length > 0) {
-                    setTrack(pl.tracks[0], pl.tracks);
-                  }
-                }}
-                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
-              >
-                <div className="flex items-center gap-4 min-w-0 flex-1">
-                  <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-spotify-green to-emerald-950 overflow-hidden flex items-center justify-center text-black shrink-0 font-bold shadow">
-                    {pl.coverArt ? (
-                      <img src={pl.coverArt} alt={pl.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <Music className="w-6 h-6 stroke-[2.5]" />
-                    )}
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-white text-base font-bold truncate group-hover:text-spotify-green transition-colors">
-                      {pl.title}
-                    </span>
-                    <span className="text-xs text-[#b3b3b3] truncate mt-0.5">
-                      Playlist • {pl.tracks.length} songs
-                    </span>
-                  </div>
+            {filteredPlaylists.map(list => (
+                <div key={list.id} className="flex items-center gap-1">
+                  <div className="min-w-0 flex-1"><PlaylistRow list={{...list,description:list.description || 'Your playlist'}} /></div>
+                  <button type="button" aria-label={'Delete ' + list.title} title="Delete playlist" className="wl-icon-button"
+                    onClick={() => { if (window.confirm('Delete ' + list.title + ' from your library?')) deleteUserPlaylist(list.id); }}>
+                    <Trash2 size={16}/>
+                  </button>
                 </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteUserPlaylist(pl.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-2 hover:text-rose-400 text-spotify-subtext transition-all"
-                  title="Delete playlist"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-
-            {/* Curated Presets */}
-            {CURATED_PLAYLISTS.map((cp, idx) => (
-              <div
-                key={idx}
-                onClick={() => setIsSpotifyImportOpen(true)}
-                className="flex items-center gap-4 p-2.5 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
-              >
-                <div className={`w-14 h-14 rounded-lg ${cp.coverBg} flex items-center justify-center text-white/80 shrink-0 font-bold shadow`}>
-                  <Music className="w-6 h-6" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-white text-base font-bold truncate group-hover:text-spotify-green transition-colors">
-                    {cp.title}
-                  </span>
-                  <span className="text-xs text-[#b3b3b3] truncate mt-0.5">
-                    Playlist • {cp.author}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))}
+              {curatedPlaylists.filter(list => list.title.toLowerCase().includes(searchFilter.toLowerCase())).map(list =>
+                <PlaylistRow key={list.id} list={list}/>
+              )}
           </>
         )}
 

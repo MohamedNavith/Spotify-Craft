@@ -231,10 +231,10 @@ export default function SpotifyMobilePlayer({
           style={{
             bottom: 'calc(58px + max(env(safe-area-inset-bottom, 0px), 8px))',
           }}
-          className="md:hidden fixed left-2 right-2 z-40 bg-[#181818]/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.85)] transition-all duration-150 active:scale-[0.98] select-none cursor-pointer overflow-hidden touch-manipulation"
+          className="wl-mini wl-glass md:hidden fixed left-2 right-2 z-40 border border-white/10 rounded-xl p-2 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.85)] transition-all duration-150 active:scale-[0.98] select-none cursor-pointer overflow-hidden touch-manipulation"
         >
           {/* Left: Thumbnail & Info */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <button type="button" aria-label="Expand now playing" className="flex items-center text-left gap-3 min-w-0 flex-1">
             <div className="w-10 h-10 rounded-md overflow-hidden bg-black shrink-0 shadow">
               {currentTrack.artworkUrl ? (
                 <img src={currentTrack.artworkUrl} alt={currentTrack.title} className="w-full h-full object-cover" />
@@ -247,11 +247,11 @@ export default function SpotifyMobilePlayer({
               <span className="text-xs font-bold text-white truncate tracking-tight">{currentTrack.title}</span>
               <span className="text-[11px] text-[#b3b3b3] truncate">{currentTrack.artistName}</span>
             </div>
-          </div>
+          </button>
 
           {/* Right: Cast icon, (+), Play/Pause */}
           <div className="flex items-center gap-1 shrink-0">
-            <button
+            <button aria-label="Share track"
               onClick={(e) => {
                 e.stopPropagation();
                 openShareModal(currentTrack);
@@ -261,10 +261,10 @@ export default function SpotifyMobilePlayer({
               <Cast className="w-4 h-4" />
             </button>
 
-            <button
+            <button aria-label={isLiked ? 'Unlike track' : 'Like track'} aria-pressed={isLiked}
               onClick={(e) => {
                 e.stopPropagation();
-                toggleLike(currentTrack.id);
+                toggleLike(currentTrack);
                 triggerHaptic(15);
               }}
               className="p-1.5 text-white/70 hover:text-white"
@@ -272,7 +272,7 @@ export default function SpotifyMobilePlayer({
               <Plus className={`w-5 h-5 ${isLiked ? 'text-spotify-green' : ''}`} />
             </button>
 
-            <button
+            <button aria-label={isPlaying ? 'Pause' : 'Play'}
               onClick={(e) => {
                 e.stopPropagation();
                 togglePlay();
@@ -338,7 +338,7 @@ export default function SpotifyMobilePlayer({
             }}
             className="relative z-10 flex items-center justify-between px-5 pb-2 shrink-0 touch-none"
           >
-            <button
+            <button aria-label="Minimize player"
               onClick={() => {
                 setIsExpandedNowPlaying(false);
                 triggerHaptic(10);
@@ -357,7 +357,7 @@ export default function SpotifyMobilePlayer({
               </span>
             </div>
 
-            <button
+            <button aria-label="Share track"
               onClick={() => openShareModal(currentTrack)}
               className="p-2 -mr-2 text-white/80 hover:text-white active:scale-75 transition-transform"
             >
@@ -451,9 +451,9 @@ export default function SpotifyMobilePlayer({
               <div className="flex flex-col min-w-0 pr-4">
                 <div className="flex items-center gap-2 min-w-0">
                   <h2 className="text-xl font-black text-white truncate tracking-tight">{currentTrack.title}</h2>
-                  <button
+                  <button aria-label="Audio settings"
                     onClick={() => setIsQualityModalOpen(true)}
-                    title={`Audio Quality: ${audioStreamDetails?.tierLabel || 'High Quality'} (${audioStreamDetails?.codec || 'AAC'} • ${audioStreamDetails?.bitrate || '320kbps'})\nTap to customize audio streaming tier`}
+                    title="Audio settings"
                     className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95 cursor-pointer border ${
                       audioStreamDetails?.isRealLossless
                         ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
@@ -462,21 +462,15 @@ export default function SpotifyMobilePlayer({
                         : 'bg-white/10 text-white/70 border-white/15'
                     }`}
                   >
-                    {audioStreamDetails?.isRealLossless
-                      ? audioStreamDetails.tier === 'hi-res-lossless'
-                        ? 'Hi-Res Lossless'
-                        : 'Lossless'
-                      : streamingQuality === 'high-efficiency'
-                      ? 'HE-AAC'
-                      : '320k'}
+                    {audioStreamDetails?.codec || 'Audio'}
                   </button>
                 </div>
                 <p className="text-xs text-[#b3b3b3] font-medium truncate mt-0.5">{currentTrack.artistName}</p>
               </div>
 
-              <button
+              <button aria-label={isLiked ? 'Unlike track' : 'Like track'} aria-pressed={isLiked}
                 onClick={() => {
-                  toggleLike(currentTrack.id);
+                  toggleLike(currentTrack);
                   triggerHaptic(15);
                 }}
                 className={`w-10 h-10 rounded-full border flex items-center justify-center active:scale-75 transition-all shrink-0 ${
@@ -494,7 +488,7 @@ export default function SpotifyMobilePlayer({
                   <div className="h-full bg-white transition-all" style={{ width: `${progressPercent}%` }} />
                 </div>
                 <input
-                  type="range"
+                  type="range" aria-label="Playback position"
                   min={0}
                   max={duration > 0 ? duration : 180}
                   step={0.1}
@@ -512,7 +506,7 @@ export default function SpotifyMobilePlayer({
 
             {/* Playback Controls (Shuffle, Prev, Big White Circle, Next, Sleep Timer) */}
             <div className="flex items-center justify-between mb-4 px-2">
-              <button
+              <button aria-label="Shuffle" aria-pressed={isShuffled}
                 onClick={() => {
                   toggleShuffle();
                   triggerHaptic(10);
@@ -522,7 +516,7 @@ export default function SpotifyMobilePlayer({
                 <Shuffle className="w-5 h-5" />
               </button>
 
-              <button
+              <button aria-label="Previous track"
                 onClick={() => {
                   prevTrack();
                   triggerHaptic(15);
@@ -533,7 +527,7 @@ export default function SpotifyMobilePlayer({
               </button>
 
               {/* Big White Circular Play/Pause Button */}
-              <button
+              <button aria-label={isPlaying ? 'Pause' : 'Play'}
                 onClick={() => {
                   togglePlay();
                   triggerHaptic(20);
@@ -543,7 +537,7 @@ export default function SpotifyMobilePlayer({
                 {isPlaying ? <Pause className="w-7 h-7 fill-black" /> : <Play className="w-7 h-7 fill-black ml-1" />}
               </button>
 
-              <button
+              <button aria-label="Next track"
                 onClick={() => {
                   nextTrack();
                   triggerHaptic(15);
@@ -553,7 +547,7 @@ export default function SpotifyMobilePlayer({
                 <SkipForward className="w-8 h-8 fill-current" />
               </button>
 
-              <button
+              <button aria-label="Sleep timer"
                 onClick={() => {
                   openSleepTimerModal();
                   triggerHaptic(10);
@@ -572,7 +566,7 @@ export default function SpotifyMobilePlayer({
 
             {/* Bottom Quick Row: Device, Share, Verci Cosmic, Queue */}
             <div className="flex items-center justify-between pt-1 pb-3 text-white/80">
-              <button
+              <button aria-label="Open visualizer"
                 onClick={() => {
                   setIsVerciOpen(true);
                   triggerHaptic(15);
@@ -584,7 +578,7 @@ export default function SpotifyMobilePlayer({
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">Verci</span>
               </button>
 
-              <button
+              <button aria-label="Share track"
                 onClick={() => {
                   openShareModal(currentTrack);
                   triggerHaptic(12);
@@ -594,7 +588,7 @@ export default function SpotifyMobilePlayer({
                 <Share2 className="w-5 h-5" />
               </button>
 
-              <button
+              <button aria-label="Open queue"
                 onClick={() => {
                   onOpenQueue?.();
                   triggerHaptic(12);

@@ -1,5 +1,10 @@
 'use client';
 
+import PlaylistRow from '../components/PlaylistRow';
+import { curatedPlaylists } from '../lib/playlistCatalog';
+import { notify } from '../components/InterfaceEffects';
+import { artistPortrait } from '../lib/artistPortrait';
+
 import {
   ArrowDownToLine,
   ArrowUpDown,
@@ -32,7 +37,11 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { currentTrack, isPlaying, setTrack, setIsSpotifyImportOpen, setIsCreateSheetOpen } = usePlayerStore();
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const isPlaying = usePlayerStore(state => state.isPlaying);
+  const setTrack = usePlayerStore(state => state.setTrack);
+  const setIsSpotifyImportOpen = usePlayerStore(state => state.setIsSpotifyImportOpen);
+  const setIsCreateSheetOpen = usePlayerStore(state => state.setIsCreateSheetOpen);
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'playlists' | 'artists' | 'albums'>('all');
   const [searchFilter, setSearchFilter] = useState('');
@@ -45,12 +54,6 @@ export default function Sidebar() {
     return () => window.removeEventListener('wavelength_playlists_updated', handleUpdate);
   }, []);
 
-  const curatedPlaylists = [
-    { title: "Today's Top Hits", author: 'Spotify Curated', coverBg: 'bg-emerald-900', tracksCount: 50 },
-    { title: 'Global Top 50', author: 'Daily Chart', coverBg: 'bg-cyan-900', tracksCount: 50 },
-    { title: 'Hot Hits India', author: 'Bollywood & Desi', coverBg: 'bg-amber-900', tracksCount: 40 },
-    { title: 'Chill Waves & Lo-Fi', author: 'Lofi Records', coverBg: 'bg-violet-900', tracksCount: 60 },
-  ];
 
   const curatedAlbums = [
     {
@@ -101,52 +104,52 @@ export default function Sidebar() {
     {
       name: 'Anirudh Ravichander',
       listeners: '28.4M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/600x600bb.jpg',
+      image: artistPortrait('anirudh-ravichander'),
     },
     {
       name: 'A.R. Rahman',
       listeners: '32.1M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/600x600bb.jpg',
+      image: artistPortrait('a-r-rahman'),
     },
     {
       name: 'Arijit Singh',
       listeners: '44.8M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/600x600bb.jpg',
+      image: artistPortrait('arijit-singh'),
     },
     {
       name: 'Taylor Swift',
       listeners: '104.2M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/600x600bb.jpg',
+      image: artistPortrait('taylor-swift'),
     },
     {
       name: 'Billie Eilish',
       listeners: '98.5M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
+      image: artistPortrait('billie-eilish'),
     },
     {
       name: 'Bruno Mars',
       listeners: '110.3M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
+      image: artistPortrait('bruno-mars'),
     },
     {
       name: 'Sabrina Carpenter',
       listeners: '86.7M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/57/e8/7b/57e87ba0-5057-9bb9-c247-ce7dbe426e89/24UMGIM55213.rgb.jpg/600x600bb.jpg',
+      image: artistPortrait('sabrina-carpenter'),
     },
     {
       name: 'The Weeknd',
       listeners: '118.0M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/600x600bb.jpg',
+      image: artistPortrait('the-weeknd'),
     },
     {
       name: 'Diljit Dosanjh',
       listeners: '24.9M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/600x600bb.jpg',
+      image: artistPortrait('diljit-dosanjh'),
     },
     {
       name: 'Karan Aujla',
       listeners: '18.2M listeners',
-      image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f7/6d/78/f76d78c5-cc9c-f2d6-8603-ba690eaa5c7d/5064089826918_cover.jpg/600x600bb.jpg',
+      image: artistPortrait('karan-aujla'),
     },
   ];
 
@@ -176,24 +179,30 @@ export default function Sidebar() {
     al.artist.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
     <>
       {/* Desktop Spotify Bento Sidebar */}
-      <aside className="hidden md:flex w-[280px] lg:w-[300px] xl:w-[320px] flex-col gap-2 select-none h-full text-spotify-subtext text-sm font-medium shrink-0">
-        <div className="bg-spotify-base rounded-lg flex-1 flex flex-col overflow-hidden border border-white/5 shadow-xl">
+      <aside aria-label="Your library" className={`wl-sidebar hidden md:flex ${collapsed ? 'w-16' : 'w-48 lg:w-60 xl:w-64'} flex-col gap-2 select-none h-full text-spotify-subtext text-sm font-medium shrink-0`}>
+        <div className="wl-workspace bg-spotify-base flex-1 flex flex-col overflow-hidden">
           {/* Header Row: Your Library + Create (+) Button */}
           <div className="p-4 pb-2 flex items-center justify-between">
             <button
-              onClick={() => setActiveFilter('all')}
+              onClick={() => setCollapsed(!collapsed)}
+              aria-expanded={!collapsed}
+              aria-controls="library-sidebar-content"
+              aria-label={collapsed ? 'Expand library' : 'Collapse library'}
+              title={collapsed ? 'Expand library' : 'Collapse library'}
               className="flex items-center gap-3 text-spotify-subtext hover:text-white transition-colors group"
             >
               <Library className="w-6 h-6 group-hover:scale-105 transition-transform" />
               <span className="font-extrabold text-base tracking-tight text-spotify-subtext group-hover:text-white">
-                Your Library
+                {!collapsed && 'Your Library'}
               </span>
             </button>
 
-            <div className="flex items-center gap-1">
+            <div hidden={collapsed} className={collapsed ? 'hidden' : 'flex items-center gap-1'}>
               <button
                 onClick={() => setIsCreateSheetOpen(true)}
                 title="Create playlist or blend"
@@ -204,6 +213,7 @@ export default function Sidebar() {
             </div>
           </div>
 
+          <div id="library-sidebar-content" className={collapsed ? 'hidden' : 'contents'}>
           {/* Authentic Spotify Filter Pills: Playlists, Artists, Albums */}
           <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
             {(['playlists', 'artists', 'albums'] as const).map((filter) => (
@@ -269,7 +279,7 @@ export default function Sidebar() {
               <>
                 {/* Pinned: Liked Songs */}
                 <Link
-                  href="/library#liked-songs"
+                  href="/playlist?id=liked"
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group"
                 >
                   <div className="w-12 h-12 rounded bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
@@ -292,7 +302,7 @@ export default function Sidebar() {
                     if (offTracks.length > 0) {
                       setTrack(offTracks[0], offTracks);
                     } else {
-                      alert('No tracks saved offline yet. Click the download checkmark on any track to save it offline!');
+                      notify('No downloads yet. Save a track with the download button.');
                     }
                   }}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors group cursor-pointer"
@@ -310,70 +320,18 @@ export default function Sidebar() {
                   </div>
                 </div>
 
-                {/* User Custom Playlists */}
-                {filteredPlaylists.map((playlist) => (
-                  <div
-                    key={playlist.id}
-                    onClick={() => {
-                      if (playlist.tracks.length > 0) {
-                        setTrack(playlist.tracks[0], playlist.tracks);
-                      }
-                    }}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-12 h-12 rounded bg-gradient-to-br from-spotify-green to-emerald-950 overflow-hidden flex items-center justify-center text-black shrink-0 font-bold shadow">
-                        {playlist.coverArt ? (
-                          <img src={playlist.coverArt} alt={playlist.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <Music className="w-5 h-5 stroke-[2.5]" />
-                        )}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
-                          {playlist.title}
-                        </span>
-                        <span className="text-xs text-spotify-subtext truncate mt-0.5">
-                          Playlist • {playlist.tracks.length} songs
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteUserPlaylist(playlist.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 hover:text-rose-400 text-spotify-subtext transition-all"
-                      title="Remove from Library"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Curated Spotify Presets */}
-                {curatedPlaylists.map((item, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setIsSpotifyImportOpen(true)}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer group"
-                  >
-                    <div
-                      className={`w-12 h-12 rounded ${item.coverBg} flex items-center justify-center text-white/80 shrink-0 font-bold shadow`}
-                    >
-                      <Music className="w-5 h-5" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-white text-sm font-bold truncate group-hover:text-spotify-green transition-colors">
-                        {item.title}
-                      </span>
-                      <span className="text-xs text-spotify-subtext truncate mt-0.5">
-                        Playlist • {item.author}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                {filteredPlaylists.map(list => (
+                <div key={list.id} className="flex items-center gap-1">
+                  <div className="min-w-0 flex-1"><PlaylistRow list={{...list,description:list.description || 'Your playlist'}} /></div>
+                  <button type="button" aria-label={'Delete ' + list.title} title="Delete playlist" className="wl-icon-button"
+                    onClick={() => { if (window.confirm('Delete ' + list.title + ' from your library?')) deleteUserPlaylist(list.id); }}>
+                    <Trash2 size={16}/>
+                  </button>
+                </div>
+              ))}
+              {curatedPlaylists.filter(list => list.title.toLowerCase().includes(searchFilter.toLowerCase())).map(list =>
+                <PlaylistRow key={list.id} list={list}/>
+              )}
               </>
             )}
 
@@ -482,47 +440,10 @@ export default function Sidebar() {
               Check for Updates
             </button>
           </div>
+          </div>
         </div>
       </aside>
 
-      {/* Mobile Bottom Navigation Bar (Spotify Android/iOS App Bar) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-t border-white/10 flex items-center justify-around py-1.5 px-3 text-spotify-subtext safe-area-pb">
-        <Link
-          href="/"
-          className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-            pathname === '/' || pathname === '/Spotify-Craft/' ? 'text-white font-bold' : 'hover:text-white'
-          }`}
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">Home</span>
-        </Link>
-        <Link
-          href="/search"
-          className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-            pathname === '/search' ? 'text-white font-bold' : 'hover:text-white'
-          }`}
-        >
-          <Search className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">Search</span>
-        </Link>
-        <Link
-          href="/library"
-          className={`flex flex-col items-center gap-1 py-1 transition-colors ${
-            pathname === '/library' ? 'text-white font-bold' : 'hover:text-white'
-          }`}
-        >
-          <Library className="w-5 h-5" />
-          <span className="text-[10px] tracking-tight">Your Library</span>
-        </Link>
-        <button
-          onClick={() => setIsCreateSheetOpen(true)}
-          className="flex flex-col items-center gap-1 py-1 transition-colors hover:text-white"
-          title="Create Playlist or Blend"
-        >
-          <Plus className="w-6 h-6" />
-          <span className="text-[10px] tracking-tight">Create</span>
-        </button>
-      </nav>
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { Check, Download, Music, Plus, Sparkles, Upload, X } from 'lucide-react';
 import { useState } from 'react';
-import { importSpotifyPlaylist, parseUploadedSpotifyList } from '../lib/spotifySync';
+import { ExportPlaylist, importSpotifyPlaylist, matchExportTracks, readPlaylistExport } from '../lib/spotifySync';
 import { addSpotifyPlaylistToLibrary } from '../lib/userPlaylists';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { UnifiedTrack } from '../types';
@@ -26,9 +26,11 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
   const [playlistTitle, setPlaylistTitle] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
 
+  const [exports, setExports] = useState<ExportPlaylist[]>([]);
+  const [selectedExport, setSelectedExport] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
 
-  const { setTrack, addToQueue } = usePlayerStore();
+  const setTrack = usePlayerStore(state => state.setTrack);
 
   if (!isOpen) return null;
 
@@ -36,6 +38,8 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
     const toImport = targetUrl || url.trim();
     if (!toImport) return;
 
+    setExports([]);
+    setImportedTracks([]);
     setIsLoading(true);
     setIsSaved(false);
     setStatusMessage('Syncing with Spotify metadata...');
@@ -44,30 +48,50 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
       const res = await importSpotifyPlaylist(toImport);
       setPlaylistTitle(res.title);
       setImportedTracks(res.tracks);
-      setStatusMessage(`Found ${res.tracks.length} official full-length tracks!`);
+      setStatusMessage(`Found ${res.tracks.length} tracks.`);
     } catch (err: any) {
-      setStatusMessage('Could not import playlist. Please check link format.');
+      setStatusMessage(err instanceof Error ? err.message : 'Playlist unavailable. Try importing a CSV.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  async function chooseExport(lists: ExportPlaylist[], index: number) {
+    setSelectedExport(index);
+    setImportedTracks([]);
+    setIsSaved(false);
+    setIsLoading(true);
+    const list = lists[index];
+    try {
+      setPlaylistTitle(list.title);
+      setStatusMessage('Matching songs…');
+      const tracks = await matchExportTracks(list);
+      setImportedTracks(tracks);
+      setStatusMessage('Matched ' + tracks.length + ' of ' + list.tracks.length + ' songs.');
+    } catch {
+      setStatusMessage('Could not match songs from this playlist.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setExports([]);
+    setImportedTracks([]);
     setIsLoading(true);
     setIsSaved(false);
     setStatusMessage(`Reading ${file.name}...`);
 
     try {
-      const text = await file.text();
-      const tracks = await parseUploadedSpotifyList(text);
-      setPlaylistTitle(file.name.replace(/\.[^/.]+$/, ''));
-      setImportedTracks(tracks);
-      setStatusMessage(`Imported ${tracks.length} matching full-length tracks!`);
+      const lists = readPlaylistExport(await file.text(), file.name.replace(/\.[^/.]+$/, ''));
+      if (!lists.length) throw new Error('No playlists in file');
+      setExports(lists);
+      await chooseExport(lists, 0);
     } catch (err) {
-      setStatusMessage('Failed to parse file. Make sure it contains Song, Artist.');
+      setStatusMessage('Could not read this export. Choose a Spotify playlist JSON file or a song and artist CSV.');
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +99,10 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
 
   const handlePlayAll = () => {
     if (importedTracks.length > 0) {
-      addSpotifyPlaylistToLibrary(playlistTitle, importedTracks);
+      try {
+        if (!isSaved) addSpotifyPlaylistToLibrary(playlistTitle, importedTracks);
+      } catch { setStatusMessage('Could not save this playlist in this browser.'); return; }
+      setIsSaved(true);
       setTrack(importedTracks[0], importedTracks);
       onClose();
     }
@@ -83,7 +110,9 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
 
   const handleSaveToLibrary = () => {
     if (importedTracks.length > 0) {
-      addSpotifyPlaylistToLibrary(playlistTitle, importedTracks);
+      try {
+        if (!isSaved) addSpotifyPlaylistToLibrary(playlistTitle, importedTracks);
+      } catch { setStatusMessage('Could not save this playlist in this browser.'); return; }
       setIsSaved(true);
       setStatusMessage(`Successfully saved "${playlistTitle}" to Your Library!`);
     }
@@ -108,6 +137,7 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
             </div>
           </div>
           <button
+            aria-label="Close import"
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-white/10 text-spotify-subtext hover:text-white flex items-center justify-center transition-colors"
           >
@@ -119,12 +149,13 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
         <div className="p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar flex-1">
           {/* Link Input Section */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-spotify-subtext uppercase tracking-wider">
+            <label htmlFor="spotify-import-link" className="text-xs font-bold text-spotify-subtext uppercase tracking-wider">
               Paste Spotify Playlist Link or URI
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
+                id="spotify-import-link"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
@@ -147,6 +178,7 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
               {SAMPLE_PLAYLISTS.map((p) => (
                 <button
                   key={p.name}
+                  disabled={isLoading}
                   onClick={() => {
                     setUrl(p.url);
                     handleImport(p.url);
@@ -163,12 +195,13 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
           <div className="border-t border-spotify-border pt-4 flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-white text-sm font-semibold">Upload Spotify Export File</span>
-              <span className="text-spotify-subtext text-xs">Supports .csv or .json files</span>
+              <span className="text-spotify-subtext text-xs">CSV, Spotify playlist JSON, or plain text</span>
             </div>
             <label className="cursor-pointer px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 transition-colors">
               <Upload className="w-4 h-4" />
               <span>Choose File</span>
               <input
+                disabled={isLoading}
                 type="file"
                 accept=".csv,.json,.txt"
                 onChange={handleFileUpload}
@@ -177,9 +210,16 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
             </label>
           </div>
 
+          {exports.length > 1 && <label className="grid gap-2 text-sm">
+            Playlist in this file
+            <select value={selectedExport} disabled={isLoading} className="rounded-lg bg-spotify-card p-2"
+              onChange={event => chooseExport(exports, Number(event.target.value))}>
+              {exports.map((list,index) => <option key={index} value={index}>{list.title}</option>)}
+            </select>
+          </label>}
           {/* Status Message */}
           {statusMessage && (
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs text-spotify-green flex items-center gap-2">
+            <div role="status" className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs text-spotify-green flex items-center gap-2">
               <Check className="w-4 h-4 shrink-0" />
               <span>{statusMessage}</span>
             </div>
@@ -190,7 +230,7 @@ export default function SpotifyImportModal({ isOpen, onClose }: SpotifyImportMod
             <div className="flex flex-col gap-3 mt-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="text-sm font-bold text-white truncate max-w-[200px]">
-                  {playlistTitle} ({importedTracks.length} songs)
+                  {playlistTitle} ({importedTracks.length} {importedTracks.length === 1 ? 'song' : 'songs'})
                 </span>
                 <div className="flex items-center gap-2">
                   <button

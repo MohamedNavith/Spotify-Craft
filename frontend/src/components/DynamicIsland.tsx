@@ -249,7 +249,7 @@ export default function DynamicIsland() {
           <div className="flex items-center justify-between pt-1">
             {/* Like */}
             <button
-              onClick={() => toggleLike(currentTrack.id)}
+              onClick={() => toggleLike(currentTrack)}
               className="p-2 text-white/70 hover:text-white transition-colors active:scale-90"
               title={isLiked ? 'Unlike' : 'Like'}
             >

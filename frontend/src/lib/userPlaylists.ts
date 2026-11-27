@@ -16,7 +16,16 @@ export function getUserPlaylists(): UserPlaylist[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const lists = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(lists)) return [];
+    return lists.filter(list => typeof list?.id === 'string' && typeof list.title === 'string').map(list => ({
+      ...list, tracks: (Array.isArray(list.tracks) ? list.tracks : []).filter((t: UnifiedTrack) => t?.id && t.title).map(
+        (t: UnifiedTrack & {artist?:string; album?:string; audioUrl?:string; previewUrl?:string}) => ({
+          ...t, artistName:t.artistName || t.artist || 'Unknown artist', albumName:t.albumName || t.album,
+          streamUrl:t.streamUrl || t.previewUrl || t.audioUrl || null,
+        }),
+      ),
+    }));
   } catch {
     return [];
   }
@@ -59,7 +68,7 @@ export function createCustomUserPlaylist(
     createdAt: Date.now(),
   };
 
-  saveUserPlaylist(newPlaylist);
+  if (!saveUserPlaylist(newPlaylist).length) throw new Error('Storage is full or unavailable.');
   return newPlaylist;
 }
 
@@ -78,8 +87,7 @@ export function addTrackToExistingPlaylist(playlistId: string, track: UnifiedTra
     tracks: [...target.tracks, track],
   };
 
-  saveUserPlaylist(updated);
-  return updated;
+  return saveUserPlaylist(updated).length ? updated : null;
 }
 
 export function deleteUserPlaylist(id: string): UserPlaylist[] {
@@ -99,7 +107,8 @@ export function getLikedTracks(): UnifiedTrack[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(LIKED_TRACKS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const tracks = raw ? JSON.parse(raw) : [];
+    return Array.isArray(tracks) ? tracks.filter(track => track?.id && typeof track.title === 'string' && typeof track.artistName === 'string') : [];
   } catch {
     return [];
   }
@@ -146,6 +155,6 @@ export function addSpotifyPlaylistToLibrary(
     createdAt: Date.now(),
   };
 
-  saveUserPlaylist(newPlaylist);
+  if (!saveUserPlaylist(newPlaylist).length) throw new Error('Storage is full or unavailable.');
   return newPlaylist;
 }

@@ -25,19 +25,29 @@
 
 ![Wavelength desktop web player with personalized mixes and the library sidebar](docs/screenshots/01_desktop_home.png)
 
-| Browse on the web | Browse in the Windows app |
+| Artist discovery | Song and playlist search |
 | --- | --- |
-| ![Desktop web search categories](docs/screenshots/03_desktop_search.png) | ![Search categories in the packaged Windows app](docs/screenshots/windows-search.png) |
+| ![Popular artists with credited performer photographs](docs/screenshots/desktop-artists.png) | ![Searching for Bruno returns tracks and playlists](docs/screenshots/03_desktop_search.png) |
 
-| Mobile web home | Mobile web search |
+| Mobile home | Playlist detail |
 | --- | --- |
-| <img src="docs/screenshots/05_mobile_home.png" width="270" alt="Home shortcuts and bottom navigation on a phone-sized screen"> | <img src="docs/screenshots/mobile-browse.png" width="270" alt="Two-column category browser on mobile web"> |
+| <img src="docs/screenshots/05_mobile_home.png" width="270" alt="Home shortcuts and daily mixes on a phone"> | <img src="docs/screenshots/mobile-playlist.png" width="270" alt="Today's Top Hits with its track order, play button and save action"> |
+
+**Windows app** · Search in the packaged Windows player.
+
+![Search categories in the Windows release](docs/screenshots/windows-search.png)
 
 **Android APK in landscape** · Artist preferences and playback settings in BlueStacks.
 
 ![Android app displaying favorite artists and playback settings](docs/screenshots/android-settings.png)
 
 The mobile web images use a 393 × 852 CSS-pixel browser viewport. The Android image comes from the installed APK. The APK attached to the v2.0.0 release reports version 1.4.0 (code 3) to Android.
+
+## Finding and saving playlists
+
+Search accepts partial song, artist and playlist names. Type `chi` for Chill Waves & Lo-Fi or `bol` for Bollywood collections. Use the **Playlists** filter for saved playlists, curated mixes and public Jamendo results. A playlist opens with its track list and a play button. **Save a copy to library** makes a collection editable on this device.
+
+Choose **Create Playlist** in the library to build your own. **Sync Spotify** accepts supported public links, Spotify playlist JSON exports, and song-and-artist CSV or text files. For a JSON file containing multiple playlists, choose the one you want to save. The import preview shows how many songs matched.
 
 ## Self-hosting
 
@@ -81,6 +91,7 @@ Settings lets you select a preferred audio quality. The stream supplied by the p
 | `Right` / `Left` | Seek Forward / Backward 5s |
 | `Up` / `Down` | Adjust Volume ±5% |
 | `M` | Mute / Unmute Audio |
+| `/` | Focus search |
 | `L` | Like Track / Save to Favorites |
 | `S` | Toggle Shuffle |
 | `R` | Cycle Repeat (Off / All / One) |
@@ -90,4 +101,4 @@ Settings lets you select a preferred audio quality. The stream supplied by the p
 
 ## 📄 License & Terms
 
-Wavelength is distributed under the MIT License. Streaming is performed strictly according to authorized API licenses and fair use principles.
+The project identifies its software license as MIT. The artist photographs have individual source and license credits. [Artist photo credits](frontend/public/artists/CREDITS.txt)

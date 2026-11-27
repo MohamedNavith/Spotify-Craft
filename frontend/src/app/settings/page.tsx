@@ -1,5 +1,7 @@
 'use client';
 
+import { artistPortrait } from '../../lib/artistPortrait';
+
 import { AlertTriangle, Check, Disc3, Download, Headphones, Heart, Info, Music, Plus, RefreshCw, Settings, Sparkles, Trash2, UserCheck, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CURRENT_APP_VERSION, isNewerVersion } from '../../components/AppUpdateChecker';
@@ -15,62 +17,62 @@ interface PopularArtist {
 const DEFAULT_POPULAR_ARTISTS: PopularArtist[] = [
   {
     name: 'Anirudh Ravichander',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/600x600bb.jpg',
+    image: artistPortrait('anirudh-ravichander'),
     genre: 'Tamil & Bollywood Rock',
   },
   {
     name: 'A.R. Rahman',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/600x600bb.jpg',
+    image: artistPortrait('a-r-rahman'),
     genre: 'Composer & Master',
   },
   {
     name: 'Arijit Singh',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/600x600bb.jpg',
+    image: artistPortrait('arijit-singh'),
     genre: 'Soulful & Melodic',
   },
   {
     name: 'Taylor Swift',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('taylor-swift'),
     genre: 'Pop & Singer-Songwriter',
   },
   {
     name: 'Billie Eilish',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('billie-eilish'),
     genre: 'Alternative Pop',
   },
   {
     name: 'Bruno Mars',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
+    image: artistPortrait('bruno-mars'),
     genre: 'R&B & Funk',
   },
   {
     name: 'Sabrina Carpenter',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/57/e8/7b/57e87ba0-5057-9bb9-c247-ce7dbe426e89/24UMGIM55213.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('sabrina-carpenter'),
     genre: 'Pop & Dance',
   },
   {
     name: 'The Weeknd',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('the-weeknd'),
     genre: 'Synthwave & R&B',
   },
   {
     name: 'Pritam',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/3d/c7/43/3dc74387-e7f4-2342-397c-4cf2037c69a5/8902894623223_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('pritam'),
     genre: 'Bollywood Hits',
   },
   {
     name: 'Diljit Dosanjh',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('diljit-dosanjh'),
     genre: 'Punjabi & Global Fusion',
   },
   {
     name: 'Karan Aujla',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f7/6d/78/f76d78c5-cc9c-f2d6-8603-ba690eaa5c7d/5064089826918_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('karan-aujla'),
     genre: 'Desi Hip-Hop',
   },
   {
     name: 'Sidhu Moose Wala',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/37/ca/50/37ca5028-a2dc-975b-6366-6427c2b81761/5064089945930_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('sidhu-moose-wala'),
     genre: 'Punjabi Legend',
   },
 ];
@@ -163,8 +165,13 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        <nav aria-label="Settings sections" className="flex flex-wrap gap-3 text-sm">
+          <a className="wl-filter" href="#artist-preferences">Artists</a>
+          <a className="wl-filter" href="#audio-preferences">Audio quality</a>
+          <a className="wl-filter" href={artistPortrait('CREDITS').replace('.webp','.txt')}>Photo credits</a>
+        </nav>
         {/* Section 1: Favourite Singers & Artists */}
-        <section className="flex flex-col gap-4">
+        <section id="artist-preferences" className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl md:text-2xl font-bold text-white">
@@ -217,9 +224,7 @@ export default function SettingsPage() {
                       src={artist.image}
                       alt={artist.name}
                       referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23282828'/><circle cx='50' cy='50' r='30' fill='%231DB954'/><path d='M45 40 L65 50 L45 60 Z' fill='black'/></svg>";
-                      }}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                     {isSelected && (
@@ -246,7 +251,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Section 2: Audio & Playback Preferences */}
-        <section className="flex flex-col gap-6 border-t border-white/10 pt-8">
+        <section id="audio-preferences" className="flex flex-col gap-6 border-t border-white/10 pt-8">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
               Playback &amp; Audio Quality

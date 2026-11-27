@@ -78,7 +78,7 @@ export default function PodcastsPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-white">Podcasts & Shows</h1>
           <p className="text-spotify-subtext text-sm mt-1">
-            Stream inspiring talk shows, technical deep-dives, and musical conversations.
+            Explore sample shows. Episode controls play a shared audio preview.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function PodcastsPage() {
                   <span className="text-xs font-bold text-spotify-green uppercase tracking-wider">
                     Podcast
                   </span>
-                  <h2 className="text-2xl font-bold text-white truncate mt-0.5">
+                  <h2 className="text-xl font-bold text-spotify-text mt-0.5">
                     {pod.title}
                   </h2>
                   <p className="text-xs text-spotify-subtext mt-1">{pod.description}</p>

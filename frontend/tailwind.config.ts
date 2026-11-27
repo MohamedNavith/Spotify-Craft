@@ -10,17 +10,17 @@ export default {
     extend: {
       colors: {
         spotify: {
-          base: '#121212',
-          card: '#181818',
-          elevated: '#242424',
-          hover: '#2a2a2a',
-          active: '#333333',
-          green: '#1ed760',
-          'green-hover': '#1fdf64',
+          base: 'rgb(var(--wl-surface-1) / <alpha-value>)',
+          card: 'rgb(var(--wl-surface-2) / <alpha-value>)',
+          elevated: 'rgb(var(--wl-surface-3) / <alpha-value>)',
+          hover: 'rgb(var(--wl-surface-4) / <alpha-value>)',
+          active: 'rgb(var(--wl-surface-4) / <alpha-value>)',
+          green: 'rgb(var(--wl-accent) / <alpha-value>)',
+          'green-hover': 'rgb(var(--wl-accent-hover) / <alpha-value>)',
           'green-dark': '#169c46',
-          subtext: '#b3b3b3',
-          border: '#282828',
-          text: '#ffffff',
+          subtext: 'rgb(var(--wl-muted) / <alpha-value>)',
+          border: 'rgb(var(--wl-line) / <alpha-value>)',
+          text: 'rgb(var(--wl-text) / <alpha-value>)',
         },
       },
       fontFamily: {

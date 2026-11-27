@@ -13,12 +13,15 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { searchOfficialMusic } from '../lib/officialMusic';
 import { useAuthStore } from '../stores/useAuthStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { UnifiedTrack } from '../types';
+import PlaylistRow from './PlaylistRow';
+import { findPlaylists, localTracks, rankSongs, PlaylistSummary, searchPublicPlaylists } from '../lib/playlistCatalog';
+import ThemeToggle from './ThemeToggle';
 import UserProfileModal from './UserProfileModal';
 
 interface TopBarProps {
@@ -32,18 +35,30 @@ export default function TopBar({
   onSearchChange,
 }: TopBarProps) {
   const router = useRouter();
+  const onSearchPage = usePathname().replace(/\/$/, '') === '/search';
   const { user, isAuthenticated, logout } = useAuthStore();
-  const {
-    setTrack,
-    setIsSpotifyImportOpen,
-    setIsDiscordModalOpen,
-    isDynamicIslandVisible,
-    toggleDynamicIsland,
-  } = usePlayerStore();
+  const setTrack = usePlayerStore(state => state.setTrack);
+  const setIsSpotifyImportOpen = usePlayerStore(state => state.setIsSpotifyImportOpen);
+  const setIsDiscordModalOpen = usePlayerStore(state => state.setIsDiscordModalOpen);
+  const isDynamicIslandVisible = usePlayerStore(state => state.isDynamicIslandVisible);
+  const toggleDynamicIsland = usePlayerStore(state => state.toggleDynamicIsland);
 
   const [query, setQuery] = useState(externalQuery || '');
   const [suggestions, setSuggestions] = useState<UnifiedTrack[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [publicMatches,setPublicMatches] = useState<PlaylistSummary[]>([]);
+  const playlistMatches = query.trim() ? [...findPlaylists(query),...publicMatches].slice(0,3) : [];
+  useEffect(() => {
+    setPublicMatches([]);
+    if (query.trim().length < 2 || onSearchPage) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      searchPublicPlaylists(query.trim(), controller.signal).then(lists => {
+        if (!controller.signal.aborted) setPublicMatches(lists);
+      }).catch(() => {});
+    }, 240);
+    return () => { clearTimeout(timeout); controller.abort(); };
+  }, [query,onSearchPage]);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Sync external query if passed
@@ -62,14 +77,16 @@ export default function TopBar({
     }
 
     let active = true;
+    const local = localTracks(query,6);
+    setSuggestions(local);
+    setIsDropdownOpen(true);
     const timer = setTimeout(async () => {
       try {
         const results = await searchOfficialMusic(query.trim(), 6);
         if (!active) return;
-        setSuggestions(results);
-        setIsDropdownOpen(results.length > 0);
+        setSuggestions(rankSongs(query, [...local, ...results], 6));
       } catch {
-        if (active) setSuggestions([]);
+        if (active) setSuggestions(local);
       }
     }, 200);
 
@@ -90,6 +107,19 @@ export default function TopBar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey ||
+          (event.target instanceof Element && event.target.closest('input,textarea,select,[contenteditable]'))) return;
+      event.preventDefault();
+      const input = document.getElementById('catalog-query') || dropdownRef.current?.querySelector('input');
+      if (input?.getClientRects().length) input.focus();
+      else router.push('/search');
+    };
+    window.addEventListener('keydown', focusSearch);
+    return () => window.removeEventListener('keydown', focusSearch);
+  }, [router]);
+
   const handleInputChange = (val: string) => {
     setQuery(val);
     onSearchChange?.(val);
@@ -105,7 +135,7 @@ export default function TopBar({
       style={{
         paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)',
       }}
-      className="h-16 bg-black px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 select-none border-b border-[#282828]/60 shrink-0"
+      className="wl-top wl-glass h-16 px-3 md:px-6 flex items-center justify-between sticky top-0 z-40 select-none border-b border-[#282828]/60 shrink-0"
     >
       {/* Left: Official Wavelength Brand Logo + Signature Spotify Home Button */}
       <div className="flex items-center gap-3 shrink-0">
@@ -113,7 +143,7 @@ export default function TopBar({
           <div className="w-9 h-9 rounded-full bg-spotify-green flex items-center justify-center text-black font-black shadow-lg group-hover:scale-105 transition-transform">
             <Radio className="w-5 h-5 text-black stroke-[2.5]" />
           </div>
-          <span className="font-black text-xl tracking-tight text-white group-hover:text-spotify-green transition-colors">
+          <span className="font-black text-base sm:text-xl tracking-tight wl-theme-text group-hover:text-spotify-green transition-colors">
             Wavelength
           </span>
         </Link>
@@ -129,15 +159,15 @@ export default function TopBar({
       </div>
 
       {/* Center: Authentic Spotify Search Pill with Browse Icon & Shortcut */}
-      <div className="hidden md:flex flex-1 max-w-[500px] mx-4 relative" ref={dropdownRef}>
-        <div className="w-full h-12 bg-[#1f1f1f] hover:bg-[#282828] focus-within:bg-[#282828] rounded-full flex items-center px-3 border border-transparent focus-within:border-white/70 transition-all shadow-inner group">
+      <div className={onSearchPage ? 'hidden' : 'hidden md:flex flex-1 max-w-[500px] mx-4 relative'} ref={dropdownRef}>
+        <div className="w-full h-11 bg-spotify-elevated hover:bg-spotify-hover focus-within:bg-[#282828] rounded-full flex items-center px-3 border border-transparent focus-within:border-white/70 transition-all shadow-inner group">
           {/* Search Icon */}
           <button
             onClick={() => {
               if (query.trim()) {
                 setIsDropdownOpen(false);
                 router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-              }
+              } else { router.push('/search'); }
             }}
             title="Search"
             className="p-1.5 text-spotify-subtext group-hover:text-white transition-colors"
@@ -151,9 +181,10 @@ export default function TopBar({
             value={query}
             onChange={(e) => handleInputChange(e.target.value)}
             onFocus={() => {
-              if (suggestions.length > 0) setIsDropdownOpen(true);
+              if (query.trim()) setIsDropdownOpen(true);
             }}
             onKeyDown={(e) => {
+              if (e.key === 'Escape') setIsDropdownOpen(false);
               if (e.key === 'Enter' && query.trim()) {
                 setIsDropdownOpen(false);
                 router.push(`/search?q=${encodeURIComponent(query.trim())}`);
@@ -194,12 +225,13 @@ export default function TopBar({
         </div>
 
         {/* Live Spotify Autocomplete Dropdown */}
-        {isDropdownOpen && suggestions.length > 0 && (
-          <div className="absolute top-14 left-0 right-0 bg-[#282828] border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 max-h-96 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2">
+        {isDropdownOpen && query.trim() && (
+          <div className="absolute top-14 left-0 right-0 bg-spotify-card border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 max-h-96 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-spotify-subtext px-3 py-1">
               Top Results
             </span>
 
+            {playlistMatches.map(list => <PlaylistRow key={list.id} list={list} onSelect={()=>setIsDropdownOpen(false)}/>)}
             {suggestions.map((track) => (
               <div
                 key={track.id}
@@ -235,14 +267,15 @@ export default function TopBar({
                     e.stopPropagation();
                     handleSelectTrack(track);
                   }}
-                  className="w-8 h-8 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center opacity-0 group-hover:opacity-100 shadow transition-all hover:scale-105 shrink-0"
+                  aria-label={'Play '+track.title}
+                  className="focus-visible:opacity-100 w-8 h-8 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center opacity-0 group-hover:opacity-100 shadow transition-all hover:scale-105 shrink-0"
                 >
                   <Play className="w-4 h-4 fill-black ml-0.5" />
                 </button>
               </div>
             ))}
 
-            <div
+            <button
               onClick={() => {
                 setIsDropdownOpen(false);
                 router.push(`/search?q=${encodeURIComponent(query.trim())}`);
@@ -250,7 +283,7 @@ export default function TopBar({
               className="p-2 text-center text-xs text-spotify-green hover:underline cursor-pointer font-bold border-t border-white/5 mt-1"
             >
               View all results for &ldquo;{query}&rdquo; →
-            </div>
+            </button>
           </div>
         )}
       </div>
@@ -293,11 +326,13 @@ export default function TopBar({
           <span className="hidden sm:inline">Island</span>
         </button>
 
+        <ThemeToggle />
+
         {/* Settings */}
         <Link
           href="/settings"
           title="Settings"
-          className="w-9 h-9 rounded-full hover:bg-white/10 text-spotify-subtext hover:text-white flex items-center justify-center transition-colors"
+          className="hidden sm:flex w-9 h-9 rounded-full hover:bg-white/10 text-spotify-subtext hover:text-white flex items-center justify-center transition-colors"
         >
           <Settings className="w-5 h-5" />
         </Link>

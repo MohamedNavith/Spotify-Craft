@@ -23,15 +23,14 @@ export default function MobileMiniPlayer() {
 
   return (
     <div
-      onClick={() => setIsExpandedNowPlaying(true)}
       style={{
         bottom: 'calc(58px + max(env(safe-area-inset-bottom, 0px), 8px))',
       }}
-      className="md:hidden fixed left-2 right-2 z-30 bg-[#222222]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_8px_30px_rgba(0,0,0,0.85)] cursor-pointer select-none overflow-hidden transition-transform active:scale-[0.99]"
+      className="wl-mini wl-glass md:hidden fixed left-2 right-2 z-30 border border-white/10 rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),0_8px_30px_rgba(0,0,0,0.85)] cursor-pointer select-none overflow-hidden transition-transform active:scale-[0.99]"
     >
       <div className="flex items-center justify-between p-2 gap-3">
         {/* Left: Thumbnail + Titles */}
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <button type="button" aria-label="Open now playing" onClick={() => setIsExpandedNowPlaying(true)} className="flex items-center gap-2.5 min-w-0 flex-1 text-left">
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-black shrink-0 border border-white/10 shadow-md flex items-center justify-center">
             {currentTrack.artworkUrl ? (
               <img
@@ -44,14 +43,14 @@ export default function MobileMiniPlayer() {
             )}
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs font-bold text-white truncate leading-tight">
+            <span className="text-xs font-bold wl-theme-text truncate leading-tight">
               {currentTrack.title}
             </span>
             <span className="text-[10px] text-spotify-subtext truncate leading-tight">
               {currentTrack.artistName}
             </span>
           </div>
-        </div>
+        </button>
 
         {/* Right: Verci Sparkle, Heart, Play/Pause */}
         <div className="flex items-center gap-1 shrink-0">
@@ -71,9 +70,11 @@ export default function MobileMiniPlayer() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              toggleLike(currentTrack.id);
+              toggleLike(currentTrack);
             }}
-            className="p-2 text-white/60 hover:text-white active:scale-90 transition-transform"
+            aria-label={isLiked ? 'Unlike track' : 'Like track'}
+            aria-pressed={isLiked}
+            className="wl-like wl-icon-button"
           >
             <Heart
               className={`w-4 h-4 ${
@@ -88,7 +89,8 @@ export default function MobileMiniPlayer() {
               e.stopPropagation();
               togglePlay();
             }}
-            className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-lg active:scale-90 transition-transform ml-1"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+            className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg active:scale-90 transition-transform ml-1"
           >
             {isPlaying ? (
               <Pause className="w-4 h-4 fill-current" />

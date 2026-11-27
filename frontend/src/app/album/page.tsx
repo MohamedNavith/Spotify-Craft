@@ -1,5 +1,6 @@
 'use client';
 
+import CatalogSkeleton from '../../components/CatalogSkeleton';
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -30,7 +31,7 @@ const AASHIQUI_2_ALBUM: {
   title: 'Aashiqui 2',
   artists: 'Mithoon • Ankit Tiwari • Jeet Gannguli',
   releaseDate: 'Album • 6 Apr 2013',
-  coverUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg',
+  coverUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg',
   tracks: [
     {
       id: 'official:tum-hi-ho',
@@ -42,7 +43,7 @@ const AASHIQUI_2_ALBUM: {
       duration: 262,
       streamUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e0/65/55/e06555c8-1090-bb7f-94ad-0a5d45465551/mzaf_6436270634698547247.plus.aac.p.m4a',
       streamFormat: 'aac',
-      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg',
+      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg',
       license: 'T-Series / Official Release',
       audioQuality: '320kbps (Master Studio)',
       explicit: false,
@@ -59,7 +60,7 @@ const AASHIQUI_2_ALBUM: {
       duration: 390,
       streamUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e0/65/55/e06555c8-1090-bb7f-94ad-0a5d45465551/mzaf_6436270634698547247.plus.aac.p.m4a',
       streamFormat: 'aac',
-      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg',
+      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg',
       license: 'T-Series / Official Release',
       audioQuality: '320kbps (Master Studio)',
       explicit: false,
@@ -76,7 +77,7 @@ const AASHIQUI_2_ALBUM: {
       duration: 304,
       streamUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e0/65/55/e06555c8-1090-bb7f-94ad-0a5d45465551/mzaf_6436270634698547247.plus.aac.p.m4a',
       streamFormat: 'aac',
-      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg',
+      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg',
       license: 'T-Series / Official Release',
       audioQuality: '320kbps (Master Studio)',
       explicit: false,
@@ -93,7 +94,7 @@ const AASHIQUI_2_ALBUM: {
       duration: 295,
       streamUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e0/65/55/e06555c8-1090-bb7f-94ad-0a5d45465551/mzaf_6436270634698547247.plus.aac.p.m4a',
       streamFormat: 'aac',
-      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg',
+      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg',
       license: 'T-Series / Official Release',
       audioQuality: '320kbps (Master Studio)',
       explicit: false,
@@ -110,7 +111,7 @@ const AASHIQUI_2_ALBUM: {
       duration: 306,
       streamUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e0/65/55/e06555c8-1090-bb7f-94ad-0a5d45465551/mzaf_6436270634698547247.plus.aac.p.m4a',
       streamFormat: 'aac',
-      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg',
+      artworkUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg',
       license: 'T-Series / Official Release',
       audioQuality: '320kbps (Master Studio)',
       explicit: false,
@@ -137,18 +138,18 @@ function AlbumViewContent() {
   };
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-[#0b3b32] via-[#121212] to-[#121212] text-white p-4 md:p-8 select-none pb-28">
+    <div className="min-h-full bg-gradient-to-b from-spotify-elevated via-spotify-base to-spotify-base text-spotify-text p-4 md:p-8 select-none pb-28">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between mb-6">
         <button
-          onClick={() => router.back()}
+          aria-label="Back" onClick={() => router.back()}
           className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
 
         <button
-          onClick={() => openShareModal(album.tracks[0])}
+          aria-label="Share album track" onClick={() => openShareModal(album.tracks[0])}
           className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors"
         >
           <MoreVertical className="w-5 h-5" />
@@ -157,8 +158,9 @@ function AlbumViewContent() {
 
       {/* Album Artwork & Metadata Header (Screenshot #4) */}
       <div className="flex flex-col items-start gap-4 mb-6">
-        <div className="w-52 md:w-64 aspect-square rounded-xl overflow-hidden shadow-2xl border border-white/10 mx-auto md:mx-0">
-          <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
+        <div className="relative bg-[#20483d] w-52 md:w-64 aspect-square rounded-xl overflow-hidden shadow-2xl border border-white/10 mx-auto md:mx-0">
+          <span aria-hidden="true" className="absolute inset-0 grid place-items-center text-2xl font-bold">{album.title}</span>
+          <img onError={e=>{ e.currentTarget.hidden=true; }} style={{position:"relative"}} src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
         </div>
 
         <div className="flex flex-col mt-2">
@@ -255,7 +257,7 @@ function AlbumViewContent() {
 
 export default function AlbumPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-white">Loading album...</div>}>
+    <Suspense fallback={<div className="p-6"><CatalogSkeleton label="Loading album" /></div>}>
       <AlbumViewContent />
     </Suspense>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import ScrollingTitle from './ScrollingTitle';
 import {
   ArrowDownToLine,
   Check,
@@ -142,7 +143,7 @@ export default function PlayerBar() {
           cycleRepeat();
           break;
         case 'KeyL':
-          if (currentTrack) toggleLike(currentTrack.id);
+          if (currentTrack) toggleLike(currentTrack);
           break;
         case 'KeyQ':
           setIsQueueOpen((prev) => !prev);
@@ -195,13 +196,15 @@ export default function PlayerBar() {
       {/* Persistent Spotify Desktop Playback Bar */}
       <footer
         aria-label="Now playing bar"
-        className="hidden md:grid grid-cols-12 items-center h-[76px] lg:h-[84px] bg-black border-t border-[#282828] px-4 select-none z-40 shrink-0 text-white"
+        className="wl-player wl-glass hidden md:grid grid-cols-12 items-center h-[76px] lg:h-[84px] border-t px-3 xl:px-4 select-none z-40 shrink-0 text-white"
       >
         {/* Left (Col 1-3): Current Track Cover & Details & Heart */}
         <div className="col-span-3 flex items-center gap-3.5 min-w-0 pr-4">
           {currentTrack ? (
             <>
-              <div
+              <button
+                type="button"
+                aria-label="Open now playing"
                 onClick={() => toggleNowPlayingView()}
                 className="w-14 h-14 rounded-md bg-[#242424] overflow-hidden shrink-0 shadow-lg cursor-pointer group relative"
               >
@@ -216,19 +219,18 @@ export default function PlayerBar() {
                     W
                   </div>
                 )}
-              </div>
+              </button>
 
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span
-                    onClick={() => toggleNowPlayingView()}
-                    className="text-white text-sm font-bold truncate hover:underline cursor-pointer"
-                  >
-                    {currentTrack.title}
-                  </span>
+                  {isPlaying && <span aria-hidden="true" className="wl-equalizer shrink-0"><i /><i /><i /></span>}
+                  <button type="button" title={currentTrack.title} onClick={toggleNowPlayingView}
+                    className="wl-title wl-theme-text overflow-hidden text-left text-sm font-bold">
+                    <ScrollingTitle title={currentTrack.title} />
+                  </button>
                   <button
                     onClick={() => setIsQualityModalOpen(true)}
-                    title={`Audio Quality: ${audioStreamDetails?.tierLabel || 'High Quality'} (${audioStreamDetails?.codec || 'AAC'} • ${audioStreamDetails?.bitrate || '320kbps'})\nClick to customize audio streaming tier`}
+                    title={audioStreamDetails ? `Stream details: ${audioStreamDetails.codec} · ${audioStreamDetails.bitrate}` : 'Audio settings'}
                     className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95 cursor-pointer border ${
                       audioStreamDetails?.isRealLossless
                         ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
@@ -237,24 +239,19 @@ export default function PlayerBar() {
                         : 'bg-white/10 hover:bg-white/15 text-white/70 hover:text-white border-white/15'
                     }`}
                   >
-                    {audioStreamDetails?.isRealLossless
-                      ? audioStreamDetails.tier === 'hi-res-lossless'
-                        ? 'Hi-Res Lossless'
-                        : 'Lossless'
-                      : streamingQuality === 'high-efficiency'
-                      ? 'HE-AAC'
-                      : '320k'}
+                    {audioStreamDetails?.codec || 'Audio'}
                   </button>
                 </div>
-                <span className="text-spotify-subtext text-xs truncate hover:underline cursor-pointer mt-0.5">
+                <span className="text-spotify-subtext text-xs truncate mt-0.5">
                   {currentTrack.artistName}
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5 ml-2 shrink-0">
                 <button
-                  onClick={() => toggleLike(currentTrack.id)}
-                  className="text-spotify-subtext hover:text-white p-1 transition-colors"
+                  onClick={() => toggleLike(currentTrack)}
+                  aria-pressed={isLiked}
+                  className="wl-like text-spotify-subtext hover:text-white p-1"
                   title={isLiked ? 'Remove from Liked Songs' : 'Save to Liked Songs (L)'}
                 >
                   <Heart
@@ -289,7 +286,7 @@ export default function PlayerBar() {
         {/* Center (Col 4-9): Transport Controls & Scrubber */}
         <div className="col-span-6 flex flex-col items-center gap-1.5 max-w-2xl mx-auto w-full">
           {/* Controls Row */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center wl-transport gap-4">
             {/* Mode Switch Badge */}
             <button
               onClick={() => togglePlaybackMode()}
@@ -309,7 +306,8 @@ export default function PlayerBar() {
               className={`transition-colors relative p-1 ${
                 isShuffled ? 'text-spotify-green' : 'text-spotify-subtext hover:text-white'
               }`}
-              title="Enable shuffle (S)"
+              aria-pressed={isShuffled}
+              title={isShuffled ? 'Disable shuffle (S)' : 'Enable shuffle (S)'}
             >
               <Shuffle className="w-4 h-4" />
               {isShuffled && (
@@ -392,36 +390,32 @@ export default function PlayerBar() {
           <div className="w-full flex items-center gap-2 text-[11px] text-spotify-subtext font-mono">
             <span className="w-10 text-right tabular-nums">{formatTime(progress)}</span>
 
-            <div className="flex-1 relative group flex items-center cursor-pointer h-3">
+            <div className="wl-scrubber flex-1 relative group flex items-center cursor-pointer h-4">
               {/* Background Bar */}
               <div className="w-full h-1 bg-[#4d4d4d] rounded-full overflow-hidden">
                 {/* Progress Fill (White turning Spotify Green on Hover) */}
                 <div
-                  className="h-full bg-white group-hover:bg-spotify-green transition-colors"
-                  style={{ width: `${progressPercent}%` }}
+                  className="wl-range-fill h-full w-full bg-spotify-green"
+                  style={{ transform: `scaleX(${progressPercent / 100})` }}
                 />
               </div>
 
               {/* Spotify Circular Scrubber Thumb */}
               <div
-                className="w-3 h-3 bg-white rounded-full shadow-lg absolute -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+                className="wl-thumb w-3 h-3 bg-spotify-green rounded-full shadow-lg absolute -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
                 style={{ left: `${progressPercent}%` }}
               />
 
               <input
                 type="range"
+                aria-label="Playback position"
+                aria-valuetext={`${formatTime(progress)} of ${formatTime(duration)}`}
+                disabled={!currentTrack || duration <= 0}
                 min={0}
-                max={duration > 0 ? duration : 180}
+                max={duration > 0 ? duration : 1}
                 step={0.1}
                 value={progress}
-                onInput={(e) => {
-                  const val = parseFloat((e.target as HTMLInputElement).value);
-                  seek(val);
-                }}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  seek(val);
-                }}
+                onChange={event => seek(event.currentTarget.valueAsNumber)}
                 className="absolute inset-0 w-full opacity-0 cursor-pointer"
               />
             </div>
@@ -542,7 +536,7 @@ export default function PlayerBar() {
             <div className="flex-1 relative flex items-center h-3 cursor-pointer">
               <div className="w-full h-1 bg-[#4d4d4d] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-white group-hover:bg-spotify-green transition-colors"
+                  className="wl-range-fill h-full w-full bg-spotify-green"
                   style={{ width: `${isMuted ? 0 : volume * 100}%` }}
                 />
               </div>
@@ -555,6 +549,7 @@ export default function PlayerBar() {
 
               <input
                 type="range"
+                aria-label="Volume"
                 min={0}
                 max={1}
                 step={0.01}

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Clock, Play, Trash2 } from 'lucide-react';
 import TrackCard from '../../components/TrackCard';
 import { usePlayerStore } from '../../stores/usePlayerStore';
@@ -9,7 +10,7 @@ export default function HistoryPage() {
 
   const handleClearHistory = () => {
     localStorage.removeItem('wavelength_listening_history');
-    window.location.reload();
+    usePlayerStore.setState({history: []});
   };
 
   return (
@@ -69,6 +70,7 @@ export default function HistoryPage() {
             <p className="text-xs text-spotify-subtext mt-1 max-w-sm">
               Songs you play will appear here so you can easily jump back into your recent favorites.
             </p>
+            <Link href="/search" className="mt-4 text-spotify-green underline">Find music</Link>
           </div>
         )}
       </div>

@@ -36,15 +36,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-spotify-elevated/40 to-spotify-base select-none">
-      <div className="w-full max-w-md flex flex-col items-center gap-6 bg-black/85 border border-white/10 p-8 rounded-3xl shadow-2xl backdrop-blur-xl">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-12 h-12 rounded-full bg-spotify-green flex items-center justify-center text-black shadow-lg group-hover:scale-105 transition-transform">
-            <Radio className="w-7 h-7 stroke-[2.5]" />
-          </div>
-          <span className="font-black text-3xl tracking-tight text-white group-hover:text-spotify-green transition-colors">
-            Wavelength
-          </span>
-        </Link>
+      <div className="w-full max-w-md flex flex-col items-center gap-6 bg-spotify-card border border-white/10 p-5 sm:p-8 rounded-2xl shadow-sm backdrop-blur-xl">
+
 
         <div className="text-center">
           <h1 className="text-2xl md:text-3xl font-black text-white">
@@ -57,18 +50,18 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="w-full p-3 bg-red-950/80 border border-red-500/50 rounded-xl text-red-200 text-xs font-medium">
+          <div role="alert" className="w-full p-3 bg-red-950/80 border border-red-500/50 rounded-xl text-red-200 text-xs font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-white/80">Email address</label>
+            <label htmlFor="login-email" className="text-sm font-bold text-spotify-text">Email address</label>
             <div className="relative flex items-center">
               <Mail className="w-4 h-4 text-spotify-subtext absolute left-3.5 pointer-events-none" />
               <input
-                type="email"
+                type="email" id="login-email" autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -79,11 +72,11 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-white/80">Password</label>
+            <label htmlFor="login-password" className="text-sm font-bold text-spotify-text">Password</label>
             <div className="relative flex items-center">
               <Lock className="w-4 h-4 text-spotify-subtext absolute left-3.5 pointer-events-none" />
               <input
-                type="password"
+                type="password" id="login-password" autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

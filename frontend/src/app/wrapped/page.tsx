@@ -2,6 +2,7 @@
 
 import { Award, Clock, Flame, Headphones, Music, Radio, Share2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { notify } from '../../components/InterfaceEffects';
 
 export default function WrappedPage() {
   const stats = {
@@ -36,20 +37,25 @@ export default function WrappedPage() {
               Wavelength Wrapped
             </span>
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mt-2">
-              Your Year in Sound
+              A Year in Sound
             </h1>
             <p className="text-white/80 text-sm max-w-lg">
-              You explored thousands of minutes of open, licensed music across Jamendo, Audius, and Internet Archive.
+              Explore a sample listening recap with example stats, songs, and genres.
             </p>
           </div>
 
           <div className="flex items-center gap-4 z-10">
             <button
-              onClick={() => alert('Wavelength Wrapped card copied to clipboard!')}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText('Wavelength Wrapped preview · ' + window.location.href);
+                  notify('Preview link copied');
+                } catch { notify('Clipboard unavailable. Copy the page address to share.'); }
+              }}
               className="px-6 py-3 rounded-full bg-white text-black font-extrabold text-sm flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-xl"
             >
               <Share2 className="w-4 h-4" />
-              <span>Share My Wrapped</span>
+              <span>Share preview</span>
             </button>
           </div>
         </div>

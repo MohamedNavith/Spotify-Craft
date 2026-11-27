@@ -98,7 +98,7 @@ export default function NowPlayingPanel() {
 
             <div className="flex items-center gap-1 shrink-0 pt-1">
               <button
-                onClick={() => toggleLike(currentTrack.id)}
+                onClick={() => toggleLike(currentTrack)}
                 className="p-1.5 text-spotify-subtext hover:text-white transition-colors"
                 title={isLiked ? 'Remove from Liked Songs' : 'Save to Liked Songs'}
               >

@@ -1,5 +1,9 @@
 'use client';
 
+import { getLikedTracks } from '../lib/userPlaylists';
+import { playlistUrl, rockAndPop } from '../lib/playlistCatalog';
+import { artistPortrait } from '../lib/artistPortrait';
+
 import { ChevronLeft, ChevronRight, Disc3, Flame, Headphones, Heart, Mic2, Music2, Play, Radio, Sparkles, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,61 +26,61 @@ const POPULAR_ARTISTS_CATALOG: PopularArtistItem[] = [
   {
     id: 'pritam',
     name: 'Pritam',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/3d/c7/43/3dc74387-e7f4-2342-397c-4cf2037c69a5/8902894623223_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('pritam'),
     genre: 'Bollywood',
   },
   {
     id: 'arijit',
     name: 'Arijit Singh',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/600x600bb.jpg',
+    image: artistPortrait('arijit-singh'),
     genre: 'Soulful & Melodic',
   },
   {
     id: 'ar-rahman',
     name: 'A.R. Rahman',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/600x600bb.jpg',
+    image: artistPortrait('a-r-rahman'),
     genre: 'Composer & Master',
   },
   {
     id: 'anirudh',
     name: 'Anirudh Ravichander',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/600x600bb.jpg',
+    image: artistPortrait('anirudh-ravichander'),
     genre: 'Tamil & Bollywood Rock',
   },
   {
     id: 'taylor-swift',
     name: 'Taylor Swift',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('taylor-swift'),
     genre: 'Pop Superstar',
   },
   {
     id: 'sabrina-carpenter',
     name: 'Sabrina Carpenter',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/57/e8/7b/57e87ba0-5057-9bb9-c247-ce7dbe426e89/24UMGIM55213.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('sabrina-carpenter'),
     genre: 'Pop & Dance',
   },
   {
     id: 'billie-eilish',
     name: 'Billie Eilish',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('billie-eilish'),
     genre: 'Alternative Pop',
   },
   {
     id: 'bruno-mars',
     name: 'Bruno Mars',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
+    image: artistPortrait('bruno-mars'),
     genre: 'R&B & Pop',
   },
   {
     id: 'the-weeknd',
     name: 'The Weeknd',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/600x600bb.jpg',
+    image: artistPortrait('the-weeknd'),
     genre: 'Synthwave & R&B',
   },
   {
     id: 'diljit',
     name: 'Diljit Dosanjh',
-    image: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/600x600bb.jpg',
+    image: artistPortrait('diljit-dosanjh'),
     genre: 'Punjabi & Global Fusion',
   },
 ];
@@ -93,7 +97,19 @@ export default function HomePage() {
   const [favArtistNames, setFavArtistNames] = useState<string[]>([]);
   const [loadingArtist, setLoadingArtist] = useState<string | null>(null);
 
-  const { setTrack, history } = usePlayerStore();
+  const setTrack = usePlayerStore(state => state.setTrack);
+  const history = usePlayerStore(state => state.history);
+  const [likedTracks, setLikedTracks] = useState<UnifiedTrack[]>([]);
+  useEffect(() => {
+    const refresh = () => setLikedTracks(getLikedTracks());
+    refresh();
+    window.addEventListener('wavelength_liked_tracks_updated', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('wavelength_liked_tracks_updated', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
   const historyScrollRef = useRef<HTMLDivElement | null>(null);
 
   const scrollShelf = (direction: 'left' | 'right') => {
@@ -171,51 +187,51 @@ export default function HomePage() {
 
   const quickTiles = [
     {
+      playlistId: 'collection-todayTopHits',
       title: "Today's Top Hits",
       gradient: 'from-emerald-700 to-green-600',
       icon: <Flame className="w-6 h-6 text-white" />,
-      tracks: topHits,
-      startTrack: topHits[0],
+      tracks: CURATED_OFFICIAL_HITS.todayTopHits,
     },
     {
+      playlistId: 'collection-bollywoodHits',
       title: 'Bollywood & Indian Hits',
       gradient: 'from-amber-600 to-rose-600',
       icon: <Sparkles className="w-6 h-6 text-white" />,
-      tracks: bollywood,
-      startTrack: bollywood[0],
+      tracks: CURATED_OFFICIAL_HITS.bollywoodHits,
     },
     {
+      playlistId: 'collection-global50',
       title: 'Global Top 50',
       gradient: 'from-indigo-700 to-purple-600',
       icon: <Radio className="w-6 h-6 text-white" />,
-      tracks: global50,
-      startTrack: global50[0],
+      tracks: CURATED_OFFICIAL_HITS.global50,
     },
     {
+      playlistId: 'collection-chillLoFi',
       title: 'Chill Lo-Fi Study',
       gradient: 'from-teal-800 to-cyan-700',
       icon: <Headphones className="w-6 h-6 text-white" />,
-      tracks: chillLoFi,
-      startTrack: chillLoFi[0],
+      tracks: CURATED_OFFICIAL_HITS.chillLoFi,
     },
     {
+      playlistId: 'liked',
       title: 'Liked Songs',
       gradient: 'from-purple-800 to-indigo-900',
       icon: <Heart className="w-6 h-6 fill-white text-white" />,
-      tracks: topHits,
-      startTrack: topHits[1] || topHits[0],
+      tracks: likedTracks,
     },
     {
+      playlistId: rockAndPop.id,
       title: 'Rock & Pop Legends',
       gradient: 'from-rose-800 to-pink-700',
       icon: <Music2 className="w-6 h-6 text-white" />,
-      tracks: global50,
-      startTrack: global50[2] || global50[0],
+      tracks: rockAndPop.tracks,
     },
   ];
 
   return (
-    <div className="flex flex-col min-h-full pb-16 relative overflow-hidden bg-gradient-to-b from-[#1e3264]/40 via-spotify-base to-spotify-base">
+    <div className="flex flex-col min-h-full pb-16 relative overflow-hidden wl-home">
       <div className="p-6 flex flex-col gap-6">
         {/* Category Pills */}
         <div className="flex items-center gap-2 sticky top-0 py-2 -mt-2 bg-spotify-base/80 backdrop-blur-md z-20">
@@ -235,36 +251,32 @@ export default function HomePage() {
         </div>
 
         {/* Dynamic Greeting */}
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">
+        <h1 className="wl-heading font-extrabold text-spotify-text">
           {greeting}
         </h1>
 
         {/* Spotify 6-Item Quick Play Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="wl-quick-grid wl-stagger grid gap-2 md:gap-3">
           {quickTiles.map((tile, idx) => (
             <div
               key={idx}
-              onClick={() => {
-                if (tile.startTrack) {
-                  setTrack(tile.startTrack, tile.tracks);
-                }
-              }}
               className="group bg-white/5 hover:bg-white/10 rounded overflow-hidden flex items-center justify-between transition-colors cursor-pointer shadow-sm relative pr-4"
             >
-              <div className="flex items-center gap-4 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 <div
-                  className={`w-16 h-16 bg-gradient-to-br ${tile.gradient} flex items-center justify-center shrink-0 shadow-md`}
+                  className={`w-10 h-12 sm:w-16 sm:h-16 bg-gradient-to-br ${tile.gradient} flex items-center justify-center shrink-0 shadow-md`}
                 >
                   {tile.icon}
                 </div>
-                <span className="font-bold text-sm text-white truncate">
+                <Link href={playlistUrl(tile.playlistId)} className="font-bold text-sm text-white truncate after:absolute after:inset-0">
                   {tile.title}
-                </span>
+                </Link>
               </div>
 
               {/* Floating green play button on hover */}
               <button
-                className="w-10 h-10 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-105 active:scale-95 shrink-0"
+                className="absolute right-2 hidden md:flex w-10 h-10 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black items-center justify-center shadow-xl opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-105 active:scale-95 shrink-0"
+                onClick={event => { event.stopPropagation(); if (tile.tracks.length) setTrack(tile.tracks[0], tile.tracks); else router.push(playlistUrl('liked')); }}
                 title={`Play ${tile.title}`}
               >
                 <Play className="w-5 h-5 fill-black ml-0.5" />
@@ -328,57 +340,49 @@ export default function HomePage() {
                 Made For You
               </h2>
               <p className="text-spotify-subtext text-xs">
-                Your personalized mixes based on listening affinity &amp; acoustic moods
+                A mix for each mood
               </p>
             </div>
-            <span className="text-xs font-semibold text-spotify-green uppercase tracking-wider bg-spotify-green/10 px-2.5 py-1 rounded-full">
-              Personalized
-            </span>
+
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {generateDailyMixes().map((mix) => (
               <div
                 key={mix.id}
-                onClick={() => {
-                  if (mix.tracks.length > 0) {
-                    setTrack(mix.tracks[0], mix.tracks);
-                  }
-                }}
                 className="p-4 rounded-xl bg-spotify-card hover:bg-spotify-hover transition-all duration-300 flex flex-col gap-3 group cursor-pointer shadow-lg relative border border-white/5"
               >
                 {/* Mix Cover Artwork with Gradient & Spotify badge */}
                 <div
                   className={`aspect-square w-full rounded-lg bg-gradient-to-br ${mix.gradient} p-4 flex flex-col justify-between shadow-md relative overflow-hidden`}
                 >
-                  <div className="flex items-center justify-between">
+                  <img src={mix.id === 'daily-mix-3' ? mix.tracks[0]?.artworkUrl || undefined : artistPortrait(({ 'daily-mix-1':'bruno-mars', 'daily-mix-2':'arijit-singh', 'daily-mix-3':'billie-eilish', 'daily-mix-4':'the-weeknd' } as Record<string,string>)[mix.id])} alt="" className="absolute inset-0 h-full w-full object-cover object-[50%_25%]" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20" />
+                  <div className="relative flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase tracking-wider text-white/80">
                       Wavelength
                     </span>
                     <Disc3 className="w-5 h-5 text-white/60 animate-spin" style={{ animationDuration: '8s' }} />
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-white leading-tight">
-                      {mix.title}
-                    </h3>
-                  </div>
+
 
                   {/* Play Button on hover */}
                   <button
+                    aria-label={`Play ${mix.title}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (mix.tracks.length > 0) setTrack(mix.tracks[0], mix.tracks);
                     }}
-                    className="absolute bottom-3 right-3 w-12 h-12 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-105 active:scale-95"
+                    className="absolute z-10 bottom-3 right-3 w-12 h-12 rounded-full bg-spotify-green hover:bg-spotify-green-hover text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-105 active:scale-95"
                   >
                     <Play className="w-6 h-6 fill-black ml-0.5" />
                   </button>
                 </div>
 
                 <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-white truncate">
+                  <Link href={playlistUrl(mix.id)} className="font-bold text-white after:absolute after:inset-0">
                     {mix.title}
-                  </span>
+                  </Link>
                   <p className="text-xs text-spotify-subtext line-clamp-2 mt-0.5 leading-snug">
                     {mix.description}
                   </p>
@@ -449,9 +453,7 @@ export default function HomePage() {
                     src={artist.image}
                     alt={artist.name}
                     referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500';
-                    }}
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
 
@@ -490,7 +492,7 @@ export default function HomePage() {
                 Featured Album
               </h2>
               <p className="text-spotify-subtext text-xs">
-                Stream the complete master soundtrack
+                Music from the film
               </p>
             </div>
             <Link
@@ -508,7 +510,8 @@ export default function HomePage() {
             <div className="flex items-center gap-5">
               <div className="w-24 h-24 rounded-xl overflow-hidden shadow-2xl border border-white/20 shrink-0 group-hover:scale-105 transition-transform">
                 <img
-                  src="https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4a/12/35/4a123561-1c5c-7d35-30df-5953018e69ee/8902894354228.jpg/600x600bb.jpg"
+                  onError={event => { event.currentTarget.hidden = true; }}
+                  src="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg"
                   alt="Aashiqui 2"
                   className="w-full h-full object-cover"
                 />
@@ -516,7 +519,7 @@ export default function HomePage() {
 
               <div className="flex flex-col">
                 <span className="text-xs font-bold uppercase tracking-widest text-spotify-green">
-                  Master Studio Album
+                  Film soundtrack
                 </span>
                 <h3 className="text-2xl font-black text-white tracking-tight mt-0.5">
                   Aashiqui 2
@@ -571,13 +574,13 @@ export default function HomePage() {
 
                 <div className="flex items-center justify-center gap-1.5 my-auto">
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
-                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" alt="Arijit" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('arijit-singh')} alt="Arijit" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow z-10 scale-105">
-                    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=500" alt="Pritam" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('pritam')} alt="Pritam" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
-                    <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" alt="Anirudh" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('anirudh-ravichander')} alt="Anirudh" className="w-full h-full object-cover" />
                   </div>
                 </div>
 
@@ -610,13 +613,13 @@ export default function HomePage() {
 
                 <div className="flex items-center justify-center gap-1.5 my-auto">
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
-                    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500" alt="Punjabi" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('diljit-dosanjh')} alt="Diljit Dosanjh" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow z-10 scale-105">
-                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=500" alt="Sidhu" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('sidhu-moose-wala')} alt="Sidhu" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
-                    <img src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500" alt="Karan" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('karan-aujla')} alt="Karan" className="w-full h-full object-cover" />
                   </div>
                 </div>
 
@@ -649,13 +652,13 @@ export default function HomePage() {
 
                 <div className="flex items-center justify-center gap-1.5 my-auto">
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
-                    <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500" alt="Diljit" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('diljit-dosanjh')} alt="Diljit" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow z-10 scale-105">
-                    <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=500" alt="Badshah" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('badshah-rapper')} alt="Badshah" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
-                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500" alt="Yo Yo" className="w-full h-full object-cover" />
+                    <img src={artistPortrait('yo-yo-honey-singh')} alt="Yo Yo" className="w-full h-full object-cover" />
                   </div>
                 </div>
 

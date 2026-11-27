@@ -1,12 +1,15 @@
 'use client';
 
-import { Clock3, Heart, Pause, Play, Search, X } from 'lucide-react';
+import { Heart, Pause, Play, Search, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import CatalogSkeleton from '../../components/CatalogSkeleton';
 import TrackCard from '../../components/TrackCard';
-import { searchTracks } from '../../lib/api';
+import PlaylistRow from '../../components/PlaylistRow';
+import { findPlaylists, PlaylistSummary, searchPublicPlaylists } from '../../lib/playlistCatalog';
+import { useSongSearch } from '../../lib/useSongSearch';
 import { usePlayerStore } from '../../stores/usePlayerStore';
-import { UnifiedSearchResult, UnifiedTrack } from '../../types';
+
 
 function formatDuration(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -17,122 +20,119 @@ function formatDuration(sec: number): string {
 const BROWSE_CATEGORIES = [
   {
     name: 'Bollywood & Desi',
-    query: 'Bollywood Hits Arijit Singh Pritam',
+    query: 'Bollywood',
     color: 'from-amber-600 to-orange-800',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/fb/11/bffb111e-b834-c360-1e5b-b98a0033faea/8902894358899.jpg/300x300bb.jpg',
   },
   {
     name: 'Pop Hits',
-    query: 'Pop Music Hits Charts 2024',
+    query: 'Pop',
     color: 'from-pink-600 to-rose-700',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/300x300bb.jpg',
   },
   {
     name: 'Punjabi Hits',
-    query: 'Punjabi Hits Diljit Dosanjh Karan Aujla',
+    query: 'Punjabi',
     color: 'from-emerald-600 to-teal-800',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/300x300bb.jpg',
   },
   {
     name: 'Hip-Hop & Rap',
-    query: 'Hip Hop Rap Top Hits',
+    query: 'Hip Hop',
     color: 'from-orange-600 to-amber-700',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f7/6d/78/f76d78c5-cc9c-f2d6-8603-ba690eaa5c7d/5064089826918_cover.jpg/300x300bb.jpg',
   },
   {
     name: 'Tamil & South Beats',
-    query: 'Tamil Hits Anirudh Ravichander AR Rahman',
+    query: 'Tamil',
     color: 'from-red-600 to-red-900',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/47/61/88/476188e2-5cd5-2320-8f0b-f9cd978560fd/885288695823.jpg/300x300bb.jpg',
   },
   {
     name: 'Chill & Lo-Fi',
-    query: 'Chill Lo-Fi study beats relaxing',
+    query: 'Chill',
     color: 'from-indigo-600 to-blue-800',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2a/aa/b4/2aaab42a-a4cb-a600-4a25-d78961495960/18UMGIM17204.rgb.jpg/300x300bb.jpg',
   },
   {
     name: 'Rock Classics',
-    query: 'Rock Classics Legends Queen AC/DC',
+    query: 'Rock',
     color: 'from-stone-700 to-stone-900',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/70/c2/f2/70c2f254-1eb5-2c77-f21c-55d953a65483/1200220383139.jpg/300x300bb.jpg',
   },
   {
     name: 'R&B & Soul',
-    query: 'R&B Soul Bruno Mars The Weeknd',
+    query: 'Soul',
     color: 'from-purple-600 to-violet-800',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/300x300bb.jpg',
   },
   {
     name: 'Alternative & Indie',
-    query: 'Alternative Indie Billie Eilish',
+    query: 'Indie',
     color: 'from-teal-600 to-cyan-800',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/300x300bb.jpg',
   },
   {
     name: 'Romantic Melodies',
-    query: 'Romantic Love Songs Melodies Arijit',
+    query: 'Love',
     color: 'from-rose-600 to-pink-800',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2c/ca/64/2cca640a-e221-6063-23d0-fef1c78d263d/8909024123639.png/300x300bb.jpg',
   },
   {
     name: 'Workout Energy',
-    query: 'Workout Gym High Energy EDM Beats',
+    query: 'Workout',
     color: 'from-fuchsia-600 to-pink-800',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a0/dd/fd/a0ddfd72-ee9e-f046-6466-a5dbefc696fa/26UM1IM21436.rgb.jpg/300x300bb.jpg',
   },
   {
     name: 'Punjabi Legends',
-    query: 'Sidhu Moose Wala Punjabi Classics',
+    query: 'Sidhu',
     color: 'from-blue-700 to-indigo-950',
     cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/37/ca/50/37ca5028-a2dc-975b-6366-6427c2b81761/5064089945930_cover.jpg/300x300bb.jpg',
   },
 ];
 
 export default function SearchPage() {
-  return <Suspense><SearchContent /></Suspense>;
+  return <Suspense fallback={<div className="p-6"><CatalogSkeleton label="Loading search" /></div>}><SearchContent /></Suspense>;
 }
 
 function SearchContent() {
   const urlQuery = useSearchParams().get('q') || '';
-  const [failed, setFailed] = useState(false);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<UnifiedSearchResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { currentTrack, isPlaying, setTrack, togglePlay, likedTrackIds, toggleLike } =
-    usePlayerStore();
+  const [query, setQuery] = useState(urlQuery);
+  const [filter, setFilter] = useState<'All'|'Songs'|'Playlists'>('All');
+  const [remote,setRemote] = useState<PlaylistSummary[]>([]);
+  const [remoteState,setRemoteState] = useState('idle');
+  const local = findPlaylists(query);
+  const lists = [...local,...remote];
+  const {tracks,loading:isLoading,failed} = useSongSearch(filter === 'Playlists' ? '' : query);
+  const results = {tracks};
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const isPlaying = usePlayerStore(state => state.isPlaying);
+  const setTrack = usePlayerStore(state => state.setTrack);
+  const togglePlay = usePlayerStore(state => state.togglePlay);
+  const likedTrackIds = usePlayerStore(state => state.likedTrackIds);
+  const toggleLike = usePlayerStore(state => state.toggleLike);
 
   useEffect(() => {
     setQuery(urlQuery);
   }, [urlQuery]);
 
   useEffect(() => {
-    let active = true;
-    setResults(null);
-    setFailed(false);
-    setIsLoading(Boolean(query.trim()));
-    if (!query.trim()) return;
-
-    const timer = setTimeout(async () => {
-      try {
-        const res = await searchTracks(query.trim(), 20);
-        if (active) setResults(res);
-      } catch {
-        if (active) setFailed(true);
-      } finally {
-        if (active) setIsLoading(false);
-      }
-    }, 300);
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [query]);
+    setRemote([]);
+    setRemoteState('idle');
+    if (filter === 'Songs' || query.trim().length < 2) return;
+    const controller = new AbortController();
+    setRemoteState('loading');
+    const timer = setTimeout(() => {
+      searchPublicPlaylists(query.trim(),controller.signal).then(items=>{
+        if (!controller.signal.aborted) { setRemote(items); setRemoteState('done'); }
+      }).catch(()=>{ if (!controller.signal.aborted) setRemoteState('failed'); });
+    },240);
+    return () => { clearTimeout(timer); controller.abort(); };
+  },[query,filter]);
 
   const topTrack = results?.tracks?.[0];
-  const otherTracks = results?.tracks?.slice(1, 5) || [];
+  const visibleLists = filter === 'All' ? lists.slice(0, 4) : lists;
 
   return (
     <div className="flex flex-col min-h-full pb-12 p-6">
@@ -143,8 +143,9 @@ function SearchContent() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          id="catalog-query"
           aria-label="Search the catalog"
-          placeholder="What do you want to play?"
+          placeholder="Songs, artists, or playlists"
           className="w-full h-12 bg-[#242424] hover:bg-[#2a2a2a] focus:bg-[#2a2a2a] text-white text-sm pl-11 pr-10 rounded-full outline-none border border-transparent focus:border-white/40 transition-all shadow-inner placeholder:text-spotify-subtext"
         />
         {query && (
@@ -159,19 +160,27 @@ function SearchContent() {
       </div>
 
       <div className="flex flex-col gap-6">
-        {isLoading && <p role="status">Searching the catalog…</p>}
-        {failed && <p role="alert">Search is unavailable. Please try again.</p>}
+        <div aria-label="Result types" className="flex gap-2">{(['All','Songs','Playlists'] as const).map(type =>
+          <button type="button" key={type} aria-pressed={filter===type} className="wl-filter" onClick={()=>setFilter(type)}>{type}</button>
+        )}</div>
+        {filter !== 'Songs' && lists.length > 0 && <section aria-label="Playlist results"><div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-xl font-bold text-spotify-text">Playlists</h2>
+          {visibleLists.length < lists.length && <button className="text-sm font-semibold text-spotify-subtext" onClick={() => setFilter('Playlists')}>See all playlists</button>}</div>
+          <div className="grid gap-2 sm:grid-cols-2">{visibleLists.map(list=><PlaylistRow key={list.id} list={list}/>)}</div></section>}
+        {filter !== 'Songs' && remoteState==='failed' && <p role="status">Public playlist search is unavailable.</p>}
+        {filter==='Playlists' && !lists.length && remoteState!=='failed' && <p role="status">{remoteState==='loading' ? 'Searching public playlists…' : 'No matching playlists.'}</p>}
+        {filter !== 'Playlists' && isLoading && !tracks.length && <CatalogSkeleton label="Searching the catalog" />}
+        {failed && <p role="alert">Online song search is unavailable. Your local matches are shown.</p>}
         {/* If no query, show Spotify Browse Categories */}
-        {!query.trim() && (
+        {!query.trim() && filter !== 'Playlists' && (
           <section className="flex flex-col gap-4">
             <h2 className="text-2xl font-bold text-white">Browse all</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="wl-browse-grid wl-stagger grid gap-3 md:gap-4">
               {BROWSE_CATEGORIES.map((cat) => (
                 <button
                   type="button"
                   key={cat.name}
                   onClick={() => setQuery(cat.query)}
-                  className={`group text-left focus-visible:outline-white h-44 rounded-xl p-4 bg-gradient-to-br ${cat.color} cursor-pointer hover:scale-[1.02] transition-all duration-300 shadow-md hover:shadow-xl relative overflow-hidden flex flex-col justify-between`}
+                  className={`group wl-always-dark text-left h-32 sm:h-36 rounded-xl p-4 bg-gradient-to-br ${cat.color} cursor-pointer hover:scale-[1.02] transition-all duration-300 shadow-md hover:shadow-xl relative overflow-hidden flex flex-col justify-between`}
                 >
                   <span className="text-white font-extrabold text-lg leading-tight tracking-tight z-10 drop-shadow">
                     {cat.name}
@@ -237,6 +246,7 @@ function SearchContent() {
 
                     {/* Floating green play button */}
                     <button
+                      aria-label={(currentTrack?.id === topTrack.id && isPlaying ? 'Pause ' : 'Play ') + topTrack.title}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (currentTrack?.id === topTrack.id) togglePlay();
@@ -265,10 +275,11 @@ function SearchContent() {
                     return (
                       <div
                         key={track.id}
-                        onClick={() => setTrack(track, results.tracks)}
                         className="group flex items-center justify-between p-2 rounded-md hover:bg-spotify-hover transition-colors cursor-pointer"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
+                        <button className="flex flex-1 items-center gap-3 min-w-0 text-left"
+                          aria-label={(isCurrent && isPlaying ? 'Pause ' : 'Play ') + track.title}
+                          onClick={() => isCurrent ? togglePlay() : setTrack(track, results.tracks)}>
                           {/* Play/Index toggle */}
                           <div className="w-6 text-center text-xs text-spotify-subtext font-mono group-hover:hidden">
                             {idx + 1}
@@ -303,15 +314,17 @@ function SearchContent() {
                               {track.artistName}
                             </span>
                           </div>
-                        </div>
+                        </button>
 
                         <div className="flex items-center gap-4 text-xs text-spotify-subtext pr-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleLike(track.id);
+                              toggleLike(track);
                             }}
-                            className={`opacity-0 group-hover:opacity-100 transition-opacity ${
+                            aria-label={(isLiked ? 'Unlike ' : 'Like ') + track.title}
+                            aria-pressed={isLiked}
+                            className={`focus-visible:opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity ${
                               isLiked ? 'opacity-100 text-spotify-green' : 'hover:text-white'
                             }`}
                           >
@@ -347,11 +360,11 @@ function SearchContent() {
         )}
 
         {/* Empty state when searching and no results */}
-        {query.trim() && results && results.tracks.length === 0 && !isLoading && (
+        {filter !== 'Playlists' && query.trim() && !tracks.length && !isLoading && !failed && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h3 className="text-xl font-bold text-white">No results found for "{query}"</h3>
+            <h3 className="text-xl font-bold text-white">No songs found for "{query}"</h3>
             <p className="text-spotify-subtext text-sm mt-2">
-              Please make sure your words are spelled correctly or use less or different keywords.
+              Try another song title or artist.
             </p>
           </div>
         )}

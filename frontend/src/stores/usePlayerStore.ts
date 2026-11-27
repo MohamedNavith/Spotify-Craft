@@ -1,3 +1,4 @@
+import { getLikedTracks, saveLikedTrack, removeLikedTrack } from '../lib/userPlaylists';
 import { create } from 'zustand';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
 import {
@@ -80,7 +81,7 @@ interface PlayerState {
   toggleNowPlayingView: () => void;
   setIsNowPlayingViewOpen: (open: boolean) => void;
   setDynamicVideoId: (id: string | null) => void;
-  toggleLike: (trackId: string) => void;
+  toggleLike: (track: UnifiedTrack) => void;
   markTrackDownloaded: (id: string) => void;
   unmarkTrackDownloaded: (id: string) => void;
   addToQueue: (track: UnifiedTrack) => void;
@@ -151,7 +152,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isExpandedNowPlaying: false,
   isNowPlayingViewOpen: false,
   dynamicVideoId: null,
-  likedTrackIds: new Set<string>(),
+  likedTrackIds: new Set(getLikedTracks().map(t=>t.id)),
   downloadedTrackIds: new Set<string>(),
   isSleepTimerModalOpen: false,
   sleepTimerMinutes: null,
@@ -200,11 +201,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     } catch {}
 
     const instantVideoId = resolveVideoId(track.title, track.artistName);
-    const isLocalOrOffline = track.provider === 'upload' || track.id.startsWith('offline-');
+    const useSourceAudio = track.provider === 'upload' || track.id.startsWith('offline-') || (track.provider === 'jamendo' && !!track.streamUrl);
 
-    if (isLocalOrOffline) {
+    if (useSourceAudio) {
       set({
         currentTrack: track,
+        audioStreamDetails: null,
         queue: newQueue,
         queueIndex: index >= 0 ? index : 0,
         history: updatedHist,
@@ -595,16 +597,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setIsSpotifyImportOpen: (open) => set({ isSpotifyImportOpen: open }),
 
-  toggleLike: (trackId) =>
-    set((state) => {
-      const nextLiked = new Set(state.likedTrackIds);
-      if (nextLiked.has(trackId)) {
-        nextLiked.delete(trackId);
-      } else {
-        nextLiked.add(trackId);
-      }
-      return { likedTrackIds: nextLiked };
-    }),
+  toggleLike: track => {
+    const saved = getLikedTracks().some(t=>t.id === track.id) ? removeLikedTrack(track.id) : saveLikedTrack(track);
+    set({likedTrackIds:new Set(saved.map(t=>t.id))});
+  },
 
   markTrackDownloaded: (id) =>
     set((state) => {

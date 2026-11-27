@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Figtree } from 'next/font/google';
+import InterfaceEffects from '../components/InterfaceEffects';
 import AppUpdateChecker from '../components/AppUpdateChecker';
 import AudioEngine from '../components/AudioEngine';
 import BackButtonManager from '../components/BackButtonManager';
@@ -49,8 +50,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`dark ${figtree.variable}`}>
-      <body className={`${figtree.className} font-sans h-screen w-screen flex flex-col overflow-hidden bg-black text-white select-none`}>
+      <body className={`${figtree.className} font-sans wl-shell w-full flex flex-col overflow-hidden`}>
         {/* Global Spotify Top Navigation Bar */}
+        <a href="#main-content" className="wl-skip">Skip to content</a>
+        <InterfaceEffects />
         <TopBar />
 
         {/* Main 3-Column Bento Shell */}
@@ -59,7 +62,7 @@ export default function RootLayout({
           <Sidebar />
 
           {/* Main Content Viewport */}
-          <main className="flex-1 bg-spotify-base rounded-lg overflow-y-auto custom-scrollbar flex flex-col relative pb-32 md:pb-0 border border-white/5 shadow-2xl">
+          <main id="main-content" tabIndex={-1} className="wl-main wl-workspace wl-scroll min-w-0 flex-1 overflow-y-auto flex flex-col relative">
             {children}
           </main>
 
