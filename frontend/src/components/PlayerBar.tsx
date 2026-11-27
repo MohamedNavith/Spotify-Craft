@@ -26,7 +26,8 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { saveTrackOffline } from '../lib/offlineStorage';
+import { notify } from './InterfaceEffects';
+import { canSaveAudioOffline, isTrackOffline, saveTrackOffline } from '../lib/offlineStorage';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import EqualizerModal from './EqualizerModal';
 import LyricsModal from './LyricsModal';
@@ -175,6 +176,13 @@ export default function PlayerBar() {
   const isDownloaded = currentTrack ? downloadedTrackIds.has(currentTrack.id) : false;
   const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
 
+  useEffect(() => {
+    let active = true;
+    const id = currentTrack?.id;
+    if (id && !isDownloaded) isTrackOffline(id).then(saved=>{ if (active && saved) markTrackDownloaded(id); });
+    return () => { active = false; };
+  },[currentTrack?.id,isDownloaded,markTrackDownloaded]);
+
   const handleDownload = async () => {
     if (!currentTrack) return;
     setIsDownloading(true);
@@ -182,6 +190,7 @@ export default function PlayerBar() {
     if (ok) {
       markTrackDownloaded(currentTrack.id);
     }
+    notify(ok ? 'Saved for offline listening' : 'Could not download the audio. Try again when the track is ready.');
     setIsDownloading(false);
   };
 
@@ -264,9 +273,10 @@ export default function PlayerBar() {
                 </button>
 
                 <button
+                  disabled={isDownloading || isDownloaded || !canSaveAudioOffline(currentTrack)}
                   onClick={handleDownload}
                   className="text-spotify-subtext hover:text-white p-1 transition-colors"
-                  title={isDownloaded ? 'Saved in App Storage (Offline)' : 'Download song for offline listening'}
+                  title={isDownloaded ? 'Saved in App Storage (Offline)' : canSaveAudioOffline(currentTrack) ? 'Download song for offline listening' : 'Offline download unavailable for this track'}
                 >
                   {isDownloaded ? (
                     <Check className="w-4 h-4 text-spotify-green" />

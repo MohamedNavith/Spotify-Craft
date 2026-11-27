@@ -33,15 +33,17 @@
 | --- | --- |
 | <img src="docs/screenshots/05_mobile_home.png" width="270" alt="Home shortcuts and daily mixes on a phone"> | <img src="docs/screenshots/mobile-playlist.png" width="270" alt="Today's Top Hits with its track order, play button and save action"> |
 
-**Windows app** · Search in the packaged Windows player.
+**Windows app** · Song results for a three-letter search in the released Windows player.
 
-![Search categories in the Windows release](docs/screenshots/windows-search.png)
+![The Windows app showing songs that match ari](docs/screenshots/windows-search.png)
 
-**Android APK in landscape** · Artist preferences and playback settings in BlueStacks.
+**Android APK** · The current debug build running on an Android 14 emulator.
 
-![Android app displaying favorite artists and playback settings](docs/screenshots/android-settings.png)
+| Artist preferences | Saved playlist |
+| --- | --- |
+| <img src="docs/screenshots/android-settings.png" width="270" alt="Android artist picker showing performer portraits and corner selection badges"> | <img src="docs/screenshots/android-playlist.png" width="270" alt="An editable playlist open inside the Android app"> |
 
-The mobile web images use a 393 × 852 CSS-pixel browser viewport. The Android image comes from the installed APK. The APK attached to the v2.0.0 release reports version 1.4.0 (code 3) to Android.
+The mobile web captures use a 393 × 852 CSS-pixel viewport. The Android captures are from the APK built from this source. The APK attached to the v2.0.0 download above reports version 1.4.0 (code 3) to Android.
 
 ## Finding and saving playlists
 
@@ -54,6 +56,8 @@ Choose **Create Playlist** in the library to build your own. **Sync Spotify** ac
 Copy `.env.example` to `.env`. Set distinct random values for `JWT_SECRET` and `JWT_REFRESH_SECRET` and replace `POSTGRES_PASSWORD` with a random URL-safe value. Run `docker compose up --build -d` and open `http://localhost:3000`. The schema service initializes PostgreSQL before the API starts. For an existing database, back it up before applying schema changes. The schema service stops if Prisma detects a change that requires accepting data loss.
 
 For a public deployment, put the frontend behind an HTTPS reverse proxy. The frontend serves the static player and proxies `/api/` to NestJS. The API health endpoint is available on the host at `http://localhost:4000/health` and checks that PostgreSQL can query the users table. Add `--profile bot` and configure `DISCORD_TOKEN` and `CLIENT_ID` to start the Discord bot.
+
+For your own Jamendo quota, set `JAMENDO_CLIENT_ID` in the self-hosted `.env` or as a GitHub Actions repository variable before building Pages. The public app identifier is included in the browser bundle.
 
 The player’s profiles and library are browser-local. The self-hosted API has its own authentication and playlist endpoints. Capacity depends on hosting resources and streaming-provider limits.
 

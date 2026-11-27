@@ -40,3 +40,7 @@ WCAG AA targets 4.5:1 for normal text and 3:1 for large text and non-text contro
 | Muted text on light surface 4 | 6.08 to 1 |
 
 Ratios use the WCAG relative-luminance formula on the solid tokens. Translucent layers and artwork backgrounds vary by image.
+
+## Automated follow-up
+
+An axe-core scan found a low-contrast Discord link, dark library surfaces behind dark text in light mode, and missing names on the album, podcast and settings controls. After correction, axe-core 4.10.3 reported zero violations of the WCAG 2 A/AA and 2.1 A/AA rules it checks on the 13 routes tested in dark desktop and light phone layouts. These 26 checks cover the displayed route states. Dialogs, other viewport combinations and assistive-technology workflows need separate evaluation.

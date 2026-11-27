@@ -300,3 +300,8 @@ button, a, input, select, [role="button"] {
 .wl-top:has(input:focus-visible) .focus-within\:bg-\[\#282828\] { background:rgb(var(--wl-surface-3)); }
 .wl-main:has(.wl-search-field) .wl-search-field { border:1px solid rgb(var(--wl-line)); }
 @media (max-width:900px) and (min-width:768px) { .wl-top button[title*="Discord"] span,.wl-top button[title*="Spotify Playlists"] span { display:none; } }
+[data-theme=light] .wl-top .wl-discord-action { color:#343d93; }
+[data-theme=light] .wl-top .wl-discord-action:hover { color:white; background:#424bad; }
+/* Keep faces in frame when portraits are displayed in square and circular artwork slots. */
+.wl-shell img[src*="/artists/"] { object-position: center top; }
+.wl-shell img[src$="/arijit-singh.webp"] { object-view-box: inset(0 19% 59% 17%); }

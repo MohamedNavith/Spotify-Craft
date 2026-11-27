@@ -180,7 +180,7 @@ export default function LibraryPage() {
   );
 
   return (
-    <div className="min-h-full bg-[#121212] text-white p-4 md:p-8 select-none pb-28">
+    <div className="min-h-full bg-spotify-base text-spotify-text p-4 md:p-8 select-none pb-28">
       {/* Top Header: Avatar, Your Library, Search, Plus (+) */}
       <div className="flex items-center justify-between mb-4 pt-1">
         <div className="flex items-center gap-3">

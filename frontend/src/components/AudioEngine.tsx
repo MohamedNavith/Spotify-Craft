@@ -1,5 +1,7 @@
 'use client';
 
+import { playsFromSource } from '../lib/offlineStorage';
+
 import { useEffect, useRef } from 'react';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
 import { invalidateAudioCache, resolveMasterAudioStream } from '../lib/masterAudioResolver';
@@ -39,9 +41,7 @@ export default function AudioEngine() {
     setIsPlaying,
   } = usePlayerStore();
 
-  const isLocalOrOffline =
-    currentTrack?.provider === 'upload' ||
-    currentTrack?.id?.startsWith('offline-');
+  const isLocalOrOffline = playsFromSource(currentTrack);
 
   const videoId =
     dynamicVideoId ||
@@ -326,7 +326,7 @@ export default function AudioEngine() {
                 currentTrack.artistName,
                 'high-quality',
               );
-              if (fresh && fresh.streamUrl && audioRef.current) {
+              if (fresh?.streamUrl && audioRef.current && usePlayerStore.getState().currentTrack?.id === currentTrack.id) {
                 audioRef.current.src = fresh.streamUrl;
                 audioRef.current.play().catch(() => {});
                 usePlayerStore.getState().setAudioStreamDetails({

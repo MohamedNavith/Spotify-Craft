@@ -30,9 +30,9 @@ export const metadata: Metadata = {
   description: 'Production-quality Spotify-style music streaming platform powered by Next.js and open licensed music APIs.',
   manifest: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/manifest.json`,
   icons: {
-    icon: './icon.svg',
-    shortcut: './icon.svg',
-    apple: './icon.svg',
+    icon: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/icon.svg`,
+    shortcut: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/favicon.ico`,
+    apple: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/apple-touch-icon.png`,
   },
 };
 

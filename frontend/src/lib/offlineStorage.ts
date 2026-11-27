@@ -37,42 +37,32 @@ export interface OfflineRecord {
   downloadedAt: number;
 }
 
+export function canSaveAudioOffline(track: UnifiedTrack) {
+  return track.provider === 'jamendo' ? track.audioDownloadAllowed === true : track.audioDownloadAllowed !== false;
+}
+
+export function playsFromSource(track: UnifiedTrack | null) {
+  return !!track && (track.provider === 'upload' || track.id.startsWith('offline-') ||
+    track.streamUrl?.startsWith('blob:') || (track.provider === 'jamendo' && !!track.streamUrl));
+}
+
 /**
  * Saves a track and its audio into IndexedDB for 100% offline playback.
  */
 export async function saveTrackOffline(track: UnifiedTrack): Promise<boolean> {
   try {
+    if (!track.streamUrl || !canSaveAudioOffline(track)) return false;
+    const response = await fetch(track.streamUrl);
+    if (!response.ok) return false;
+    const blob = await response.blob();
+    if (!blob.size || blob.type.startsWith('text/')) return false;
     const db = await openDB();
-
-    let audioBlob: Blob | undefined;
-    if (track.streamUrl) {
-      try {
-        const res = await fetch(track.streamUrl);
-        if (res.ok) {
-          audioBlob = await res.blob();
-        }
-      } catch (fetchErr) {
-        console.warn('Could not fetch audio blob, saving metadata only:', fetchErr);
-      }
-    }
-
-    const record: OfflineRecord = {
-      id: track.id,
-      track: {
-        ...track,
-        audioDownloadAllowed: true,
-      },
-      blob: audioBlob,
-      downloadedAt: Date.now(),
-    };
-
-    return new Promise((resolve, reject) => {
+    const record: OfflineRecord = { id:track.id, track, blob, downloadedAt:Date.now() };
+    return await new Promise<boolean>(resolve => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.put(record);
-
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
+      tx.objectStore(STORE_NAME).put(record);
+      tx.oncomplete = () => { db.close(); resolve(true); };
+      tx.onabort = tx.onerror = () => { db.close(); resolve(false); };
     });
   } catch (err) {
     console.error('Failed to save track offline:', err);
@@ -93,7 +83,7 @@ export async function getOfflineTracks(): Promise<UnifiedTrack[]> {
 
       req.onsuccess = () => {
         const records: OfflineRecord[] = req.result || [];
-        const tracks = records.map((r) => {
+        const tracks = records.filter(record => record.blob?.size).map((r) => {
           let streamUrl = r.track.streamUrl;
           if (r.blob) {
             try {
@@ -125,7 +115,7 @@ export async function isTrackOffline(id: string): Promise<boolean> {
       const store = tx.objectStore(STORE_NAME);
       const req = store.get(id);
 
-      req.onsuccess = () => resolve(Boolean(req.result));
+      req.onsuccess = () => resolve(Boolean(req.result?.blob?.size));
       req.onerror = () => resolve(false);
     });
   } catch {

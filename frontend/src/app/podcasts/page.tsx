@@ -108,15 +108,15 @@ export default function PodcastsPage() {
               {/* Episodes List */}
               <div className="flex flex-col divide-y divide-spotify-border">
                 {pod.episodes.map((ep) => (
-                  <div
+                  <button type="button" aria-label={`Play ${ep.title}`}
                     key={ep.id}
                     onClick={() => handlePlayEpisode(ep, pod)}
-                    className="py-4 flex items-center justify-between group cursor-pointer hover:bg-spotify-hover/40 px-2 rounded transition-colors"
+                    className="py-4 text-left flex items-center justify-between group cursor-pointer hover:bg-spotify-hover/40 px-2 rounded transition-colors"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <button className="w-10 h-10 rounded-full bg-white group-hover:bg-spotify-green text-black flex items-center justify-center shrink-0 transition-all group-hover:scale-105">
+                      <span aria-hidden="true" className="w-10 h-10 rounded-full bg-white group-hover:bg-spotify-green text-black flex items-center justify-center shrink-0 transition-all group-hover:scale-105">
                         <Play className="w-4 h-4 fill-black ml-0.5" />
-                      </button>
+                      </span>
 
                       <div className="flex flex-col min-w-0">
                         <h3 className="text-sm font-bold text-white group-hover:text-spotify-green transition-colors truncate">
@@ -137,7 +137,7 @@ export default function PodcastsPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>

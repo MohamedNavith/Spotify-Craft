@@ -75,6 +75,73 @@ async function verifyImport(page) {
   await page.locator('main').getByRole('button', { name: 'Play Tum Hi Ho', exact: true }).waitFor();
 }
 
+// An ordinary PCM file lets the browser exercise media and IndexedDB without network access.
+function silentWav() {
+  const bytes = Buffer.alloc(44 + 16000 * 12);
+  bytes.write('RIFF', 0);
+  bytes.writeUInt32LE(bytes.length - 8, 4);
+  bytes.write('WAVEfmt ', 8);
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(1, 22);
+  bytes.writeUInt32LE(8000, 24);
+  bytes.writeUInt32LE(16000, 28);
+  bytes.writeUInt16LE(2, 32);
+  bytes.writeUInt16LE(16, 34);
+  bytes.write('data', 36);
+  bytes.writeUInt32LE(bytes.length - 44, 40);
+  return bytes;
+}
+
+async function verifyQueueAndOfflinePlayback(page) {
+  let offline = false;
+  const sample = silentWav();
+  await page.route('**/playlist-test-*.wav', (route) =>
+    offline
+      ? route.abort()
+      : route.fulfill({ status: 200, contentType: 'audio/wav', body: sample }),
+  );
+  const tracks = [1, 2].map((i) => ({
+    id: 'jamendo:test-' + i,
+    provider: 'jamendo',
+    providerTrackId: 'test-' + i,
+    title: 'Test audio ' + i,
+    artistName: 'Test artist',
+    duration: 12,
+    streamUrl: new URL('playlist-test-' + i + '.wav', root).href,
+    streamFormat: 'wav',
+    license: 'Test recording',
+    explicit: false,
+    audioDownloadAllowed: true,
+  }));
+  await page.evaluate((tracks) => {
+    const library = JSON.parse(localStorage.getItem('wavelength_user_playlists') || '[]');
+    library.push({ id: 'test-media', title: 'Media test', tracks, createdAt: 0 });
+    localStorage.setItem('wavelength_user_playlists', JSON.stringify(library));
+  }, tracks);
+  await page.goto(new URL('playlist/?id=test-media', root).href);
+  const main = page.locator('main');
+  await main.getByRole('button', { name: 'Play playlist', exact: true }).click();
+  const playing = () =>
+    page.waitForFunction(() => document.querySelector('audio')?.currentTime > 0.1);
+  await playing();
+  await page.getByTitle('Next (Ctrl+Right)').click();
+  await main.getByRole('button', { name: 'Pause Test audio 2', exact: true }).waitFor();
+  await page.waitForFunction(() =>
+    document.querySelector('audio')?.currentSrc.includes('playlist-test-2'),
+  );
+  await playing();
+  await page.getByTitle('Previous (Ctrl+Left)').click();
+  await main.getByRole('button', { name: 'Pause Test audio 1', exact: true }).waitFor();
+  await page.getByTitle('Download song for offline listening').click();
+  await page.getByTitle('Saved in App Storage (Offline)').waitFor();
+  await page.goto(new URL('library/', root).href);
+  offline = true;
+  await main.getByText('Downloaded Songs', { exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('audio')?.currentSrc.startsWith('blob:'));
+  await playing();
+}
+
 async function run() {
   const browser = await chromium.launch();
   try {
@@ -86,9 +153,10 @@ async function run() {
     await page.route('https://itunes.apple.com/**', (route) => route.abort());
     await verifyLibrary(page);
     await verifyImport(page);
+    await verifyQueueAndOfflinePlayback(page);
     assert.deepEqual(errors, []);
     console.log(
-      'Playlist search, editing, persistence, keyboard navigation and JSON import passed.',
+      'Playlist search, editing, persistence, keyboard navigation, JSON import, queue navigation and offline playback passed.',
     );
   } finally {
     await browser.close();

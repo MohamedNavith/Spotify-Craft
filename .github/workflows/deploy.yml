@@ -47,6 +47,7 @@ jobs:
         env:
           NEXT_EXPORT: 'true'
           NEXT_PUBLIC_BASE_PATH: '/Spotify-Craft'
+          NEXT_PUBLIC_JAMENDO_CLIENT_ID: ${{ vars.JAMENDO_CLIENT_ID }}
         run: npm run build:export
 
       - name: Deploy to GitHub Pages (gh-pages branch)

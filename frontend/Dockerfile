@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG NEXT_PUBLIC_JAMENDO_CLIENT_ID
 RUN npm run build
 
 FROM nginx:alpine

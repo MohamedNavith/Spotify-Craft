@@ -125,6 +125,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_JAMENDO_CLIENT_ID: ${JAMENDO_CLIENT_ID:-17ed92bf}
     container_name: wavelength-frontend
     restart: unless-stopped
     ports:

@@ -97,7 +97,7 @@ async function searchJamendoDirect(
   reportFailure: boolean,
 ): Promise<UnifiedSearchResult> {
   try {
-    const clientId = '17ed92bf';
+    const clientId = process.env.NEXT_PUBLIC_JAMENDO_CLIENT_ID || '17ed92bf';
     const res = await fetch(
       `https://api.jamendo.com/v3.0/tracks/?client_id=${clientId}&format=json&limit=${limit}&namesearch=${encodeURIComponent(
         query,
@@ -120,6 +120,7 @@ async function searchJamendoDirect(
       streamUrl: raw.audio,
       streamFormat: 'mp3',
       artworkUrl: raw.image || raw.album_image,
+      audioDownloadAllowed: raw.audiodownload_allowed === true,
       license: raw.license_ccurl || 'Creative Commons',
       licenseUrl: raw.license_ccurl,
       audioQuality: '192kbps (MP3)',

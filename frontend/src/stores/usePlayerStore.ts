@@ -1,3 +1,4 @@
+import { playsFromSource } from '../lib/offlineStorage';
 import { getLikedTracks, saveLikedTrack, removeLikedTrack } from '../lib/userPlaylists';
 import { create } from 'zustand';
 import { resolveVideoIdAsync } from '../lib/dynamicResolver';
@@ -56,7 +57,7 @@ interface PlayerState {
   tabHistory: string[];
 
   // Actions
-  setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[]) => void;
+  setTrack: (track: UnifiedTrack, queue?: UnifiedTrack[], position?: number) => void;
   setPlayback: (playback: UnifiedPlayback | null) => void;
   setIsPlaying: (isPlaying: boolean) => void;
   togglePlay: () => void;
@@ -188,11 +189,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       isEqualizerOpen: typeof open === 'function' ? open(state.isEqualizerOpen) : open,
     })),
 
-  setTrack: (track, queue) => {
+  setTrack: (track, queue, position) => {
     const state = get();
     const newQueue =
-      queue && queue.length > 0 ? queue : state.queue.length > 0 ? state.queue : [track];
-    const index = newQueue.findIndex((t) => t.id === track.id);
+      queue?.length ? queue : state.queue.some(item => item.id === track.id) ? state.queue : [track];
+    const index = position !== undefined && newQueue[position]?.id === track.id ? position : newQueue.findIndex((t) => t.id === track.id);
 
     const currentHist = state.history || [];
     const updatedHist = [track, ...currentHist.filter((t) => t.id !== track.id)].slice(0, 50);
@@ -201,9 +202,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     } catch {}
 
     const instantVideoId = resolveVideoId(track.title, track.artistName);
-    const useSourceAudio = track.provider === 'upload' || track.id.startsWith('offline-') || (track.provider === 'jamendo' && !!track.streamUrl);
-
-    if (useSourceAudio) {
+    if (playsFromSource(track)) {
       set({
         currentTrack: track,
         audioStreamDetails: null,
@@ -242,7 +241,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
       // Background pre-cache next track in queue
       const nextIdx = (index >= 0 ? index : 0) + 1;
-      if (newQueue[nextIdx]) {
+      if (newQueue[nextIdx] && !playsFromSource(newQueue[nextIdx])) {
         resolveMasterAudioStream(newQueue[nextIdx].title, newQueue[nextIdx].artistName, state.streamingQuality);
       }
       return;
@@ -304,7 +303,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
       // Pre-cache next song in queue in background
       const nextIdx = (index >= 0 ? index : 0) + 1;
-      if (newQueue[nextIdx]) {
+      if (newQueue[nextIdx] && !playsFromSource(newQueue[nextIdx])) {
         resolveMasterAudioStream(newQueue[nextIdx].title, newQueue[nextIdx].artistName, state.streamingQuality);
       }
     });
@@ -337,7 +336,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (queue.length === 0) return;
 
     if (repeatMode === 'one') {
-      set({ progress: 0, isPlaying: true });
+      set({ progress: 0, seekTarget: 0, isPlaying: true });
       return;
     }
 
@@ -355,101 +354,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       nextIndex = Math.floor(Math.random() * queue.length);
     }
 
-    const nextTrack = queue[nextIndex];
-    const instantVideoId = resolveVideoId(nextTrack.title, nextTrack.artistName);
-    const isLocalOrOffline = nextTrack.provider === 'upload' || nextTrack.id.startsWith('offline-');
-
-    if (isLocalOrOffline) {
-      set({
-        currentTrack: nextTrack,
-        queueIndex: nextIndex,
-        progress: 0,
-        duration: nextTrack.duration || 180,
-        isPlaying: true,
-        dynamicVideoId: instantVideoId,
-      });
-      return;
-    }
-
-    // Check fast cache
-    const cachedMaster = getCachedMasterAudio(nextTrack.title, nextTrack.artistName, state.streamingQuality);
-
-    if (cachedMaster && cachedMaster.streamUrl) {
-      set({
-        currentTrack: {
-          ...nextTrack,
-          streamUrl: cachedMaster.streamUrl,
-          duration: cachedMaster.duration,
-          audioQuality: cachedMaster.quality,
-        },
-        queueIndex: nextIndex,
-        progress: 0,
-        duration: cachedMaster.duration,
-        audioStreamDetails: cachedMaster.details || null,
-        isPlaying: true,
-        dynamicVideoId: instantVideoId,
-      });
-
-      // Pre-cache following song
-      if (queue[nextIndex + 1]) {
-        resolveMasterAudioStream(queue[nextIndex + 1].title, queue[nextIndex + 1].artistName, state.streamingQuality);
-      }
-      return;
-    }
-
-    // Cache miss: do NOT play 30s preview
-    const fallbackPreview = nextTrack.streamUrl;
-    set({
-      currentTrack: {
-        ...nextTrack,
-        streamUrl: null,
-      },
-      queueIndex: nextIndex,
-      progress: 0,
-      duration: nextTrack.duration || 180,
-      isPlaying: true,
-      dynamicVideoId: instantVideoId,
-    });
-
-    if (!instantVideoId) {
-      resolveVideoIdAsync(nextTrack.title, nextTrack.artistName).then((resolved) => {
-        if (resolved) {
-          const current = get().currentTrack;
-          if (current && current.id === nextTrack.id) {
-            set({ dynamicVideoId: resolved });
-          }
-        }
-      });
-    }
-
-    resolveMasterAudioStream(nextTrack.title, nextTrack.artistName, state.streamingQuality).then((master) => {
-      const current = get().currentTrack;
-      if (current && current.id === nextTrack.id) {
-        if (master && master.streamUrl) {
-          set({
-            currentTrack: {
-              ...current,
-              streamUrl: master.streamUrl,
-              duration: master.duration,
-              audioQuality: master.quality,
-            },
-            duration: master.duration,
-            audioStreamDetails: master.details || null,
-          });
-        } else if (fallbackPreview) {
-          set({
-            currentTrack: {
-              ...current,
-              streamUrl: fallbackPreview,
-            },
-          });
-        }
-      }
-
-      if (queue[nextIndex + 1]) {
-        resolveMasterAudioStream(queue[nextIndex + 1].title, queue[nextIndex + 1].artistName, state.streamingQuality);
-      }
-    });
+    state.setTrack(queue[nextIndex], queue, nextIndex);
   },
 
   prevTrack: () => {
@@ -458,97 +363,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (queue.length === 0) return;
 
     if (progress > 3) {
-      set({ progress: 0 });
+      state.seek(0);
       return;
     }
 
     const prevIndex = queueIndex > 0 ? queueIndex - 1 : queue.length - 1;
-    const prevTrack = queue[prevIndex];
-    const instantVideoId = resolveVideoId(prevTrack.title, prevTrack.artistName);
-    const isLocalOrOffline = prevTrack.provider === 'upload' || prevTrack.id.startsWith('offline-');
-
-    if (isLocalOrOffline) {
-      set({
-        currentTrack: prevTrack,
-        queueIndex: prevIndex,
-        progress: 0,
-        duration: prevTrack.duration || 180,
-        isPlaying: true,
-        dynamicVideoId: instantVideoId,
-      });
-      return;
-    }
-
-    // Check fast cache
-    const cachedMaster = getCachedMasterAudio(prevTrack.title, prevTrack.artistName, state.streamingQuality);
-
-    if (cachedMaster && cachedMaster.streamUrl) {
-      set({
-        currentTrack: {
-          ...prevTrack,
-          streamUrl: cachedMaster.streamUrl,
-          duration: cachedMaster.duration,
-          audioQuality: cachedMaster.quality,
-        },
-        queueIndex: prevIndex,
-        progress: 0,
-        duration: cachedMaster.duration,
-        audioStreamDetails: cachedMaster.details || null,
-        isPlaying: true,
-        dynamicVideoId: instantVideoId,
-      });
-      return;
-    }
-
-    // Cache miss: do NOT play 30s preview
-    const fallbackPreview = prevTrack.streamUrl;
-    set({
-      currentTrack: {
-        ...prevTrack,
-        streamUrl: null,
-      },
-      queueIndex: prevIndex,
-      progress: 0,
-      duration: prevTrack.duration || 180,
-      isPlaying: true,
-      dynamicVideoId: instantVideoId,
-    });
-
-    if (!instantVideoId) {
-      resolveVideoIdAsync(prevTrack.title, prevTrack.artistName).then((resolved) => {
-        if (resolved) {
-          const current = get().currentTrack;
-          if (current && current.id === prevTrack.id) {
-            set({ dynamicVideoId: resolved });
-          }
-        }
-      });
-    }
-
-    resolveMasterAudioStream(prevTrack.title, prevTrack.artistName, state.streamingQuality).then((master) => {
-      const current = get().currentTrack;
-      if (current && current.id === prevTrack.id) {
-        if (master && master.streamUrl) {
-          set({
-            currentTrack: {
-              ...current,
-              streamUrl: master.streamUrl,
-              duration: master.duration,
-              audioQuality: master.quality,
-            },
-            duration: master.duration,
-            audioStreamDetails: master.details || null,
-          });
-        } else if (fallbackPreview) {
-          set({
-            currentTrack: {
-              ...current,
-              streamUrl: fallbackPreview,
-            },
-          });
-        }
-      }
-    });
+    state.setTrack(queue[prevIndex], queue, prevIndex);
   },
 
   seek: (seconds) => {
@@ -679,7 +499,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     set({ streamingQuality: quality });
 
     const track = get().currentTrack;
-    if (track && track.provider !== 'upload' && !track.id.startsWith('offline-')) {
+    if (track && !playsFromSource(track)) {
       resolveMasterAudioStream(track.title, track.artistName, quality).then((master) => {
         if (master && master.streamUrl) {
           const current = get().currentTrack;

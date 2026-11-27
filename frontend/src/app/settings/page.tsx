@@ -210,41 +210,39 @@ export default function SettingsPage() {
             {DEFAULT_POPULAR_ARTISTS.map((artist) => {
               const isSelected = favoriteArtists.includes(artist.name);
               return (
-                <div
+                <button type="button" aria-label={artist.name} aria-pressed={isSelected}
                   key={artist.name}
                   onClick={() => toggleFavorite(artist.name)}
-                  className={`p-3 rounded-2xl flex flex-col items-center text-center gap-2.5 cursor-pointer transition-all duration-200 group relative border ${
+                  className={`min-w-0 p-2 sm:p-3 rounded-2xl flex flex-col items-center text-center gap-2.5 cursor-pointer transition-all duration-200 group relative border ${
                     isSelected
-                      ? 'bg-spotify-green/10 border-spotify-green shadow-[0_0_20px_rgba(30,215,96,0.2)]'
+                      ? 'bg-spotify-green/10 border-spotify-green'
                       : 'bg-spotify-card hover:bg-spotify-hover border-white/5'
                   }`}
                 >
-                  <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-xl border-2 border-transparent group-hover:scale-105 transition-transform bg-spotify-elevated flex items-center justify-center">
+                  <div className="relative aspect-square w-full max-w-20 md:max-w-24 rounded-full group-hover:scale-105 transition-transform bg-spotify-elevated flex items-center justify-center">
                     <img
                       src={artist.image}
-                      alt={artist.name}
+                      alt=""
                       referrerPolicy="no-referrer"
                       loading="lazy"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full rounded-full object-cover"
                     />
                     {isSelected && (
-                      <div className="absolute inset-0 bg-spotify-green/30 backdrop-blur-[1px] flex items-center justify-center">
-                        <div className="w-7 h-7 rounded-full bg-spotify-green text-black flex items-center justify-center shadow-lg">
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </div>
-                      </div>
+                      <span aria-hidden="true" className="absolute bottom-0 right-0 grid size-5 place-items-center rounded-full bg-spotify-green text-black ring-2 ring-spotify-card">
+                        <Check size={13} strokeWidth={3} />
+                      </span>
                     )}
                   </div>
 
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs md:text-sm font-bold text-white truncate max-w-[120px]">
+                  <div className="flex max-w-full flex-col min-w-0">
+                    <span className="text-xs md:text-sm font-bold text-white truncate">
                       {artist.name}
                     </span>
-                    <span className="text-[10px] text-spotify-subtext truncate max-w-[110px]">
+                    <span className="text-[10px] text-spotify-subtext truncate">
                       {artist.genre}
                     </span>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -525,6 +523,9 @@ export default function SettingsPage() {
                 </span>
               </div>
               <button
+                role="switch"
+                aria-label="Camera Dynamic Island"
+                aria-checked={isDynamicIslandVisible}
                 onClick={() => toggleDynamicIsland()}
                 className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
                   isDynamicIslandVisible ? 'bg-spotify-green' : 'bg-white/20'
@@ -532,7 +533,7 @@ export default function SettingsPage() {
               >
                 <div
                   className={`w-5 h-5 rounded-full bg-black shadow-md absolute top-0.5 transition-transform ${
-                    isDynamicIslandVisible ? 'left-6.5' : 'left-0.5'
+                    isDynamicIslandVisible ? 'left-[26px]' : 'left-0.5'
                   }`}
                 />
               </button>
@@ -547,6 +548,9 @@ export default function SettingsPage() {
                 </span>
               </div>
               <button
+                role="switch"
+                aria-label="25s Video Canvas"
+                aria-checked={isCanvasModeEnabled}
                 onClick={() => toggleCanvasMode()}
                 className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
                   isCanvasModeEnabled ? 'bg-spotify-green' : 'bg-white/20'
@@ -554,7 +558,7 @@ export default function SettingsPage() {
               >
                 <div
                   className={`w-5 h-5 rounded-full bg-black shadow-md absolute top-0.5 transition-transform ${
-                    isCanvasModeEnabled ? 'left-6.5' : 'left-0.5'
+                    isCanvasModeEnabled ? 'left-[26px]' : 'left-0.5'
                   }`}
                 />
               </button>

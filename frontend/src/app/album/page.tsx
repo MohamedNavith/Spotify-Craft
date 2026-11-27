@@ -8,15 +8,19 @@ import {
   Download,
   Heart,
   MoreVertical,
+  Pause,
   Play,
   Plus,
   Share2,
   Shuffle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import { usePlayerStore } from '../../stores/usePlayerStore';
+import { getUserPlaylists, saveUserPlaylist, deleteUserPlaylist } from '../../lib/userPlaylists';
+import { isTrackOffline, saveTrackOffline } from '../../lib/offlineStorage';
+import { notify } from '../../components/InterfaceEffects';
 import { UnifiedTrack } from '../../types';
 
 const AASHIQUI_2_ALBUM: {
@@ -123,18 +127,50 @@ const AASHIQUI_2_ALBUM: {
 
 function AlbumViewContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isSaved, setIsSaved] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
-
-  const { setTrack, currentTrack, isPlaying, openShareModal } = usePlayerStore();
-
+  const [downloading, setDownloading] = useState(false);
+  const { setTrack, currentTrack, isPlaying, togglePlay, queue, openShareModal, isShuffled, toggleShuffle } = usePlayerStore();
   const album = AASHIQUI_2_ALBUM;
+  const savedId = 'saved-' + album.id;
+  const albumActive = queue.length === album.tracks.length && queue.every((track,i) => track.id === album.tracks[i].id);
+  const canDownload = album.tracks.every(track => track.audioDownloadAllowed && track.streamUrl);
 
-  const handlePlayAll = () => {
-    if (album.tracks.length > 0) {
-      setTrack(album.tracks[0], album.tracks);
+  useEffect(() => {
+    const refresh = () => setIsSaved(getUserPlaylists().some(list => list.id === savedId));
+    refresh();
+    window.addEventListener('storage',refresh);
+    window.addEventListener('wavelength_playlists_updated',refresh);
+    if (canDownload) Promise.all(album.tracks.map(track=>isTrackOffline(track.id))).then(saved=>setIsDownloaded(saved.every(Boolean)));
+    return () => {
+      window.removeEventListener('storage',refresh);
+      window.removeEventListener('wavelength_playlists_updated',refresh);
+    };
+  },[savedId,canDownload,album]);
+
+  const toggleSaved = () => {
+    if (isSaved) {
+      deleteUserPlaylist(savedId);
+      notify(getUserPlaylists().some(list=>list.id===savedId) ? 'Could not update library' : 'Removed from library');
+      return;
     }
+    const saved = saveUserPlaylist({ id:savedId,title:album.title,description:album.artists,
+      tracks:album.tracks,coverArt:album.coverUrl,createdAt:Date.now() });
+    notify(saved.length ? 'Saved album to library' : 'Could not save album');
+  };
+
+  const downloadAlbum = async () => {
+    if (!canDownload) { notify('Offline downloads are unavailable for this album.'); return; }
+    setDownloading(true);
+    try {
+      const saved = await Promise.all(album.tracks.map(saveTrackOffline));
+      setIsDownloaded(saved.every(Boolean));
+      notify(saved.every(Boolean) ? 'Album downloaded' : 'Some tracks could not be downloaded');
+    } finally { setDownloading(false); }
+  };
+  const handlePlayAll = () => {
+    if (albumActive) togglePlay();
+    else setTrack(album.tracks[0], album.tracks);
   };
 
   return (
@@ -178,7 +214,8 @@ function AlbumViewContent() {
         <div className="flex items-center gap-4">
           {/* Add to library */}
           <button
-            onClick={() => setIsSaved(!isSaved)}
+            aria-label={isSaved ? 'Remove album from library' : 'Save album to library'} aria-pressed={isSaved}
+            onClick={toggleSaved}
             className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white active:scale-75 transition-transform"
           >
             <Plus className={`w-5 h-5 ${isSaved ? 'text-spotify-green' : ''}`} />
@@ -186,7 +223,9 @@ function AlbumViewContent() {
 
           {/* Download */}
           <button
-            onClick={() => setIsDownloaded(!isDownloaded)}
+            aria-label={canDownload ? 'Download album' : 'Offline download information'}
+            title={canDownload ? 'Download album' : 'Offline downloads unavailable'}
+            disabled={downloading || isDownloaded} onClick={downloadAlbum}
             className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white active:scale-75 transition-transform"
           >
             {isDownloaded ? (
@@ -198,24 +237,24 @@ function AlbumViewContent() {
 
           {/* Share */}
           <button
-            onClick={() => openShareModal(album.tracks[0])}
+            aria-label="Share opening track" onClick={() => openShareModal(album.tracks[0])}
             className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white active:scale-75 transition-transform"
           >
             <Share2 className="w-4 h-4 text-white" />
           </button>
 
           {/* Shuffle Toggle */}
-          <button className="text-spotify-green p-1 active:scale-75 transition-transform">
+          <button type="button" aria-label="Shuffle" aria-pressed={isShuffled} onClick={toggleShuffle} className={`${isShuffled ? 'text-spotify-green' : 'text-spotify-subtext'} p-1 active:scale-75 transition-transform`}>
             <Shuffle className="w-6 h-6" />
           </button>
         </div>
 
         {/* Big Green Circular Play Button (Screenshot #4) */}
         <button
-          onClick={handlePlayAll}
+          aria-label={albumActive && isPlaying ? 'Pause album' : 'Play album'} onClick={handlePlayAll}
           className="w-14 h-14 rounded-full bg-spotify-green hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-xl transition-all"
         >
-          <Play className="w-7 h-7 fill-black ml-1" />
+          {albumActive && isPlaying ? <Pause className="w-7 h-7 fill-black" /> : <Play className="w-7 h-7 fill-black ml-1" />}
         </button>
       </div>
 
@@ -226,18 +265,20 @@ function AlbumViewContent() {
           return (
             <div
               key={track.id}
-              onClick={() => setTrack(track, album.tracks)}
               className="py-3 flex items-center justify-between cursor-pointer group hover:bg-white/5 px-2 rounded-lg transition-colors"
             >
-              <div className="flex flex-col min-w-0 pr-4">
+              <button type="button" aria-label={(isTrackPlaying ? 'Pause ' : 'Play ') + track.title}
+                onClick={() => albumActive && currentTrack?.id === track.id ? togglePlay() : setTrack(track,album.tracks)}
+                className="flex flex-1 flex-col min-w-0 pr-4 text-left">
                 <span className={`text-base font-bold truncate ${isTrackPlaying ? 'text-spotify-green' : 'text-white'}`}>
                   {track.title}
                 </span>
                 <span className="text-xs text-[#b3b3b3] truncate mt-0.5">{track.artistName}</span>
-              </div>
+              </button>
 
               <div className="flex items-center gap-3 shrink-0">
                 <button
+                  aria-label={'Share '+track.title}
                   onClick={(e) => {
                     e.stopPropagation();
                     openShareModal(track);
