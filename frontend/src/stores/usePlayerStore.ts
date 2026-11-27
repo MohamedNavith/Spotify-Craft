@@ -104,8 +104,9 @@ interface PlayerState {
   setIsQueueOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   setIsEqualizerOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   setLyricsSyncOffset: (offset: number) => void;
-  pushTabHistory: (path: string) => void;
-  popTabHistory: () => string | null;
+  pushTabHistory: (path: string, search?: string) => void;
+  popTabHistory: (currentRoute?: string) => string | null;
+  syncTabHistoryOnPop: (path: string, search?: string) => void;
 }
 
 const getInitialHistory = (): UnifiedTrack[] => {
@@ -118,8 +119,25 @@ const getInitialHistory = (): UnifiedTrack[] => {
   }
 };
 
+export function normalizeAppRoute(rawPath: string | null | undefined, rawSearch?: string | null): string {
+  let pathPart = (rawPath || '/').trim();
+  if (pathPart === '/Spotify-Craft' || pathPart.startsWith('/Spotify-Craft/')) {
+    pathPart = pathPart.slice('/Spotify-Craft'.length) || '/';
+  }
+  const qIdx = pathPart.indexOf('?');
+  let queryPart = (rawSearch || '').trim();
+  if (qIdx !== -1) {
+    if (!queryPart) queryPart = pathPart.slice(qIdx);
+    pathPart = pathPart.slice(0, qIdx);
+  }
+  pathPart = pathPart.replace(/\/+$/, '') || '/';
+  if (queryPart && !queryPart.startsWith('?')) queryPart = `?${queryPart}`;
+  if (queryPart === '?') queryPart = '';
+  return `${pathPart}${queryPart}`;
+}
+
 const getInitialTabHistory = (): string[] => {
-  if (typeof window === 'undefined') return ['/'];
+  if (typeof window === 'undefined') return [];
   try {
     const raw = sessionStorage.getItem('wavelength_tab_history');
     if (raw) {
@@ -127,7 +145,7 @@ const getInitialTabHistory = (): string[] => {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch {}
-  return ['/'];
+  return [];
 };
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -524,28 +542,24 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     } catch {}
     set({ lyricsSyncOffset: offset });
   },
-  pushTabHistory: (path: string) => {
-    let clean = path || '/';
-    if (clean.startsWith('/Spotify-Craft')) {
-      clean = clean.replace('/Spotify-Craft', '') || '/';
-    }
-    clean = clean.replace(/\/+$/, '') || '/';
-
+  pushTabHistory: (path: string, search?: string) => {
+    const clean = normalizeAppRoute(path, search);
     const hist = get().tabHistory;
     if (hist[hist.length - 1] === clean) return;
-    const nextHist = [...hist.slice(-20), clean];
+    const nextHist = [...hist.slice(-29), clean];
     try {
       sessionStorage.setItem('wavelength_tab_history', JSON.stringify(nextHist));
     } catch {}
     set({ tabHistory: nextHist });
   },
-  popTabHistory: () => {
+  popTabHistory: (currentRoute?: string) => {
     const hist = get().tabHistory;
-    if (hist.length <= 1) return null;
-    const current = hist[hist.length - 1];
-    // Find the last item that is DIFFERENT from current tab
+    if (hist.length === 0) return null;
+    const current = currentRoute ? normalizeAppRoute(currentRoute) : hist[hist.length - 1];
+    const startIdx = hist[hist.length - 1] === current ? hist.length - 2 : hist.length - 1;
+    // LIFO stack pop: find most recent prior entry that differs from current route
     let targetIdx = -1;
-    for (let i = hist.length - 2; i >= 0; i--) {
+    for (let i = startIdx; i >= 0; i--) {
       if (hist[i] !== current) {
         targetIdx = i;
         break;
@@ -559,5 +573,22 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     } catch {}
     set({ tabHistory: nextHist });
     return targetPath;
+  },
+  syncTabHistoryOnPop: (path: string, search?: string) => {
+    const clean = normalizeAppRoute(path, search);
+    const hist = get().tabHistory;
+    if (hist[hist.length - 1] === clean) return;
+    let foundIdx = -1;
+    for (let i = hist.length - 2; i >= 0; i--) {
+      if (hist[i] === clean) {
+        foundIdx = i;
+        break;
+      }
+    }
+    const nextHist = foundIdx !== -1 ? hist.slice(0, foundIdx + 1) : [...hist.slice(-29), clean];
+    try {
+      sessionStorage.setItem('wavelength_tab_history', JSON.stringify(nextHist));
+    } catch {}
+    set({ tabHistory: nextHist });
   },
 }));

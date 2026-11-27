@@ -11,7 +11,7 @@ if (Test-Path -LiteralPath $destZip) {
 
 $zip = [System.IO.Compression.ZipFile]::Open($destZip, [System.IO.Compression.ZipArchiveMode]::Create)
 
-$rootFiles = @('index.js', 'package.json', 'package-lock.json', '.env', '.npmrc', 'README.md', 'ecosystem.config.js')
+$rootFiles = @('index.js', 'package.json', 'package-lock.json', '.env.example', '.npmrc', 'README.md', 'ecosystem.config.js')
 foreach ($f in $rootFiles) {
     $src = Join-Path $botDir $f
     if (Test-Path -LiteralPath $src) {

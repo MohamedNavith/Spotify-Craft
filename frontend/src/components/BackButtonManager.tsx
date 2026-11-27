@@ -1,113 +1,238 @@
 'use client';
 
 import { App } from '@capacitor/app';
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useRef } from 'react';
-import { usePlayerStore } from '../stores/usePlayerStore';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useRef } from 'react';
+import { useAuthStore } from '../stores/useAuthStore';
+import { normalizeAppRoute, usePlayerStore } from '../stores/usePlayerStore';
 
-function normalizePath(rawPath: string | null | undefined): string {
-  if (!rawPath) return '/';
-  let p = rawPath.trim();
-  if (p.startsWith('/Spotify-Craft')) {
-    p = p.replace('/Spotify-Craft', '');
+type OverlayKey =
+  | 'profileModal'
+  | 'createSheet'
+  | 'discordModal'
+  | 'spotifyImport'
+  | 'shareModal'
+  | 'sleepTimer'
+  | 'qualityModal'
+  | 'equalizer'
+  | 'lyrics'
+  | 'verci'
+  | 'queue'
+  | 'expandedNowPlaying'
+  | 'nowPlayingView';
+
+const OVERLAY_PRIORITY: OverlayKey[] = [
+  'profileModal',
+  'createSheet',
+  'discordModal',
+  'spotifyImport',
+  'shareModal',
+  'sleepTimer',
+  'qualityModal',
+  'equalizer',
+  'lyrics',
+  'verci',
+  'queue',
+  'expandedNowPlaying',
+  'nowPlayingView',
+];
+
+function getOpenOverlaySnapshot(): Record<OverlayKey, boolean> {
+  const player = usePlayerStore.getState();
+  const auth = useAuthStore.getState();
+  return {
+    profileModal: auth.isProfileModalOpen,
+    createSheet: player.isCreateSheetOpen,
+    discordModal: player.isDiscordModalOpen,
+    spotifyImport: player.isSpotifyImportOpen,
+    shareModal: player.isShareModalOpen,
+    sleepTimer: player.isSleepTimerModalOpen,
+    qualityModal: player.isQualityModalOpen,
+    equalizer: player.isEqualizerOpen,
+    lyrics: player.isLyricsOpen,
+    verci: player.isVerciOpen,
+    queue: player.isQueueOpen,
+    expandedNowPlaying: player.isExpandedNowPlaying,
+    nowPlayingView: player.isNowPlayingViewOpen,
+  };
+}
+
+function closeOverlayByKey(key: OverlayKey): void {
+  const player = usePlayerStore.getState();
+  const auth = useAuthStore.getState();
+  switch (key) {
+    case 'profileModal':
+      auth.setIsProfileModalOpen(false);
+      break;
+    case 'createSheet':
+      player.setIsCreateSheetOpen(false);
+      break;
+    case 'discordModal':
+      player.setIsDiscordModalOpen(false);
+      break;
+    case 'spotifyImport':
+      player.setIsSpotifyImportOpen(false);
+      break;
+    case 'shareModal':
+      player.closeShareModal();
+      break;
+    case 'sleepTimer':
+      player.closeSleepTimerModal();
+      break;
+    case 'qualityModal':
+      player.setIsQualityModalOpen(false);
+      break;
+    case 'equalizer':
+      player.setIsEqualizerOpen(false);
+      break;
+    case 'lyrics':
+      player.setIsLyricsOpen(false);
+      break;
+    case 'verci':
+      player.setIsVerciOpen(false);
+      break;
+    case 'queue':
+      player.setIsQueueOpen(false);
+      break;
+    case 'expandedNowPlaying':
+      player.setIsExpandedNowPlaying(false);
+      break;
+    case 'nowPlayingView':
+      player.setIsNowPlayingViewOpen(false);
+      break;
   }
-  p = p.replace(/\/+$/, '');
-  return p === '' ? '/' : p;
+}
+
+function RouteTracker({
+  pendingBackRef,
+  onRouteChange,
+}: {
+  pendingBackRef: React.MutableRefObject<{ target: string | null; expiresAt: number }>;
+  onRouteChange: (route: string) => void;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const pushTabHistory = usePlayerStore((s) => s.pushTabHistory);
+
+  useEffect(() => {
+    if (!pathname) return;
+    const query = searchParams?.toString() || '';
+    const fullRoute = normalizeAppRoute(pathname, query ? `?${query}` : '');
+    onRouteChange(fullRoute);
+
+    const pending = pendingBackRef.current;
+    if (pending.target && Date.now() < pending.expiresAt) {
+      if (fullRoute === pending.target) {
+        pending.target = null;
+      } else {
+        // Skip intermediate routes while catching up to a rapid LIFO pop target
+        return;
+      }
+    } else {
+      pending.target = null;
+    }
+
+    pushTabHistory(fullRoute);
+  }, [pathname, searchParams, pushTabHistory, pendingBackRef, onRouteChange]);
+
+  return null;
 }
 
 export default function BackButtonManager() {
   const router = useRouter();
-  const pathname = usePathname();
   const lastPressRef = useRef(0);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const currentRouteRef = useRef<string>('/');
+  const pendingBackRef = useRef<{ target: string | null; expiresAt: number }>({
+    target: null,
+    expiresAt: 0,
+  });
+  const overlayStackRef = useRef<OverlayKey[]>([]);
+  const prevOverlaySnapshotRef = useRef<Record<OverlayKey, boolean>>(getOpenOverlaySnapshot());
 
-  const { pushTabHistory } = usePlayerStore();
-
-  // Track page transitions for Android back button tab history
+  // Maintain strict LIFO order of open modals & overlays
   useEffect(() => {
-    if (pathname) {
-      pushTabHistory(pathname);
-    }
-  }, [pathname, pushTabHistory]);
+    const syncOverlayStack = () => {
+      const next = getOpenOverlaySnapshot();
+      const prev = prevOverlaySnapshotRef.current;
+      let stack = overlayStackRef.current.filter((key) => next[key]);
+
+      for (const key of OVERLAY_PRIORITY) {
+        if (next[key] && !prev[key]) {
+          stack = stack.filter((k) => k !== key);
+          stack.push(key);
+        }
+      }
+
+      overlayStackRef.current = stack;
+      prevOverlaySnapshotRef.current = next;
+    };
+
+    syncOverlayStack();
+    const unsubPlayer = usePlayerStore.subscribe(syncOverlayStack);
+    const unsubAuth = useAuthStore.subscribe(syncOverlayStack);
+    return () => {
+      unsubPlayer();
+      unsubAuth();
+    };
+  }, []);
 
   const handleBackNavigationRef = useRef<() => void>(() => {});
 
   const handleBackNavigation = () => {
     const state = usePlayerStore.getState();
+    const snapshot = getOpenOverlaySnapshot();
 
-    // Priority 1: Dismiss full-screen player or top-level modals
-    if (state.isExpandedNowPlaying) {
-      state.setIsExpandedNowPlaying(false);
-      return;
-    }
-    if (state.isLyricsOpen) {
-      state.setIsLyricsOpen(false);
-      return;
-    }
-    if (state.isQualityModalOpen) {
-      state.setIsQualityModalOpen(false);
-      return;
-    }
-    if (state.isQueueOpen) {
-      state.setIsQueueOpen(false);
-      return;
-    }
-    if (state.isEqualizerOpen) {
-      state.setIsEqualizerOpen(false);
-      return;
-    }
-    if (state.isSleepTimerModalOpen) {
-      state.closeSleepTimerModal();
-      return;
-    }
-    if (state.isShareModalOpen) {
-      state.closeShareModal();
-      return;
-    }
-    if (state.isCreateSheetOpen) {
-      state.setIsCreateSheetOpen(false);
-      return;
-    }
-    if (state.isDiscordModalOpen) {
-      state.setIsDiscordModalOpen(false);
-      return;
-    }
-    if (state.isVerciOpen) {
-      state.setIsVerciOpen(false);
-      return;
-    }
-    if (state.isNowPlayingViewOpen) {
-      state.setIsNowPlayingViewOpen(false);
-      return;
-    }
-    if (state.isSpotifyImportOpen) {
-      state.setIsSpotifyImportOpen(false);
-      return;
+    // Priority 1 (LIFO Overlays): Pop the most recently opened modal/sheet first
+    while (overlayStackRef.current.length > 0) {
+      const topOverlay = overlayStackRef.current.pop()!;
+      if (snapshot[topOverlay]) {
+        closeOverlayByKey(topOverlay);
+        return;
+      }
     }
 
-    // Priority 2: Navigate back to the previous tab or page viewed
-    const prevTab = state.popTabHistory();
+    for (const key of OVERLAY_PRIORITY) {
+      if (snapshot[key]) {
+        closeOverlayByKey(key);
+        return;
+      }
+    }
+
+    // Priority 2 (LIFO Tab/Route Stack): Navigate back to the last visited route
+    const activePending =
+      pendingBackRef.current.target && Date.now() < pendingBackRef.current.expiresAt
+        ? pendingBackRef.current.target
+        : undefined;
+    const browserRoute =
+      typeof window !== 'undefined'
+        ? normalizeAppRoute(window.location.pathname, window.location.search)
+        : currentRouteRef.current;
+    const effectiveCurrent = activePending || currentRouteRef.current || browserRoute;
+
+    const prevTab = state.popTabHistory(effectiveCurrent);
     if (prevTab) {
+      pendingBackRef.current = { target: prevTab, expiresAt: Date.now() + 600 };
+      currentRouteRef.current = prevTab;
       router.push(prevTab);
       return;
     }
 
-    // If no previous tab exists in history but not on root home, go to Home
-    const currentPath = normalizePath(
-      pathname || (typeof window !== 'undefined' ? window.location.pathname : '/')
-    );
-    if (currentPath !== '/') {
+    // If deep-linked onto a non-Home route with no prior stack entries, fall back to Home
+    if (effectiveCurrent !== '/') {
+      pendingBackRef.current = { target: '/', expiresAt: Date.now() + 600 };
+      currentRouteRef.current = '/';
       router.push('/');
       return;
     }
 
-    // Priority 3: On Root Home with no prior history: Require double-press within 2 seconds to exit app
+    // Priority 3: On Root Home at bottom of LIFO stack -> Require double-press within 2s to exit
     const now = Date.now();
     if (now - lastPressRef.current <= 2000) {
       try {
         App.exitApp();
       } catch {
-        // In browser or webview fallback
+        // Browser or desktop webview fallback
       }
     } else {
       lastPressRef.current = now;
@@ -115,7 +240,6 @@ export default function BackButtonManager() {
         navigator.vibrate?.(15);
       }
 
-      // Remove any existing toast
       const existing = document.getElementById('wavelength-exit-toast');
       if (existing) existing.remove();
 
@@ -138,8 +262,8 @@ export default function BackButtonManager() {
   handleBackNavigationRef.current = handleBackNavigation;
 
   useEffect(() => {
-    // 1. Native Capacitor Android Back Button Listener (captures hardware key & Android system gesture)
-    let backListenerHandle: any = null;
+    // 1. Native Capacitor Android Back Button Listener (hardware back + Android system edge gesture)
+    let backListenerHandle: { remove?: () => void } | null = null;
     try {
       App.addListener('backButton', () => {
         handleBackNavigationRef.current?.();
@@ -150,14 +274,22 @@ export default function BackButtonManager() {
       // Browser fallback
     }
 
-    // 2. Standard document 'backbutton' event (Cordova / Webview fallback)
+    // 2. Standard document 'backbutton' event (Cordova / Webview legacy fallback)
     const onBackButton = (e: Event) => {
       e.preventDefault();
       handleBackNavigationRef.current?.();
     };
     document.addEventListener('backbutton', onBackButton);
 
-    // 3. Desktop Escape key
+    // 3. Browser history popstate sync so native browser back preserves the LIFO stack
+    const onPopState = () => {
+      const dest = normalizeAppRoute(window.location.pathname, window.location.search);
+      currentRouteRef.current = dest;
+      usePlayerStore.getState().syncTabHistoryOnPop(dest);
+    };
+    window.addEventListener('popstate', onPopState);
+
+    // 4. Desktop Escape key
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleBackNavigationRef.current?.();
@@ -165,18 +297,23 @@ export default function BackButtonManager() {
     };
     window.addEventListener('keydown', onKeyDown);
 
-    // 4. In-App Fluid Edge Swipe Gesture Listener (Left-edge swipe & Right-edge swipe)
+    // 5. In-App Fluid Edge Swipe Gesture Listener (Left-edge swipe & Right-edge swipe)
     let touchStartX = 0;
     let touchStartY = 0;
     let isEdgeSwipe = false;
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
+      const target = e.target instanceof Element ? e.target : null;
+      if (target?.closest('input[type="range"], [data-no-edge-swipe]')) {
+        isEdgeSwipe = false;
+        return;
+      }
+
       const x = e.touches[0].clientX;
       const y = e.touches[0].clientY;
       const screenWidth = window.innerWidth;
 
-      // Edge swipe starts within 35px of left edge or 35px of right edge
       if (x <= 35 || x >= screenWidth - 35) {
         touchStartX = x;
         touchStartY = y;
@@ -194,10 +331,8 @@ export default function BackButtonManager() {
       const diffY = endY - touchStartY;
       const screenWidth = window.innerWidth;
 
-      // Left-to-right edge swipe (swipe from left edge inwards)
       const isLeftEdgeSwipe =
         touchStartX <= 35 && diffX > 60 && Math.abs(diffX) > Math.abs(diffY) * 1.4;
-      // Right-to-left edge swipe (swipe from right edge inwards)
       const isRightEdgeSwipe =
         touchStartX >= screenWidth - 35 &&
         diffX < -60 &&
@@ -220,6 +355,7 @@ export default function BackButtonManager() {
         backListenerHandle.remove?.();
       }
       document.removeEventListener('backbutton', onBackButton);
+      window.removeEventListener('popstate', onPopState);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchend', onTouchEnd);
@@ -229,5 +365,14 @@ export default function BackButtonManager() {
     };
   }, []);
 
-  return null;
+  return (
+    <Suspense fallback={null}>
+      <RouteTracker
+        pendingBackRef={pendingBackRef}
+        onRouteChange={(route) => {
+          currentRouteRef.current = route;
+        }}
+      />
+    </Suspense>
+  );
 }

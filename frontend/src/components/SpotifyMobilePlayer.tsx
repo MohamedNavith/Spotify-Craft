@@ -78,6 +78,7 @@ export default function SpotifyMobilePlayer({
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
+  const miniGestureHandledRef = useRef(false);
 
   // Next and previous preview tracks for swipe-peeking
   const nextTrackPreview = queue.length > 0 ? queue[(queueIndex + 1) % queue.length] : null;
@@ -108,20 +109,26 @@ export default function SpotifyMobilePlayer({
     }
   };
 
-  // Mini Player Touch Handlers (Smooth swipe to next / prev track)
+  // Mini Player Touch Handlers (Smooth swipe to skip track or swipe up to expand)
   const handleMiniTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
+    miniGestureHandledRef.current = false;
   };
 
   const handleMiniTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX === null || touchStartY === null) return;
     const diffX = e.changedTouches[0].clientX - touchStartX;
     const diffY = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
+    if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      miniGestureHandledRef.current = true;
       if (diffX < 0) nextTrack();
       else prevTrack();
       triggerHaptic(15);
+    } else if (diffY < -35 && Math.abs(diffY) > Math.abs(diffX)) {
+      miniGestureHandledRef.current = true;
+      setIsExpandedNowPlaying(true);
+      triggerHaptic(12);
     }
     setTouchStartX(null);
     setTouchStartY(null);
@@ -225,6 +232,10 @@ export default function SpotifyMobilePlayer({
           onTouchStart={handleMiniTouchStart}
           onTouchEnd={handleMiniTouchEnd}
           onClick={() => {
+            if (miniGestureHandledRef.current) {
+              miniGestureHandledRef.current = false;
+              return;
+            }
             setIsExpandedNowPlaying(true);
             triggerHaptic(12);
           }}

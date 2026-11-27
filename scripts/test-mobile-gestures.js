@@ -1,14 +1,41 @@
+const assert = require('node:assert/strict');
 const { chromium } = require('F:/Spotify-Craft[rea]/Wavelength/node_modules/playwright-core');
 const path = require('path');
-const fs = require('fs');
 
-const SCREENSHOTS_DIR = path.join(__dirname, '..', 'docs', 'screenshots');
 const ARTIFACT_DIR = 'C:/Users/moham/.gemini/antigravity/brain/95bb04ea-fbf4-4556-944d-c13bda37885d';
-
 const BASE_URL = 'http://localhost:3001';
 
+async function swipeLeftEdge(page, id = 1) {
+  await page.evaluate((touchId) => {
+    const t0 = new Touch({
+      identifier: touchId,
+      target: document.body,
+      clientX: 15,
+      clientY: 400,
+      screenX: 15,
+      screenY: 400,
+      pageX: 15,
+      pageY: 400,
+    });
+    const t1 = new Touch({
+      identifier: touchId,
+      target: document.body,
+      clientX: 120,
+      clientY: 400,
+      screenX: 120,
+      screenY: 400,
+      pageX: 120,
+      pageY: 400,
+    });
+    window.dispatchEvent(new TouchEvent('touchstart', { touches: [t0], changedTouches: [t0] }));
+    window.dispatchEvent(new TouchEvent('touchmove', { touches: [t1], changedTouches: [t1] }));
+    window.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [t1] }));
+  }, id);
+  await page.waitForTimeout(750);
+}
+
 async function testMobileGestures() {
-  console.log('📱 Starting Mobile Gestures & Tab Navigation Playwright Suite...');
+  console.log('📱 Starting Strict LIFO & Mobile Gestures Playwright Suite...');
   const browser = await chromium.launch({
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     headless: true,
@@ -25,169 +52,114 @@ async function testMobileGestures() {
   const errors = [];
   page.on('pageerror', (err) => errors.push(err.message));
 
+  const primaryNav = page.getByRole('navigation', { name: 'Primary' });
+
   // 1. Load Root Home Tab
   console.log('1. Loading Home page...');
   await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1000);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_01_home.png') });
-  console.log('   ✓ Home tab loaded successfully');
+  await page.waitForTimeout(800);
+  const homeAriaCurrent = await primaryNav.getByRole('link', { name: 'Home' }).getAttribute('aria-current');
+  assert.equal(homeAriaCurrent, 'page', 'Home tab should have aria-current="page"');
 
-  // 2. Navigate to Search tab
+  // 2. Navigate: Home -> Search
   console.log('2. Navigating to Search tab...');
-  await page.locator('nav.fixed.bottom-0 a[href="/search"]').last().click();
-  await page.waitForTimeout(800);
-  console.log(`   ✓ Active URL: ${page.url()}`);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_02_search.png') });
+  await primaryNav.getByRole('link', { name: 'Search' }).click();
+  await page.waitForTimeout(700);
+  assert.match(page.url(), /\/search\/?$/, 'Expected /search');
+  const searchAriaCurrent = await primaryNav.getByRole('link', { name: 'Search' }).getAttribute('aria-current');
+  assert.equal(searchAriaCurrent, 'page', 'Search tab should highlight even with trailingSlash');
 
-  // 3. Navigate to Library tab
-  console.log('3. Navigating to Library tab...');
-  await page.locator('nav.fixed.bottom-0 a[href="/library"]').last().click();
-  await page.waitForTimeout(800);
-  console.log(`   ✓ Active URL: ${page.url()}`);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_03_library.png') });
+  // 3. Navigate into Playlist with query string: Search -> Playlist (/playlist?id=collection-chillLoFi)
+  console.log('3. Opening Chill Waves playlist (/playlist?id=collection-chillLoFi)...');
+  await page.getByRole('textbox', { name: 'Search the catalog' }).fill('chi');
+  await page.locator('main').getByRole('link', { name: /Chill Waves/ }).first().click();
+  await page.waitForTimeout(700);
+  assert.match(page.url(), /\/playlist\/?\?id=collection-chillLoFi/, 'Expected playlist URL with ?id=');
 
-  // 4. Navigate to Settings tab
-  console.log('4. Navigating to Settings tab...');
-  await page.locator('nav.fixed.bottom-0 a[href="/settings"]').last().click();
-  await page.waitForTimeout(800);
-  console.log(`   ✓ Active URL: ${page.url()}`);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_04_settings.png') });
+  // 4. Navigate: Playlist -> Library -> Settings -> Home (re-visiting Home pushes Home on top of LIFO stack!)
+  console.log('4. Navigating Library -> Settings -> Home (LIFO stack check)...');
+  await primaryNav.getByRole('link', { name: 'Library' }).click();
+  await page.waitForTimeout(600);
+  assert.match(page.url(), /\/library\/?$/);
 
-  // 5. Test Edge-Swipe Back Gesture from Settings -> Library
-  console.log('5. Testing Left-Edge Swipe Gesture from Settings -> Library...');
-  // Dispatch touchstart at (15, 400), touchmove to (120, 400), touchend
-  await page.touchscreen.tap(10, 400);
-  await page.evaluate(() => {
-    const touchStart = new Touch({
-      identifier: 1,
-      target: document.body,
-      clientX: 15,
-      clientY: 400,
-      screenX: 15,
-      screenY: 400,
-      pageX: 15,
-      pageY: 400,
-    });
-    const touchEnd = new Touch({
-      identifier: 1,
-      target: document.body,
-      clientX: 120,
-      clientY: 400,
-      screenX: 120,
-      screenY: 400,
-      pageX: 120,
-      pageY: 400,
-    });
+  await primaryNav.getByRole('link', { name: 'Settings' }).click();
+  await page.waitForTimeout(600);
+  assert.match(page.url(), /\/settings\/?$/);
 
-    window.dispatchEvent(new TouchEvent('touchstart', { touches: [touchStart], changedTouches: [touchStart] }));
-    window.dispatchEvent(new TouchEvent('touchmove', { touches: [touchEnd], changedTouches: [touchEnd] }));
-    window.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [touchEnd] }));
-  });
-  await page.waitForTimeout(1000);
-  console.log(`   ✓ After Edge-Swipe #1 URL: ${page.url()}`);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_05_swiped_back_to_library.png') });
+  await primaryNav.getByRole('link', { name: 'Home' }).click();
+  await page.waitForTimeout(600);
+  assert.match(page.url(), /localhost:3001\/?$/);
 
-  // 6. Test Edge-Swipe Back Gesture from Library -> Search
-  console.log('6. Testing Left-Edge Swipe Gesture from Library -> Search...');
-  await page.evaluate(() => {
-    const touchStart = new Touch({
-      identifier: 2,
-      target: document.body,
-      clientX: 15,
-      clientY: 400,
-      screenX: 15,
-      screenY: 400,
-      pageX: 15,
-      pageY: 400,
-    });
-    const touchEnd = new Touch({
-      identifier: 2,
-      target: document.body,
-      clientX: 120,
-      clientY: 400,
-      screenX: 120,
-      screenY: 400,
-      pageX: 120,
-      pageY: 400,
-    });
+  // 5. Strict LIFO Back Popping: / -> /settings -> /library -> /playlist?id=collection-chillLoFi -> /search -> /
+  console.log('5. Verifying strict LIFO back popping across stack...');
+  await swipeLeftEdge(page, 1);
+  console.log('   LIFO Pop 1 ->', page.url());
+  assert.match(page.url(), /\/settings\/?$/, 'Exit from re-visited Home must pop LIFO to /settings');
 
-    window.dispatchEvent(new TouchEvent('touchstart', { touches: [touchStart], changedTouches: [touchStart] }));
-    window.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [touchEnd] }));
-  });
-  await page.waitForTimeout(1000);
-  console.log(`   ✓ After Edge-Swipe #2 URL: ${page.url()}`);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_06_swiped_back_to_search.png') });
+  await swipeLeftEdge(page, 2);
+  console.log('   LIFO Pop 2 ->', page.url());
+  assert.match(page.url(), /\/library\/?$/, 'LIFO pop #2 must return to /library');
 
-  // 7. Test Edge-Swipe Back Gesture from Search -> Home
-  console.log('7. Testing Left-Edge Swipe Gesture from Search -> Home...');
-  await page.evaluate(() => {
-    const touchStart = new Touch({
-      identifier: 3,
-      target: document.body,
-      clientX: 15,
-      clientY: 400,
-      screenX: 15,
-      screenY: 400,
-      pageX: 15,
-      pageY: 400,
-    });
-    const touchEnd = new Touch({
-      identifier: 3,
-      target: document.body,
-      clientX: 120,
-      clientY: 400,
-      screenX: 120,
-      screenY: 400,
-      pageX: 120,
-      pageY: 400,
-    });
+  await swipeLeftEdge(page, 3);
+  console.log('   LIFO Pop 3 ->', page.url());
+  assert.match(page.url(), /\/playlist\/?\?id=collection-chillLoFi/, 'LIFO pop #3 must preserve ?id= on playlist');
+  await page.locator('main').getByRole('heading', { name: /Chill Waves/ }).waitFor();
 
-    window.dispatchEvent(new TouchEvent('touchstart', { touches: [touchStart], changedTouches: [touchStart] }));
-    window.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [touchEnd] }));
-  });
-  await page.waitForTimeout(1000);
-  console.log(`   ✓ After Edge-Swipe #3 URL: ${page.url()}`);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_07_swiped_back_to_home.png') });
+  await swipeLeftEdge(page, 4);
+  console.log('   LIFO Pop 4 ->', page.url());
+  assert.match(page.url(), /\/search\/?$/, 'LIFO pop #4 must return to /search');
 
-  // 8. Test Double-Tap Back on Home (Exit prompt toast)
-  console.log('8. Testing Back Button on Home (should trigger exit toast)...');
+  await swipeLeftEdge(page, 5);
+  console.log('   LIFO Pop 5 ->', page.url());
+  assert.match(page.url(), /localhost:3001\/?$/, 'LIFO pop #5 must return to root /');
+
+  // 6. On root Home at bottom of LIFO stack -> Next back triggers exit toast!
+  console.log('6. Verifying root-bottom Exit Toast...');
   await page.evaluate(() => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
   });
-  await page.waitForTimeout(500);
-  const toast = await page.$('#wavelength-exit-toast');
-  const toastText = toast ? await toast.innerText() : null;
-  console.log(`   ✓ Exit Toast Visible: ${!!toast}, Text: "${toastText}"`);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_08_exit_toast.png') });
+  await page.waitForTimeout(300);
+  const toastText = await page.locator('#wavelength-exit-toast').innerText();
+  assert.match(toastText, /Press back again to exit/);
+  console.log('   ✓ Exit toast confirmed at bottom of stack:', toastText);
 
-  // 9. Play track and test Now Playing sheet drag-down gesture
-  console.log('9. Starting playback and testing Now Playing full-screen drag-down...');
-  const firstPlayBtn = await page.$('button.rounded-full, .group');
-  if (firstPlayBtn) {
-    await firstPlayBtn.click();
-    await page.waitForTimeout(1000);
-  }
-
-  // Open mini-player into full-screen
-  await page.evaluate(() => {
-    // If mini player is available, click it
-    const mini = document.querySelector('.bg-\\[\\#181818\\]\\/95');
-    if (mini) mini.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  });
+  // 7. Verify Modal Overlay LIFO Stack: Track Play -> Expanded Now Playing -> Lyrics -> Back closes Lyrics FIRST, then Now Playing!
+  console.log('7. Testing Overlay LIFO stack (Now Playing -> Lyrics -> Back LIFO)...');
+  await page.locator('main button[aria-label^="Play "]').first().click();
   await page.waitForTimeout(800);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_09_fullscreen_nowplaying.png') });
 
-  console.log('\n🎉 ALL MOBILE TESTS COMPLETED!');
-  if (errors.length > 0) {
-    console.error('Page errors encountered:', errors);
-  } else {
-    console.log('Zero page errors! Everything smooth and responsive.');
-  }
+  // Tap mini-player to expand full-screen Now Playing
+  await page.locator('.wl-mini button[aria-label="Expand now playing"]').click();
+  await page.waitForTimeout(600);
+  await page.getByText('Playing from Album').waitFor();
 
+  // Open Lyrics on top of Expanded Now Playing
+  await page.getByText('Tap for karaoke ↑').click();
+  await page.waitForTimeout(600);
+  await page.getByText('Live Karaoke Lyrics').waitFor();
+
+  // Back #1 MUST close Lyrics first while keeping Now Playing open!
+  await page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+  await page.waitForTimeout(500);
+  const lyricsStillVisible = await page.getByText('Live Karaoke Lyrics').isVisible().catch(() => false);
+  assert.equal(lyricsStillVisible, false, 'Lyrics modal must close first (LIFO)');
+  const nowPlayingStillVisible = await page.getByText('Playing from Album').isVisible();
+  assert.equal(nowPlayingStillVisible, true, 'Expanded Now Playing must stay open after popping Lyrics');
+  console.log('   ✓ Overlay LIFO Pop 1 closed Lyrics while preserving Expanded Now Playing');
+
+  // Back #2 MUST collapse Expanded Now Playing back to mini-player!
+  await swipeLeftEdge(page, 6);
+  const nowPlayingAfterSecondBack = await page.getByText('Playing from Album').isVisible().catch(() => false);
+  assert.equal(nowPlayingAfterSecondBack, false, 'Second back must collapse Now Playing');
+  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'test_mobile_lifo_verified.png') });
+  console.log('   ✓ Overlay LIFO Pop 2 collapsed Now Playing back to mini-player');
+
+  assert.equal(errors.length, 0, `Unexpected page errors: ${errors.join('; ')}`);
+  console.log('\n🎉 ALL LIFO STACK & MOBILE GESTURE TESTS PASSED WITH ZERO ERRORS!');
   await browser.close();
 }
 
 testMobileGestures().catch((err) => {
-  console.error('Playwright Test Failed:', err);
+  console.error('❌ Playwright LIFO Test Failed:', err);
   process.exit(1);
 });

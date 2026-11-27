@@ -22,10 +22,12 @@ export default function MobileBottomNav() {
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
 
+  const currentPath = pathname ? pathname.replace(/\/+$/, '') || '/' : '/';
+
   return (
     <nav aria-label="Primary" className="wl-glass md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 select-none pb-[max(env(safe-area-inset-bottom,0px),8px)] pt-2 px-3 flex items-center justify-around shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_-8px_24px_rgba(0,0,0,0.8)]">
       {navItems.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive = currentPath === item.href;
         const Icon = item.icon;
         return (
           <Link
