@@ -36,7 +36,7 @@ Thumbs.db
 
 # Bot data
 discord-bot/data/
-data/
+/data/
 
 # Release Artifacts
 *.exe

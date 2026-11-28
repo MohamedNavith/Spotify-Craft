@@ -1,0 +1,6 @@
+-keep class fm.wavelength.app.** { *; }
+-keep class com.ryanheise.audioservice.** { *; }
+-keep class androidx.media.** { *; }
+-keep class android.support.v4.media.** { *; }
+-dontwarn com.google.android.exoplayer2.**
+-dontwarn androidx.media3.**

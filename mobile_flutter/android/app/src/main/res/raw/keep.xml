@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_wavelength,@drawable/ic_heart_outline,@drawable/ic_heart_filled,@drawable/ic_close_media,@drawable/ic_skip_prev,@drawable/ic_play_media,@drawable/ic_pause_media,@drawable/ic_skip_next,@drawable/widget_bg,@mipmap/ic_launcher" />
