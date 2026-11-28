@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 abstract final class WavelengthColors {
-  static const Color abyss = Color(0xFF0A0A0C);
-  static const Color bgDark = Color(0xFF121212);
-  static const Color surfaceDark = Color(0xFF181818);
-  static const Color elevatedDark = Color(0xFF222226);
-  static const Color borderDark = Color(0xFF2D2D33);
+  static const Color abyss = Color(0xFF06070A);
+  static const Color bgDark = Color(0xFF0D0F13);
+  static const Color surfaceDark = Color(0xFF16181E);
+  static const Color elevatedDark = Color(0xFF21232B);
+  static const Color borderDark = Color(0xFF2D303A);
 
   static const Color bgLight = Color(0xFFF6F7F9);
   static const Color surfaceLight = Color(0xFFFFFFFF);
@@ -14,6 +14,7 @@ abstract final class WavelengthColors {
 
   static const Color emerald = Color(0xFF1DB954);
   static const Color emeraldBright = Color(0xFF1ED760);
+  static const Color appleBlue = Color(0xFF0A84FF);
   static const Color amberHiRes = Color(0xFFF5B749);
   static const Color cyanLossless = Color(0xFF38BDF8);
   static const Color danger = Color(0xFFEF4444);
@@ -35,12 +36,12 @@ abstract final class WavelengthSpacing {
   static const double xl = 24.0;
   static const double xxl = 32.0;
   static const double minTouchTarget = 48.0;
-  static const double miniPlayerHeight = 64.0;
+  static const double miniPlayerHeight = 60.0;
 }
 
 abstract final class WavelengthTheme {
   static ThemeData dark() {
-    final scheme = ColorScheme.dark(
+    const scheme = ColorScheme.dark(
       primary: WavelengthColors.emerald,
       onPrimary: Colors.black,
       secondary: WavelengthColors.emeraldBright,
@@ -88,8 +89,8 @@ abstract final class WavelengthTheme {
   }
 
   static ThemeData light() {
-    final scheme = ColorScheme.light(
-      primary: const Color(0xFF159943),
+    const scheme = ColorScheme.light(
+      primary: Color(0xFF159943),
       onPrimary: Colors.white,
       secondary: WavelengthColors.emerald,
       onSecondary: Colors.white,

@@ -17,6 +17,20 @@ class BrowseCategory {
   final String coverUrl;
 }
 
+class CanvasClipHighlight {
+  const CanvasClipHighlight({
+    required this.label,
+    required this.youtubeVideoId,
+    required this.clipStartSec,
+    required this.clipEndSec,
+  });
+
+  final String label;
+  final String youtubeVideoId;
+  final int clipStartSec;
+  final int clipEndSec;
+}
+
 abstract final class CuratedCatalog {
   static const List<WavelengthTrack> todayTopHits = [
     WavelengthTrack(
@@ -307,7 +321,163 @@ abstract final class CuratedCatalog {
         ...chillLoFi,
       ];
 
+  static const Map<String, CanvasClipHighlight> curatedCanvasHighlights = {
+    'die with a smile': CanvasClipHighlight(
+      label: 'Chorus • "If the world was ending"',
+      youtubeVideoId: 'kPa7bsKwL-c',
+      clipStartSec: 70,
+      clipEndSec: 98,
+    ),
+    'tum hi ho': CanvasClipHighlight(
+      label: 'Chorus • "Kyunki tum hi ho"',
+      youtubeVideoId: 'Umqb9KENgmk',
+      clipStartSec: 62,
+      clipEndSec: 92,
+    ),
+    'kesariya': CanvasClipHighlight(
+      label: 'Chorus • "Kesariya tera ishq hai piya"',
+      youtubeVideoId: 'BddP6PYo2gs',
+      clipStartSec: 60,
+      clipEndSec: 90,
+    ),
+    'blinding lights': CanvasClipHighlight(
+      label: 'Chorus • "Blinded by the lights"',
+      youtubeVideoId: '4NRXx6U8ABQ',
+      clipStartSec: 50,
+      clipEndSec: 78,
+    ),
+    'birds of a feather': CanvasClipHighlight(
+      label: 'Chorus • "I want you to stay"',
+      youtubeVideoId: 'V9PVRfjEBTI',
+      clipStartSec: 42,
+      clipEndSec: 70,
+    ),
+    'taste': CanvasClipHighlight(
+      label: 'Chorus • "I leave quite an impression"',
+      youtubeVideoId: 'T94PHkuydcw',
+      clipStartSec: 48,
+      clipEndSec: 76,
+    ),
+    'cruel summer': CanvasClipHighlight(
+      label: 'Bridge • "Drunk in the back of the car"',
+      youtubeVideoId: 'ic8j13piAhQ',
+      clipStartSec: 85,
+      clipEndSec: 115,
+    ),
+    'hukum': CanvasClipHighlight(
+      label: 'Hook • "Alappara kelapparom"',
+      youtubeVideoId: '1F3HM635S0k',
+      clipStartSec: 60,
+      clipEndSec: 88,
+    ),
+    'as it was': CanvasClipHighlight(
+      label: 'Chorus • "Not the same as it was"',
+      youtubeVideoId: 'H5v3kku4y6Q',
+      clipStartSec: 45,
+      clipEndSec: 72,
+    ),
+    'levitating': CanvasClipHighlight(
+      label: 'Chorus • "I got you, moonlight"',
+      youtubeVideoId: 'TUVcZfQe-Kw',
+      clipStartSec: 38,
+      clipEndSec: 66,
+    ),
+    'believer': CanvasClipHighlight(
+      label: 'Chorus • "Pain! You make me a believer"',
+      youtubeVideoId: '7wtfhZwyrcc',
+      clipStartSec: 42,
+      clipEndSec: 72,
+    ),
+  };
+
+  static CanvasClipHighlight? resolveHighlightForTrack(WavelengthTrack track) {
+    final normTitle = track.title
+        .toLowerCase()
+        .replaceAll(RegExp(r'\(.*?\)'), '')
+        .replaceAll(RegExp(r'\[.*?\]'), '')
+        .trim();
+    for (final entry in curatedCanvasHighlights.entries) {
+      if (normTitle == entry.key ||
+          normTitle.contains(entry.key) ||
+          entry.key.contains(normTitle)) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  static const List<PodcastShow> samplePodcasts = [
+    PodcastShow(
+      id: 'pod_1',
+      title: 'The Sound Design Podcast',
+      host: 'Audio Architects',
+      description:
+          'Deep dives into synthesizer history, DAC engineering, and acoustic design.',
+      colorStart: 0xFF6B21A8,
+      colorEnd: 0xFF312E81,
+      episodes: [
+        PodcastEpisode(
+          id: 'ep_1',
+          title: 'Analog vs Digital: The Synthesizer Revolution',
+          durationSec: 2150,
+          publishedLabel: '2 days ago',
+          resumeSec: 420,
+        ),
+        PodcastEpisode(
+          id: 'ep_2',
+          title: 'The Art of Spatial Audio and Binaural Beats',
+          durationSec: 1840,
+          publishedLabel: '1 week ago',
+        ),
+      ],
+    ),
+    PodcastShow(
+      id: 'pod_2',
+      title: 'Open Source Waves',
+      host: 'Open Audio Collective',
+      description:
+          'Exploring lossless codecs, USB Audio Class 2.0 DACs, and independent soundscapes.',
+      colorStart: 0xFF065F46,
+      colorEnd: 0xFF134E4A,
+      episodes: [
+        PodcastEpisode(
+          id: 'ep_3',
+          title: 'Democratizing Hi-Res Lossless Streaming',
+          durationSec: 2400,
+          publishedLabel: '3 days ago',
+          resumeSec: 1200,
+        ),
+        PodcastEpisode(
+          id: 'ep_4',
+          title: 'The Legal Frontier: Open Audio Licenses',
+          durationSec: 1980,
+          publishedLabel: '2 weeks ago',
+        ),
+      ],
+    ),
+  ];
+
   static const List<WavelengthArtist> featuredArtists = [
+    WavelengthArtist(
+      id: 'anirudh',
+      name: 'Anirudh Ravichander',
+      artworkUrl:
+          'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2c/df/14/2cdf140e-6d11-a98d-bfbf-bc5e30c3c4a1/197189528187.jpg/600x600bb.jpg',
+      localAssetPath: 'assets/artists/anirudh-ravichander.webp',
+      bio: 'High-voltage anthems & Tamil/Bollywood stadium bassdrops.',
+      monthlyListenersLabel: '28.4M monthly listeners',
+      genres: ['Tamil & Bollywood Rock'],
+    ),
+    WavelengthArtist(
+      id: 'a-r-rahman',
+      name: 'A.R. Rahman',
+      artworkUrl:
+          'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2c/df/14/2cdf140e-6d11-a98d-bfbf-bc5e30c3c4a1/197189528187.jpg/600x600bb.jpg',
+      localAssetPath: 'assets/artists/a-r-rahman.webp',
+      bio: 'Academy Award winning composer spanning Tamil, Hindi & world music.',
+      monthlyListenersLabel: '32.1M monthly listeners',
+      genres: ['Composer & Master'],
+    ),
     WavelengthArtist(
       id: 'arijit-singh',
       name: 'Arijit Singh',
@@ -315,18 +485,18 @@ abstract final class CuratedCatalog {
           'https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/9f/13/ca/9f13ca3b-e533-03e0-f19a-f0aaa774581d/196589311191.jpg/600x600bb.jpg',
       localAssetPath: 'assets/artists/arijit-singh.webp',
       bio: 'Playback icon behind Kesariya, Tum Hi Ho, and Apna Bana Le.',
-      monthlyListenersLabel: '48.2M monthly listeners',
-      genres: ['Bollywood', 'Soulful', 'Acoustic'],
+      monthlyListenersLabel: '44.8M monthly listeners',
+      genres: ['Soulful & Melodic'],
     ),
     WavelengthArtist(
-      id: 'the-weeknd',
-      name: 'The Weeknd',
+      id: 'taylor-swift',
+      name: 'Taylor Swift',
       artworkUrl:
-          'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/61/e7/3f/61e73f94-018d-5f50-50ec-8521952bc72e/20UM1IM11629.rgb.jpg/600x600bb.jpg',
-      localAssetPath: 'assets/artists/the-weeknd.webp',
-      bio: 'Synthwave, dark R&B, and arena-sized spatial mixes.',
-      monthlyListenersLabel: '108.4M monthly listeners',
-      genres: ['Synth-Pop', 'R&B'],
+          'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/49/3d/ab/493dab54-f920-9043-6181-80993b8116c9/19UMGIM53909.rgb.jpg/600x600bb.jpg',
+      localAssetPath: 'assets/artists/taylor-swift.webp',
+      bio: 'Pop, synth-pop, and storytelling across decades.',
+      monthlyListenersLabel: '104.2M monthly listeners',
+      genres: ['Pop & Singer-Songwriter'],
     ),
     WavelengthArtist(
       id: 'billie-eilish',
@@ -335,8 +505,38 @@ abstract final class CuratedCatalog {
           'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
       localAssetPath: 'assets/artists/billie-eilish.webp',
       bio: 'Intimate sub-bass vocals mastered for wired & DAC listening.',
-      monthlyListenersLabel: '97.1M monthly listeners',
-      genres: ['Alternative', 'Pop'],
+      monthlyListenersLabel: '98.5M monthly listeners',
+      genres: ['Alternative Pop'],
+    ),
+    WavelengthArtist(
+      id: 'bruno-mars',
+      name: 'Bruno Mars',
+      artworkUrl:
+          'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/11/ae/f2/11aef294-f57c-bab9-c9fc-529162984e62/24UMGIM85348.rgb.jpg/600x600bb.jpg',
+      localAssetPath: 'assets/artists/bruno-mars.webp',
+      bio: 'Silk funk, brass arrangements, and arena ballads.',
+      monthlyListenersLabel: '110.3M monthly listeners',
+      genres: ['R&B & Funk'],
+    ),
+    WavelengthArtist(
+      id: 'sabrina-carpenter',
+      name: 'Sabrina Carpenter',
+      artworkUrl:
+          'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
+      localAssetPath: 'assets/artists/sabrina-carpenter.webp',
+      bio: 'Crisp hook-driven pop hits from Short n’ Sweet.',
+      monthlyListenersLabel: '86.7M monthly listeners',
+      genres: ['Pop & Dance'],
+    ),
+    WavelengthArtist(
+      id: 'the-weeknd',
+      name: 'The Weeknd',
+      artworkUrl:
+          'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/61/e7/3f/61e73f94-018d-5f50-50ec-8521952bc72e/20UM1IM11629.rgb.jpg/600x600bb.jpg',
+      localAssetPath: 'assets/artists/the-weeknd.webp',
+      bio: 'Synthwave, dark R&B, and arena-sized spatial mixes.',
+      monthlyListenersLabel: '118.0M monthly listeners',
+      genres: ['Synthwave & R&B'],
     ),
     WavelengthArtist(
       id: 'pritam',
@@ -346,57 +546,7 @@ abstract final class CuratedCatalog {
       localAssetPath: 'assets/artists/pritam.webp',
       bio: 'Composer & arranger defining modern Hindi film soundtracks.',
       monthlyListenersLabel: '41.6M monthly listeners',
-      genres: ['Bollywood', 'Romantic'],
-    ),
-    WavelengthArtist(
-      id: 'a-r-rahman',
-      name: 'A.R. Rahman',
-      artworkUrl:
-          'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2c/df/14/2cdf140e-6d11-a98d-bfbf-bc5e30c3c4a1/197189528187.jpg/600x600bb.jpg',
-      localAssetPath: 'assets/artists/a-r-rahman.webp',
-      bio: 'Academy Award winning composer spanning Tamil, Hindi & world music.',
-      monthlyListenersLabel: '36.9M monthly listeners',
-      genres: ['Tamil', 'Classical Fusion'],
-    ),
-    WavelengthArtist(
-      id: 'anirudh',
-      name: 'Anirudh Ravichander',
-      artworkUrl:
-          'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2c/df/14/2cdf140e-6d11-a98d-bfbf-bc5e30c3c4a1/197189528187.jpg/600x600bb.jpg',
-      localAssetPath: 'assets/artists/anirudh-ravichander.webp',
-      bio: 'High-voltage anthems & stadium bassdrops.',
-      monthlyListenersLabel: '24.5M monthly listeners',
-      genres: ['Tamil', 'Rock', 'Electronic'],
-    ),
-    WavelengthArtist(
-      id: 'taylor-swift',
-      name: 'Taylor Swift',
-      artworkUrl:
-          'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/49/3d/ab/493dab54-f920-9043-6181-80993b8116c9/19UMGIM53909.rgb.jpg/600x600bb.jpg',
-      localAssetPath: 'assets/artists/taylor-swift.webp',
-      bio: 'Pop, synth-pop, and storytelling across decades.',
-      monthlyListenersLabel: '99.5M monthly listeners',
-      genres: ['Pop', 'Synth-Pop'],
-    ),
-    WavelengthArtist(
-      id: 'bruno-mars',
-      name: 'Bruno Mars',
-      artworkUrl:
-          'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/11/ae/f2/11aef294-f57c-bab9-c9fc-529162984e62/24UMGIM85348.rgb.jpg/600x600bb.jpg',
-      localAssetPath: 'assets/artists/bruno-mars.webp',
-      bio: 'Silk funk, brass arrangements, and arena ballads.',
-      monthlyListenersLabel: '122.0M monthly listeners',
-      genres: ['Pop', 'R&B', 'Funk'],
-    ),
-    WavelengthArtist(
-      id: 'sabrina-carpenter',
-      name: 'Sabrina Carpenter',
-      artworkUrl:
-          'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
-      localAssetPath: 'assets/artists/sabrina-carpenter.webp',
-      bio: 'Crisp hook-driven pop hits from Short n’ Sweet.',
-      monthlyListenersLabel: '74.2M monthly listeners',
-      genres: ['Pop', 'Dance'],
+      genres: ['Bollywood Hits'],
     ),
     WavelengthArtist(
       id: 'diljit-dosanjh',
@@ -405,8 +555,8 @@ abstract final class CuratedCatalog {
           'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/79/d2/01/79d201d2-e54d-5604-81fb-313f30db7219/198588533581.jpg/600x600bb.jpg',
       localAssetPath: 'assets/artists/diljit-dosanjh.webp',
       bio: 'Punjabi & global crossover superstar.',
-      monthlyListenersLabel: '22.8M monthly listeners',
-      genres: ['Punjabi', 'Pop'],
+      monthlyListenersLabel: '24.9M monthly listeners',
+      genres: ['Punjabi & Global Fusion'],
     ),
     WavelengthArtist(
       id: 'karan-aujla',
@@ -415,8 +565,8 @@ abstract final class CuratedCatalog {
           'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/79/d2/01/79d201d2-e54d-5604-81fb-313f30db7219/198588533581.jpg/600x600bb.jpg',
       localAssetPath: 'assets/artists/karan-aujla.webp',
       bio: 'Chart-topping Punjabi lyricist and producer.',
-      monthlyListenersLabel: '18.9M monthly listeners',
-      genres: ['Punjabi Pop', 'Hip-Hop'],
+      monthlyListenersLabel: '18.2M monthly listeners',
+      genres: ['Desi Hip-Hop'],
     ),
     WavelengthArtist(
       id: 'sidhu-moose-wala',
@@ -426,7 +576,7 @@ abstract final class CuratedCatalog {
       localAssetPath: 'assets/artists/sidhu-moose-wala.webp',
       bio: 'Legendary Punjabi hip-hop storytelling.',
       monthlyListenersLabel: '14.3M monthly listeners',
-      genres: ['Punjabi', 'Hip-Hop'],
+      genres: ['Punjabi Legend'],
     ),
     WavelengthArtist(
       id: 'badshah',
@@ -436,7 +586,7 @@ abstract final class CuratedCatalog {
       localAssetPath: 'assets/artists/badshah-rapper.webp',
       bio: 'Indian hip-hop & club anthems.',
       monthlyListenersLabel: '17.1M monthly listeners',
-      genres: ['Hip-Hop', 'Bollywood'],
+      genres: ['Hip-Hop'],
     ),
     WavelengthArtist(
       id: 'honey-singh',
@@ -446,7 +596,7 @@ abstract final class CuratedCatalog {
       localAssetPath: 'assets/artists/yo-yo-honey-singh.webp',
       bio: 'Pioneer of Indian hip-hop and Desi dance beats.',
       monthlyListenersLabel: '16.8M monthly listeners',
-      genres: ['Punjabi', 'Dance'],
+      genres: ['Desi Rap'],
     ),
   ];
 
@@ -454,8 +604,8 @@ abstract final class CuratedCatalog {
     BrowseCategory(
       name: 'Bollywood & Desi',
       query: 'Bollywood',
-      colorStart: Color(0xFFD97706),
-      colorEnd: Color(0xFF9A3412),
+      colorStart: Color(0xFFC2410C),
+      colorEnd: Color(0xFF7C2D12),
       coverUrl:
           'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/fb/11/bffb111e-b834-c360-1e5b-b98a0033faea/8902894358899.jpg/300x300bb.jpg',
     ),
@@ -471,7 +621,7 @@ abstract final class CuratedCatalog {
       name: 'Punjabi Hits',
       query: 'Punjabi',
       colorStart: Color(0xFF059669),
-      colorEnd: Color(0xFF115E59),
+      colorEnd: Color(0xFF065F46),
       coverUrl:
           'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/97/86/86/97868694-9413-a543-514a-a6374469ff97/859736427250_cover.jpg/300x300bb.jpg',
     ),
@@ -479,12 +629,12 @@ abstract final class CuratedCatalog {
       name: 'Hip-Hop & Rap',
       query: 'Hip Hop',
       colorStart: Color(0xFFEA580C),
-      colorEnd: Color(0xFF92400E),
+      colorEnd: Color(0xFF9A3412),
       coverUrl:
           'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/f7/6d/78/f76d78c5-cc9c-f2d6-8603-ba690eaa5c7d/5064089826918_cover.jpg/300x300bb.jpg',
     ),
     BrowseCategory(
-      name: 'Tamil & South',
+      name: 'Tamil & South Beats',
       query: 'Tamil',
       colorStart: Color(0xFFDC2626),
       colorEnd: Color(0xFF7F1D1D),
@@ -521,7 +671,7 @@ abstract final class CuratedCatalog {
         WavelengthPlaylist(
           id: 'collection-todayTopHits',
           name: "Today's Top Hits",
-          description: 'Global pop essentials & master streams',
+          description: 'Pop essentials',
           artworkUrl: todayTopHits.first.artworkUrl,
           isSystem: true,
           trackCount: todayTopHits.length,
@@ -530,7 +680,7 @@ abstract final class CuratedCatalog {
         WavelengthPlaylist(
           id: 'collection-bollywoodHits',
           name: 'Hot Hits India',
-          description: 'Bollywood & Indian chart toppers',
+          description: 'Bollywood and Hindi favorites',
           artworkUrl: bollywoodHits.first.artworkUrl,
           isSystem: true,
           trackCount: bollywoodHits.length,
@@ -539,7 +689,7 @@ abstract final class CuratedCatalog {
         WavelengthPlaylist(
           id: 'collection-global50',
           name: 'Global Top 50',
-          description: 'Most played worldwide right now',
+          description: 'Global pop and chart favorites',
           artworkUrl: global50.first.artworkUrl,
           isSystem: true,
           trackCount: global50.length,
@@ -548,7 +698,7 @@ abstract final class CuratedCatalog {
         WavelengthPlaylist(
           id: 'collection-chillLoFi',
           name: 'Chill Waves & Lo-Fi',
-          description: 'Laid-back beats for study & focus',
+          description: 'Laid-back music for study and focus',
           artworkUrl: chillLoFi.first.artworkUrl,
           isSystem: true,
           trackCount: chillLoFi.length,
@@ -623,9 +773,9 @@ abstract final class CuratedCatalog {
         WavelengthAlbum(
           id: 'album-aashiqui-2',
           title: 'Aashiqui 2',
-          artist: 'Arijit Singh & Mithoon',
+          artist: 'Mithoon, Arijit Singh',
           artworkUrl:
-              'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bb/23/ee/bb23eeed-0c35-4f1d-2b11-485622777ae4/8902894353007_cover.jpg/600x600bb.jpg',
+              'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/bf/fb/11/bffb111e-b834-c360-1e5b-b98a0033faea/8902894358899.jpg/600x600bb.jpg',
           year: '2013',
           tracks: bollywoodHits.where((t) => t.album == 'Aashiqui 2').toList(),
         ),
@@ -639,15 +789,22 @@ abstract final class CuratedCatalog {
           tracks: todayTopHits.where((t) => t.album == 'After Hours').toList(),
         ),
         WavelengthAlbum(
-          id: 'album-hit-me',
-          title: 'HIT ME HARD AND SOFT',
-          artist: 'Billie Eilish',
+          id: 'album-short-n-sweet',
+          title: "Short n' Sweet",
+          artist: 'Sabrina Carpenter',
           artworkUrl:
-              'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/92/9f/69/929f69f1-9977-3a44-d674-11f70c852d1b/24UMGIM36186.rgb.jpg/600x600bb.jpg',
+              'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/15/d0/f615d0ab-e0c4-575d-907e-1cc084642357/24UMGIM61704.rgb.jpg/600x600bb.jpg',
           year: '2024',
-          tracks: todayTopHits
-              .where((t) => t.album == 'HIT ME HARD AND SOFT')
-              .toList(),
+          tracks: todayTopHits.where((t) => t.title == 'Taste').toList(),
+        ),
+        WavelengthAlbum(
+          id: 'album-24k-magic',
+          title: '24K Magic',
+          artist: 'Bruno Mars',
+          artworkUrl:
+              'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ed/46/bf/ed46bf4e-7cb9-965a-54f3-03059977fe6c/075679589293.jpg/600x600bb.jpg',
+          year: '2016',
+          tracks: const [],
         ),
       ];
 }

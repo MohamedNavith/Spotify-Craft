@@ -58,6 +58,7 @@ class WavelengthAudioHandler extends BaseAudioHandler
   static const String _prefAutoplay = 'wl_autoplay';
   static const String _prefAutoResumeBt = 'wl_auto_resume_bt';
   static const String _prefGapless = 'wl_gapless';
+  static const String _prefCrossfade = 'wl_crossfade_sec';
   static const String _prefCustomBackend = 'wl_custom_backend';
 
   final WavelengthDatabase _db;
@@ -88,6 +89,7 @@ class WavelengthAudioHandler extends BaseAudioHandler
   bool _autoplayRadio = true;
   bool _autoResumeOnReconnect = false;
   bool _gaplessEnabled = true;
+  int _crossfadeSeconds = 3;
 
   bool _manuallyPaused = true;
   bool _pausedByAudioFocus = false;
@@ -136,6 +138,7 @@ class WavelengthAudioHandler extends BaseAudioHandler
   bool get autoplayRadio => _autoplayRadio;
   bool get autoResumeOnReconnect => _autoResumeOnReconnect;
   bool get gaplessEnabled => _gaplessEnabled;
+  int get crossfadeSeconds => _crossfadeSeconds;
   bool get isResolving => _resolvingTrack;
   String? get statusMessage => _statusMessage;
   AudioStreamDetails? get currentStreamDetails => _currentStreamDetails;
@@ -194,6 +197,7 @@ class WavelengthAudioHandler extends BaseAudioHandler
     _autoplayRadio = _prefs.getBool(_prefAutoplay) ?? true;
     _autoResumeOnReconnect = _prefs.getBool(_prefAutoResumeBt) ?? false;
     _gaplessEnabled = _prefs.getBool(_prefGapless) ?? true;
+    _crossfadeSeconds = _prefs.getInt(_prefCrossfade) ?? 3;
 
     _outputDevice = await NativeBridge.getAudioOutputDevice();
     NativeBridge.audioDeviceStream.listen((device) {
@@ -787,6 +791,12 @@ class WavelengthAudioHandler extends BaseAudioHandler
   Future<void> setGaplessEnabled(bool enabled) async {
     _gaplessEnabled = enabled;
     await _prefs.setBool(_prefGapless, enabled);
+    _emitChange();
+  }
+
+  Future<void> setCrossfadeSeconds(int seconds) async {
+    _crossfadeSeconds = seconds.clamp(0, 12);
+    await _prefs.setInt(_prefCrossfade, _crossfadeSeconds);
     _emitChange();
   }
 

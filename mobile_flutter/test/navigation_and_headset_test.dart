@@ -35,12 +35,14 @@ void main() {
   });
 
   group('WavelengthNavigationController LIFO stack', () {
-    test('pops keyboard -> modal -> fullPlayer -> nested tab -> Home -> exit toast -> exit', () {
+    test('pops keyboard -> modal -> Verci -> Dynamic Island -> fullPlayer -> nested tab -> Home -> exit toast -> exit', () {
       final nav = WavelengthNavigationController();
       addTearDown(nav.dispose);
 
       nav.selectTab(2); // Switch to Library
       nav.openFullPlayer();
+      nav.openVerci();
+      nav.setDynamicIslandExpanded(true);
 
       final t0 = DateTime(2026, 1, 1, 12, 0, 0);
 
@@ -55,7 +57,7 @@ void main() {
         BackOutcome.dismissKeyboard,
       );
 
-      // 2. Modal sheet dismissed before collapsing full player
+      // 2. Modal sheet dismissed before overlays/full player
       expect(
         nav.resolveLogicalBack(
           keyboardOpen: false,
@@ -66,7 +68,31 @@ void main() {
         BackOutcome.dismissModal,
       );
 
-      // 3. Full player collapses next (keeping mini-player visible)
+      // 3. Verci Studio closes before collapsing Dynamic Island / Full player
+      expect(
+        nav.resolveLogicalBack(
+          keyboardOpen: false,
+          modalOpen: false,
+          canPopNestedTab: true,
+          now: t0,
+        ),
+        BackOutcome.closeVerci,
+      );
+      expect(nav.isVerciOpen, isFalse);
+
+      // 4. Expanded Dynamic Island collapses next
+      expect(
+        nav.resolveLogicalBack(
+          keyboardOpen: false,
+          modalOpen: false,
+          canPopNestedTab: true,
+          now: t0,
+        ),
+        BackOutcome.collapseIsland,
+      );
+      expect(nav.isDynamicIslandExpanded, isFalse);
+
+      // 5. Full player collapses next (keeping mini-player visible)
       expect(
         nav.resolveLogicalBack(
           keyboardOpen: false,
@@ -78,7 +104,7 @@ void main() {
       );
       expect(nav.isFullPlayerOpen, isFalse);
 
-      // 4. Nested route inside Library tab pops one level
+      // 6. Nested route inside Library tab pops one level
       expect(
         nav.resolveLogicalBack(
           keyboardOpen: false,
@@ -89,7 +115,7 @@ void main() {
         BackOutcome.popTabRoute,
       );
 
-      // 5. Library tab root switches back to Home tab first
+      // 7. Library tab root switches back to Home tab first
       expect(
         nav.resolveLogicalBack(
           keyboardOpen: false,
@@ -101,7 +127,7 @@ void main() {
       );
       expect(nav.currentTabIndex, 0);
 
-      // 6. First back at Home shows exit toast
+      // 8. First back at Home shows exit toast
       expect(
         nav.resolveLogicalBack(
           keyboardOpen: false,
@@ -112,7 +138,7 @@ void main() {
         BackOutcome.showExitToast,
       );
 
-      // 7. Second back within 2 seconds exits cleanly
+      // 9. Second back within 2 seconds exits cleanly
       expect(
         nav.resolveLogicalBack(
           keyboardOpen: false,

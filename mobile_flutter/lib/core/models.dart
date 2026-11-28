@@ -1,17 +1,24 @@
 import 'dart:convert';
 
 enum StreamQuality {
-  auto('auto', 'Auto', 'Adapts to connection & DAC', 'AUTO'),
-  highEfficiency('high-efficiency', 'Data Saver', 'HE-AAC 96 kbps', '96K AAC'),
-  highQuality('high-quality', 'High Quality', 'AAC / MP3 320 kbps', '320K'),
-  lossless('lossless', 'Lossless', 'FLAC 16-bit / 44.1 kHz', 'FLAC 16-bit'),
-  hiResLossless('hi-res-lossless', 'Hi-Res Lossless', 'FLAC 24-bit / up to 192 kHz', 'HI-RES FLAC');
+  auto('auto', 'Auto', 'Adapts to connection & DAC', 'AUTO', 6.0),
+  highEfficiency('high-efficiency', 'High Efficiency', 'HE-AAC with low data usage', 'HE-AAC', 1.5),
+  highQuality('high-quality', 'High Quality', 'AAC 256–320 kbps Master', '320K AAC', 6.0),
+  lossless('lossless', 'Lossless', 'ALAC / FLAC up to 24-bit/48 kHz', 'LOSSLESS', 36.0),
+  hiResLossless('hi-res-lossless', 'Hi-Res Lossless', 'ALAC / FLAC up to 24-bit/192 kHz', 'HI-RES FLAC', 145.0);
 
-  const StreamQuality(this.apiKey, this.label, this.subtitle, this.shortBadge);
+  const StreamQuality(
+    this.apiKey,
+    this.label,
+    this.subtitle,
+    this.shortBadge,
+    this.approxMbPer3Min,
+  );
   final String apiKey;
   final String label;
   final String subtitle;
   final String shortBadge;
+  final double approxMbPer3Min;
 
   static StreamQuality fromKey(String? key) {
     for (final q in StreamQuality.values) {
@@ -25,15 +32,32 @@ enum RepeatModeSetting { off, all, one }
 
 enum AppThemePreference { dark, light, system }
 
-enum StoryCardTemplate {
-  classicDark('Classic Dark'),
-  frostedLyrics('Frosted Lyrics'),
-  minimalQr('Minimal + QR'),
-  neonWaveform('Neon Wave'),
-  stickerCutout('Sticker Card');
+enum VerciStyle {
+  constellation('Constellation', 'Zigzag Star Map'),
+  canvas('Video Canvas', '25s Climax & Lyrics'),
+  spicetify('Spicetify Studio', 'Fluid Aurora Lyrics'),
+  kinetic('Kinetic Pop', 'Lockscreen Clock & Badges'),
+  fisheye('Fisheye Focus', 'Magnified Karaoke Roll'),
+  minimal('Minimalist HUD', 'Clean OLED Lyric Card');
 
-  const StoryCardTemplate(this.label);
+  const VerciStyle(this.label, this.description);
   final String label;
+  final String description;
+}
+
+enum VerciFontStyle { figtree, sfPro, serif, monospace }
+
+enum StoryCardThemePreset {
+  slateNight('Slate Night', 0xFF2A323D, 0xFF12161A, 0xFF050709),
+  emeraldForest('Emerald Forest', 0xFF064E3B, 0xFF022C22, 0xFF01130E),
+  oceanTeal('Ocean Teal', 0xFF134E4A, 0xFF042F2E, 0xFF011717),
+  purpleVelvet('Purple Velvet', 0xFF4C1D95, 0xFF2E1065, 0xFF100524);
+
+  const StoryCardThemePreset(this.name, this.topHex, this.midHex, this.bottomHex);
+  final String name;
+  final int topHex;
+  final int midHex;
+  final int bottomHex;
 }
 
 class AudioStreamDetails {
@@ -59,6 +83,13 @@ class AudioStreamDetails {
   final bool isHiRes;
   final String? note;
 
+  String get tierLabel {
+    if (isHiRes) return 'HI-RES LOSSLESS';
+    if (isLossless) return 'LOSSLESS FLAC';
+    if ((bitrateKbps ?? 0) >= 256) return 'STUDIO MASTER AAC';
+    return 'HIGH EFFICIENCY';
+  }
+
   String get badgeLabel {
     if (isHiRes && bitDepth != null && sampleRateHz != null) {
       final khz = (sampleRateHz! / 1000).toStringAsFixed(sampleRateHz! % 1000 == 0 ? 0 : 1);
@@ -74,6 +105,12 @@ class AudioStreamDetails {
       return '$codec $bitrateKbps kbps';
     }
     return codec;
+  }
+
+  double estimatedSizeMb(int durationMs) {
+    final secs = durationMs > 0 ? durationMs / 1000.0 : 210.0;
+    final kbps = bitrateKbps ?? (isHiRes ? 4608 : (isLossless ? 1411 : 320));
+    return (kbps * secs) / 8192.0;
   }
 
   Map<String, dynamic> toJson() => {
@@ -397,6 +434,42 @@ class WavelengthArtist {
   final String monthlyListenersLabel;
   final List<String> genres;
   final String? searchQuery;
+}
+
+class PodcastEpisode {
+  const PodcastEpisode({
+    required this.id,
+    required this.title,
+    required this.durationSec,
+    required this.publishedLabel,
+    this.resumeSec = 0,
+  });
+
+  final String id;
+  final String title;
+  final int durationSec;
+  final String publishedLabel;
+  final int resumeSec;
+}
+
+class PodcastShow {
+  const PodcastShow({
+    required this.id,
+    required this.title,
+    required this.host,
+    required this.description,
+    required this.colorStart,
+    required this.colorEnd,
+    required this.episodes,
+  });
+
+  final String id;
+  final String title;
+  final String host;
+  final String description;
+  final int colorStart;
+  final int colorEnd;
+  final List<PodcastEpisode> episodes;
 }
 
 class LyricLine {

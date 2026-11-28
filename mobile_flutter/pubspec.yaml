@@ -1,7 +1,7 @@
 name: wavelength_app
 description: "Wavelength - Hi-Res & Lossless Music Streaming"
 publish_to: 'none'
-version: 2.0.0+6
+version: 2.1.1+7
 
 environment:
   sdk: ^3.14.0

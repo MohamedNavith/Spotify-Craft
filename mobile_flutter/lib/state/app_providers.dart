@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../audio/wavelength_audio_handler.dart';
@@ -33,10 +34,7 @@ final catalogServiceProvider = Provider<CatalogService>((ref) {
 });
 
 final resolverProvider = Provider<MasterAudioResolver>((ref) {
-  return MasterAudioResolver(
-    db: ref.watch(databaseProvider),
-    customBackendUrl: ref.watch(sharedPrefsProvider).getString('wl_custom_backend'),
-  );
+  return MasterAudioResolver(db: ref.watch(databaseProvider));
 });
 
 final offlineServiceProvider = Provider<OfflineService>((ref) {
@@ -80,29 +78,149 @@ class ThemePrefNotifier extends Notifier<AppThemePreference> {
 final themePreferenceProvider =
     NotifierProvider<ThemePrefNotifier, AppThemePreference>(ThemePrefNotifier.new);
 
-class IntegrationCredsNotifier extends Notifier<({String metaAppId, String snapClientId})> {
-  static const _metaKey = 'wl_meta_app_id';
-  static const _snapKey = 'wl_snap_client_id';
+class FavoriteArtistsNotifier extends Notifier<List<String>> {
+  static const _prefKey = 'wavelength_favorite_artists';
+  static const List<String> _defaults = [
+    'Taylor Swift',
+    'Arijit Singh',
+    'Bruno Mars',
+    'Anirudh Ravichander',
+  ];
 
   @override
-  ({String metaAppId, String snapClientId}) build() {
-    final prefs = ref.watch(sharedPrefsProvider);
-    return (
-      metaAppId: prefs.getString(_metaKey) ?? '',
-      snapClientId: prefs.getString(_snapKey) ?? '',
-    );
+  List<String> build() {
+    final raw = ref.watch(sharedPrefsProvider).getString(_prefKey);
+    if (raw == null || raw.isEmpty) return _defaults;
+    try {
+      final list = (jsonDecode(raw) as List<dynamic>).cast<String>();
+      return list;
+    } catch (_) {
+      return _defaults;
+    }
   }
 
-  Future<void> save({required String metaAppId, required String snapClientId}) async {
-    final prefs = ref.read(sharedPrefsProvider);
-    await prefs.setString(_metaKey, metaAppId.trim());
-    await prefs.setString(_snapKey, snapClientId.trim());
-    state = (metaAppId: metaAppId.trim(), snapClientId: snapClientId.trim());
+  Future<void> toggle(String artistName) async {
+    final next = List<String>.from(state);
+    if (next.contains(artistName)) {
+      next.remove(artistName);
+    } else {
+      next.add(artistName);
+    }
+    state = next;
+    await ref.read(sharedPrefsProvider).setString(_prefKey, jsonEncode(next));
+  }
+
+  Future<void> addCustom(String artistName) async {
+    final clean = artistName.trim();
+    if (clean.isEmpty || state.contains(clean)) return;
+    final next = [...state, clean];
+    state = next;
+    await ref.read(sharedPrefsProvider).setString(_prefKey, jsonEncode(next));
   }
 }
 
-final integrationCredsProvider = NotifierProvider<IntegrationCredsNotifier,
-    ({String metaAppId, String snapClientId})>(IntegrationCredsNotifier.new);
+final favoriteArtistsProvider =
+    NotifierProvider<FavoriteArtistsNotifier, List<String>>(
+        FavoriteArtistsNotifier.new);
+
+class DisplayEffectsState {
+  const DisplayEffectsState({
+    this.dynamicIslandVisible = true,
+    this.lumnGlowEnabled = true,
+    this.lumnGlowIntensity = 80.0,
+    this.canvasModeEnabled = true,
+    this.verciStyle = VerciStyle.constellation,
+    this.verciFont = VerciFontStyle.figtree,
+    this.verciTextScale = 1.0,
+  });
+
+  final bool dynamicIslandVisible;
+  final bool lumnGlowEnabled;
+  final double lumnGlowIntensity;
+  final bool canvasModeEnabled;
+  final VerciStyle verciStyle;
+  final VerciFontStyle verciFont;
+  final double verciTextScale;
+
+  DisplayEffectsState copyWith({
+    bool? dynamicIslandVisible,
+    bool? lumnGlowEnabled,
+    double? lumnGlowIntensity,
+    bool? canvasModeEnabled,
+    VerciStyle? verciStyle,
+    VerciFontStyle? verciFont,
+    double? verciTextScale,
+  }) {
+    return DisplayEffectsState(
+      dynamicIslandVisible: dynamicIslandVisible ?? this.dynamicIslandVisible,
+      lumnGlowEnabled: lumnGlowEnabled ?? this.lumnGlowEnabled,
+      lumnGlowIntensity: lumnGlowIntensity ?? this.lumnGlowIntensity,
+      canvasModeEnabled: canvasModeEnabled ?? this.canvasModeEnabled,
+      verciStyle: verciStyle ?? this.verciStyle,
+      verciFont: verciFont ?? this.verciFont,
+      verciTextScale: verciTextScale ?? this.verciTextScale,
+    );
+  }
+}
+
+class DisplayEffectsNotifier extends Notifier<DisplayEffectsState> {
+  @override
+  DisplayEffectsState build() {
+    final prefs = ref.watch(sharedPrefsProvider);
+    final styleRaw = prefs.getString('wl_verci_style');
+    final style = VerciStyle.values.firstWhere(
+      (s) => s.name == styleRaw,
+      orElse: () => VerciStyle.constellation,
+    );
+    return DisplayEffectsState(
+      dynamicIslandVisible: prefs.getBool('wl_island_visible') ?? true,
+      lumnGlowEnabled: prefs.getBool('wl_lumn_glow') ?? true,
+      lumnGlowIntensity: prefs.getDouble('wl_lumn_intensity') ?? 80.0,
+      canvasModeEnabled: prefs.getBool('wl_canvas_enabled') ?? true,
+      verciStyle: style,
+    );
+  }
+
+  Future<void> toggleDynamicIsland([bool? value]) async {
+    final next = value ?? !state.dynamicIslandVisible;
+    state = state.copyWith(dynamicIslandVisible: next);
+    await ref.read(sharedPrefsProvider).setBool('wl_island_visible', next);
+  }
+
+  Future<void> toggleLumnGlow([bool? value]) async {
+    final next = value ?? !state.lumnGlowEnabled;
+    state = state.copyWith(lumnGlowEnabled: next);
+    await ref.read(sharedPrefsProvider).setBool('wl_lumn_glow', next);
+  }
+
+  Future<void> setLumnGlowIntensity(double intensity) async {
+    state = state.copyWith(lumnGlowIntensity: intensity.clamp(20.0, 140.0));
+    await ref.read(sharedPrefsProvider).setDouble('wl_lumn_intensity', state.lumnGlowIntensity);
+  }
+
+  Future<void> toggleCanvasMode([bool? value]) async {
+    final next = value ?? !state.canvasModeEnabled;
+    state = state.copyWith(canvasModeEnabled: next);
+    await ref.read(sharedPrefsProvider).setBool('wl_canvas_enabled', next);
+  }
+
+  Future<void> setVerciStyle(VerciStyle style) async {
+    state = state.copyWith(verciStyle: style);
+    await ref.read(sharedPrefsProvider).setString('wl_verci_style', style.name);
+  }
+
+  void setVerciFont(VerciFontStyle font) {
+    state = state.copyWith(verciFont: font);
+  }
+
+  void setVerciTextScale(double scale) {
+    state = state.copyWith(verciTextScale: scale.clamp(0.7, 1.5));
+  }
+}
+
+final displayEffectsProvider =
+    NotifierProvider<DisplayEffectsNotifier, DisplayEffectsState>(
+        DisplayEffectsNotifier.new);
 
 final audioEngineTickProvider = StreamProvider<int>((ref) async* {
   final handler = ref.watch(audioHandlerProvider);

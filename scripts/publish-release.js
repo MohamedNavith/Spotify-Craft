@@ -38,12 +38,27 @@ async function main() {
 
   const owner = 'MohamedNavith';
   const repo = 'Spotify-Craft';
-  const tag = 'v2.1.0';
+  const tag = 'v2.1.1';
+  const apkPath = path.join(
+    __dirname,
+    '..',
+    'mobile_flutter',
+    'build',
+    'app',
+    'outputs',
+    'flutter-apk',
+    'app-release.apk'
+  );
+  if (!fs.existsSync(apkPath)) {
+    console.error(`APK not found: ${apkPath}`);
+    process.exit(1);
+  }
+  const apkMb = (fs.statSync(apkPath).size / 1024 / 1024).toFixed(2);
   const releaseTitle =
-    'Wavelength v2.1.0 — Dedicated Android App Using Flutter (Not WebView)';
-  const releaseBody = `## Wavelength v2.1.0 — Dedicated Native Android App (Flutter, Not WebView)
+    'Wavelength v2.1.1 — Dedicated Android App Using Flutter (Not WebView)';
+  const releaseBody = `## Wavelength v2.1.1 — Dedicated Native Android App (Flutter, Not WebView)
 
-This release introduces the **dedicated Android app built natively with Flutter & Kotlin/Media3 (ExoPlayer)** — completely replacing the old Capacitor WebView wrapper while running **100% free of cost ($0 server hosting)** via direct stream resolution and local SQLite persistence.
+Built natively with **Flutter & Kotlin/Media3 (ExoPlayer)** — completely replacing the old WebView wrapper while running **100% free of cost (\$0 server hosting)** via direct stream resolution and local SQLite persistence.
 
 ---
 
@@ -51,19 +66,18 @@ This release introduces the **dedicated Android app built natively with Flutter 
 
 | Platform | Asset | Size | Download |
 | :--- | :--- | :--- | :--- |
-| **Android (Native Flutter, API 24+)** | \`wavelength-android-flutter.apk\` | 56.1 MB | [Download APK](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-android-flutter.apk) |
+| **Android (Native Flutter, API 24+)** | \`wavelength-android-flutter.apk\` | ${apkMb} MB | [Download APK](https://github.com/${owner}/${repo}/releases/download/${tag}/wavelength-android-flutter.apk) |
 
-*(Windows Desktop \`.exe\`, Portable ZIP, and Discord Bot ZIP remain available under [Release v2.0.0](https://github.com/${owner}/${repo}/releases/tag/v2.0.0).)*
+*(Previous releases remain archived under [Releases](https://github.com/${owner}/${repo}/releases).)*
 
 ---
 
-### Highlights (Native Flutter App — Zero WebView)
-- **Dedicated Native Engine**: Built on **Flutter** + **Android ExoPlayer (\`just_audio\` / \`audio_service\`)**, preserving Hi-Res FLAC / 320k AAC stream quality directly on-device with zero browser/WebView overhead.
-- **Rich Lock Screen, Notification Shade & Headset Controls**: \`MediaStyle\` foreground service with cached album artwork, seekbar progress, **Prev / Play-Pause / Next / Heart Like / Stop** actions, **1x / 2x / 3x** wired & Bluetooth earphone button support, \`AudioFocus\` call/navigation handling, and instant auto-pause on headphone unplug or Bluetooth disconnect.
-- **Strict LIFO Hardware Back Navigation**: Nested per-tab navigation stacks (Home / Search / Library), preserved scroll positions, modal/keyboard dismissal first, collapsible Full Player keeping the Mini-Player visible, and double-back exit confirmation only at root Home.
-- **Typo-Tolerant Fuzzy & Lyric Search**: Damerau-Levenshtein + phonetic search, \`"Did you mean..."\`, filter chips (\`All\`, \`Songs\`, \`Artists\`, \`Albums\`, \`Playlists\`, \`Lyrics\`), and synced karaoke LRCLIB lyrics with tap-to-seek.
-- **Playlists, Offline Downloads, EQ, USB DAC & Widgets**: Local SQLite persistence, multi-select Add-to-Playlist with Undo, drag reorder, 5-band hardware Equalizer + Bass Boost + LoudnessEnhancer, USB-C DAC & Bluetooth sample-rate readout, Home Screen Widget, Quick Settings Tile, and Android Auto browse tree.
-- **Story Sharing & Spotify Importer**: 9:16 & 1:1 story card renderer, 15s animated waveform MP4 clip exporter, QR/JSON playlist sharing, and Spotify link / Exportify CSV/JSON importer.
+### What's New in v2.1.1 (Full Visual & Feature Parity)
+- **Floating Dynamic Island**: Under-camera pill with spinning album art, live animated equalizer bars, expandable player capsule (scrubber, Like, Prev / Play-Pause / Next, Verci orb), and swipe-up dismiss / top-bar toggle.
+- **Verci & Lumn Studio (6 Interactive Modes + Ambient Rim Glow)**: FNV-1a zigzag **Constellation** star-map with synced LRCLIB lyrics, **25s Video Canvas**, **Spicetify Studio**, **Kinetic Pop** lockscreen clock + bold typography pills, **Fisheye**, **Minimalist HUD**, font family selector, text-scale slider, and Lumn rim-glow intensity control.
+- **Hi-Res Streaming Quality Modal & Audio Engine**: Apple-style dark **Mobile Data Streaming** sheet (\`Low\`, \`High Efficiency HE-AAC\`, \`High Quality 256kbps\`, \`Lossless 24-bit/48kHz\`, \`Hi-Res Lossless 24-bit/192kHz\`) with high-data warning prompts, hardware 5-band Equalizer + Crossfade (\`0–12s\`), and real-time USB-C DAC & Bluetooth codec readout.
+- **Exact Wavelength Home, Search, Library & Clean Consumer Settings**: \`All | Music | Podcasts\` filter chips, Personalized Favorite Singers shelf & multi-select picker in Settings, Damerau-Levenshtein typo-tolerant & lyric search, Create Playlist green banner with live song picker, Spotify / Exportify CSV/JSON importer, 9:14 Share Photo Card studio (4 preset themes, \`Song | Lyrics\` toggle, QR, 15s MP4 clip), and clean consumer-only playback settings (no Meta/Snap/developer IDs).
+- **Rich Lock Screen, Headset Controls & Strict LIFO Back Stack**: \`MediaStyle\` foreground service, **1x / 2x / 3x** wired & Bluetooth button clicks, Home Widget, Quick Settings Tile, Android Auto browse tree, and strict LIFO unwinding (\`keyboard → modal → Verci → Dynamic Island → Full Player → nested tab → Home → double-back exit toast\`).
 `;
 
   console.log(`Checking existing releases for ${owner}/${repo}...`);
@@ -130,17 +144,6 @@ This release introduces the **dedicated Android app built natively with Flutter 
 
   const uploadBaseUrl = `https://uploads.github.com/repos/${owner}/${repo}/releases/${release.id}/assets`;
   const existingAssets = release.assets || [];
-
-  const apkPath = path.join(
-    __dirname,
-    '..',
-    'mobile_flutter',
-    'build',
-    'app',
-    'outputs',
-    'flutter-apk',
-    'app-release.apk'
-  );
 
   const filesToUpload = [
     {
