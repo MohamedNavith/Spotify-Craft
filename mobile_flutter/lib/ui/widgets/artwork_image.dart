@@ -243,7 +243,7 @@ class TrackRowTile extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              track.qualityDetails!.isHiRes ? 'HI-RES' : 'FLAC',
+                              track.qualityDetails!.isHiRes ? 'HI-RES' : track.qualityDetails!.codec.toUpperCase(),
                               style: const TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,

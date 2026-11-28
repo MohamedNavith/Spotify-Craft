@@ -85,7 +85,7 @@ class AudioStreamDetails {
 
   String get tierLabel {
     if (isHiRes) return 'HI-RES LOSSLESS';
-    if (isLossless) return 'LOSSLESS FLAC';
+    if (isLossless) return 'LOSSLESS ${codec.toUpperCase()}';
     if ((bitrateKbps ?? 0) >= 256) return 'STUDIO MASTER AAC';
     return 'HIGH EFFICIENCY';
   }
@@ -96,10 +96,11 @@ class AudioStreamDetails {
       return 'HI-RES $bitDepth-bit/$khz kHz';
     }
     if (isLossless) {
-      final bits = bitDepth ?? 16;
-      final sr = sampleRateHz ?? 44100;
+      final bits = bitDepth;
+      final sr = sampleRateHz;
+      if (bits == null || sr == null) return codec.toUpperCase();
       final khz = (sr / 1000).toStringAsFixed(sr % 1000 == 0 ? 0 : 1);
-      return 'FLAC $bits-bit/$khz kHz';
+      return '${codec.toUpperCase()} $bits-bit/$khz kHz';
     }
     if (bitrateKbps != null && bitrateKbps! > 0) {
       return '$codec $bitrateKbps kbps';

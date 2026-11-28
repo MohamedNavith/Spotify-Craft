@@ -78,8 +78,6 @@ class LocalAudioScanner {
       qualityDetails: AudioStreamDetails(
         codec: ext.isNotEmpty ? ext : 'AUDIO',
         container: ext.toLowerCase(),
-        sampleRateHz: 44100,
-        bitDepth: isFlac ? 16 : null,
         sourceProvider: 'Local Device File',
         isLossless: isFlac,
       ),

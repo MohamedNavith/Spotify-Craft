@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import '../modals/share_sheet.dart';
 import '../widgets/artwork_image.dart';
 import '../widgets/dynamic_island.dart';
 import 'full_player_screen.dart';
+import 'detail_screens.dart';
 import 'home_search_library_screens.dart';
 import 'settings_screen.dart';
 import 'spotify_import_screen.dart';
@@ -39,6 +41,7 @@ class _WavelengthAppShellState extends ConsumerState<WavelengthAppShell> {
 
   Future<void> _initRuntimeListeners() async {
     final handler = ref.read(audioHandlerProvider);
+
     _toastSub = handler.toastStream.listen((msg) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -64,6 +67,35 @@ class _WavelengthAppShellState extends ConsumerState<WavelengthAppShell> {
     final nav = ref.read(navigationProvider);
     final handler = ref.read(audioHandlerProvider);
 
+    if (payload.startsWith('wavelength://playlist/import?') ||
+        payload.startsWith('wavelength-playlist:')) {
+      try {
+        if (payload.length > 250000) throw const FormatException();
+        final encoded = payload.startsWith('wavelength-playlist:')
+            ? payload.substring('wavelength-playlist:'.length)
+            : Uri.parse(payload).queryParameters['data'];
+        final data = jsonDecode(utf8.decode(base64Url.decode(encoded ?? '')));
+        if (data is! Map || data['name'] is! String || data['tracks'] is! List) {
+          throw const FormatException();
+        }
+        final tracks = <WavelengthTrack>[];
+        for (final entry in data['tracks'] as List) {
+          if (entry is! Map || entry['title'] is! String || entry['artist'] is! String) continue;
+          final title = entry['title'] as String;
+          final artist = entry['artist'] as String;
+          tracks.add(CuratedCatalog.allTracks.where((t) => t.title == title && t.artist == artist).firstOrNull ??
+              WavelengthTrack(id: 'shared:${jsonEncode([title, artist])}', title: title, artist: artist));
+        }
+        nav.collapseFullPlayer();
+        nav.pushInActiveTab(PlaylistDetailScreen(initialPlaylist: WavelengthPlaylist(
+          id: 'shared:${DateTime.now().microsecondsSinceEpoch}', name: data['name'],
+          tracks: tracks, trackCount: tracks.length, isSystem: true,
+        )));
+      } on FormatException {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This playlist link could not be read.')));
+      }
+      return;
+    }
     if (payload.contains('open.spotify.com/') || payload.startsWith('spotify:')) {
       nav.collapseFullPlayer();
       nav.pushInActiveTab(SpotifyImportScreen(initialInput: payload));

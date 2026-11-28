@@ -53,6 +53,7 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
   StoryCardThemePreset _preset = StoryCardThemePreset.slateNight;
   bool _lyricsMode = false;
   bool _showQr = false;
+  bool _squarePost = false;
   bool _busy = false;
   bool _copied = false;
   String? _statusMessage;
@@ -73,7 +74,12 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
       return 'wavelength://track/${Uri.encodeComponent(widget.track!.id)}?title=${Uri.encodeQueryComponent(widget.track!.title)}&artist=${Uri.encodeQueryComponent(widget.track!.artist)}';
     }
     if (widget.playlist != null) {
-      return 'wavelength-playlist:${base64UrlEncode(utf8.encode(jsonEncode(widget.playlist!.toJson())))}';
+      final playlist = widget.playlist!;
+      final contents = {
+        'name': playlist.name,
+        'tracks': [for (final t in playlist.tracks) {'title': t.title, 'artist': t.artist}],
+      };
+      return 'wavelength://playlist/import?data=${base64UrlEncode(utf8.encode(jsonEncode(contents)))}';
     }
     return 'wavelength://player';
   }
@@ -94,7 +100,8 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
       throw StateError('Photo card is not ready yet.');
     }
     final width = boundary.size.width;
-    final pixelRatio = width > 0 ? (1080.0 / width).clamp(2.5, 4.5) : 3.5;
+    if (width <= 0) throw StateError('Wait for the card preview to load.');
+    final pixelRatio = 1080.0 / width;
     final img = await boundary.toImage(pixelRatio: pixelRatio);
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     img.dispose();
@@ -158,8 +165,12 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.qr_code_2_rounded),
-                  tooltip: 'Toggle QR badge',
-                  onPressed: () => setState(() => _showQr = !_showQr),
+                  tooltip: _sharePayloadUri.length <= 1000
+                      ? 'Toggle QR badge'
+                      : 'Use Share to send this playlist',
+                  onPressed: _sharePayloadUri.length <= 1000
+                      ? () => setState(() => _showQr = !_showQr)
+                      : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded),
@@ -168,13 +179,21 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
               ],
             ),
             const SizedBox(height: 8),
-            // Exact Wavelength 9:14 Story Photo Card Preview
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(value: false, label: Text('Story')),
+                ButtonSegment(value: true, label: Text('Square post')),
+              ],
+              selected: {_squarePost},
+              onSelectionChanged: (value) => setState(() => _squarePost = value.first),
+            ),
+            const SizedBox(height: 12),
             Center(
               child: RepaintBoundary(
                 key: _cardBoundaryKey,
                 child: Container(
-                  width: 260,
-                  height: 405,
+                  width: 270,
+                  height: _squarePost ? 270 : 480,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -236,7 +255,7 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
                           Text(
                             widget.track?.qualityDetails?.isLossless == true
                                 ? 'LOSSLESS'
-                                : 'HI-RES',
+                                : '',
                             style: const TextStyle(
                               color: Colors.white38,
                               fontFamily: 'monospace',
@@ -253,10 +272,8 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: QrImageView(
-                            data: _sharePayloadUri.length > 260
-                                ? 'wavelength://playlist/${widget.playlist?.id ?? 'mix'}'
-                                : _sharePayloadUri,
-                            size: 160,
+                            data: _sharePayloadUri,
+                            size: _squarePost ? 108 : 160,
                             padding: EdgeInsets.zero,
                           ),
                         )
@@ -276,7 +293,7 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
                               const SizedBox(height: 8),
                               Text(
                                 '"${widget.highlightedLyric ?? 'Now listening to $_title by $_subtitle'}"',
-                                maxLines: 5,
+                                maxLines: _squarePost ? 2 : 5,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -301,7 +318,7 @@ class _ShareStudioSheetState extends ConsumerState<_ShareStudioSheet> {
                       else
                         WavelengthArtwork(
                           imageUrl: _artworkUrl,
-                          size: 176,
+                          size: _squarePost ? 112 : 176,
                           borderRadius: 14,
                         ),
                       // Sound wave barcode + metadata footer

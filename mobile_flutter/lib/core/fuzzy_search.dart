@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'models.dart';
 
 class FuzzySearchEngine {
+  static final _searchCharacter = RegExp(r'^[\p{L}\p{M}\p{N}]$', unicode: true);
   static const Map<String, String> _diacriticMap = {
     'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a',
     'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e',
@@ -18,10 +19,7 @@ class FuzzySearchEngine {
     for (final rune in lower.runes) {
       final ch = String.fromCharCode(rune);
       final mapped = _diacriticMap[ch] ?? ch;
-      final code = mapped.codeUnitAt(0);
-      final isAlnum =
-          (code >= 97 && code <= 122) || (code >= 48 && code <= 57);
-      if (isAlnum) {
+      if (_searchCharacter.hasMatch(mapped)) {
         buf.write(mapped);
       } else {
         buf.write(' ');

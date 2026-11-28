@@ -3,6 +3,10 @@ import 'package:wavelength_app/core/fuzzy_search.dart';
 import 'package:wavelength_app/core/models.dart';
 
 void main() {
+  test('matches prefixes in Hindi and Tamil titles', () {
+    expect(FuzzySearchEngine.similarityScore('अरि', 'अरिजीत सिंह'), greaterThan(0.9));
+    expect(FuzzySearchEngine.similarityScore('அனி', 'அனிருத்'), greaterThan(0.9));
+  });
   const sampleTracks = [
     WavelengthTrack(
       id: '1',
